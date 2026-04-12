@@ -9,8 +9,10 @@
 2. `mvi-core-runtime`
    - 默认 Store 运行时
 3. `mvi-platform-android`
-   - Android ViewModel + Compose 绑定
-4. `mvi-extensions`
+   - Android ViewModel 适配层（无 Compose 依赖）
+4. `mvi-platform-android-compose`
+   - Compose 绑定层
+5. `mvi-extensions`
    - 日志插件、状态迁移插件
 
 ## 版本策略建议

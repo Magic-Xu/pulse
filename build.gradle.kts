@@ -11,6 +11,7 @@ val publishableModules = setOf(
     "mvi-core-contract",
     "mvi-core-runtime",
     "mvi-platform-android",
+    "mvi-platform-android-compose",
     "mvi-extensions",
 )
 
@@ -80,6 +81,7 @@ tasks.register("mviFrameworkCheck") {
     dependsOn(
         "mviCoreCheck",
         ":mvi-platform-android:tasks",
+        ":mvi-platform-android-compose:tasks",
     )
 }
 

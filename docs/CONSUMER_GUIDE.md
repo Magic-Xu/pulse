@@ -4,15 +4,26 @@
 
 ## Android 使用方最小依赖
 
+### 非 Compose 项目
+
 ```kotlin
 dependencies {
     implementation(project(":mvi-platform-android"))
 }
 ```
 
+### Compose 项目（推荐）
+
+```kotlin
+dependencies {
+    implementation(project(":mvi-platform-android-compose"))
+}
+```
+
 说明：
 
 - `mvi-platform-android` 会透传 `mvi-core-runtime` 和 `mvi-core-contract`
+- `mvi-platform-android-compose` 会透传 `mvi-platform-android`
 - 业务层可以直接使用 `MviState/MviIntent/MviEffect` 等核心类型
 - 不需要额外手写 core 模块依赖
 

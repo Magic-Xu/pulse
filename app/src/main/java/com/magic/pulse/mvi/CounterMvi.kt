@@ -16,8 +16,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.magic.mvicore.android.MviViewModel
-import com.magic.mvicore.android.collectStateAsState
-import com.magic.mvicore.android.observeEffects
+import com.magic.mvicore.android.compose.collectStateAsState
+import com.magic.mvicore.android.compose.observeEffects
 import com.magic.mvicore.contract.MviEffect
 import com.magic.mvicore.contract.MviIntent
 import com.magic.mvicore.contract.MviState

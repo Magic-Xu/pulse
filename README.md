@@ -14,14 +14,18 @@
    - 串行 dispatch、生命周期控制、effect 分发、插件扩展点
 
 3. `mvi-platform-android`
-   - Android 子组件（ViewModel + Compose 绑定）
-   - Android 能力后置，避免污染核心模块
+   - Android 子组件（ViewModel 适配）
+   - 不依赖 Compose，作为 Android 基础层
 
-4. `mvi-extensions`
+4. `mvi-platform-android-compose`
+   - Compose 绑定层（`collectStateAsState` / `observeEffects`）
+   - 在 Android 基础层之上按需引入
+
+5. `mvi-extensions`
    - 可插拔扩展模块（日志插件、状态变化观察插件）
    - 不改核心 API，通过 StorePlugin 扩展能力
 
-5. 后续计划（待实现）
+6. 后续计划（待实现）
    - 更完整的生命周期策略
    - 多平台适配（如 Desktop / iOS 对接层）
 
@@ -32,9 +36,10 @@ app
  ├─ mvi-extensions (optional)
  │   └─ mvi-core-runtime
  │       └─ mvi-core-contract
- └─ mvi-platform-android
-     └─ mvi-core-runtime
-         └─ mvi-core-contract
+ └─ mvi-platform-android-compose
+     └─ mvi-platform-android
+         └─ mvi-core-runtime
+             └─ mvi-core-contract
 ```
 
 ## 架构原则
@@ -47,7 +52,9 @@ app
 ## 依赖策略
 
 - Android 业务应用（如 `app`）只需要依赖 `mvi-platform-android`
+- 使用 Compose 时推荐只依赖 `mvi-platform-android-compose`
 - `mvi-platform-android` 通过 `api` 透出 `mvi-core-runtime`
+- `mvi-platform-android-compose` 通过 `api` 透出 `mvi-platform-android`
 - `mvi-core-runtime` 通过 `api` 透出 `mvi-core-contract`
 
 这样使用方不需要写一串 core 依赖，同时仍能直接使用 `MviState/MviIntent/MviEffect` 等核心类型。

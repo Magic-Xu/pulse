@@ -1,11 +1,12 @@
 plugins {
     id("com.android.library")
+    alias(libs.plugins.kotlin.compose)
 }
 
-description = "MVICore Android adapter: ViewModel-based Store ownership."
+description = "MVICore Android Compose adapter: Store <-> Compose bindings."
 
 android {
-    namespace = "com.magic.mvicore.android"
+    namespace = "com.magic.mvicore.android.compose"
     compileSdk {
         version = release(36) {
             minorApiLevel = 1
@@ -21,9 +22,12 @@ android {
         targetCompatibility = JavaVersion.VERSION_11
     }
 
+    buildFeatures {
+        compose = true
+    }
 }
 
 dependencies {
-    api(project(":mvi-core-runtime"))
-    api(libs.androidx.lifecycle.viewmodel)
+    api(project(":mvi-platform-android"))
+    api(libs.androidx.compose.runtime)
 }

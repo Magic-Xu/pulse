@@ -1,4 +1,4 @@
-package com.magic.mvicore.android
+package com.magic.mvicore.android.compose
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
