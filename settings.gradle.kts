@@ -25,3 +25,4 @@ dependencyResolutionManagement {
 rootProject.name = "pulse"
 include(":app")
 include(":mvi-core-contract")
+include(":mvi-core-runtime")
