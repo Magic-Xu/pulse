@@ -64,12 +64,14 @@ app
 
 - 使用方接入指南：[docs/CONSUMER_GUIDE.md](/Users/magic/Desktop/reborn/MVICore/docs/CONSUMER_GUIDE.md)
 - 最小发布计划：[docs/RELEASE_PLAN.md](/Users/magic/Desktop/reborn/MVICore/docs/RELEASE_PLAN.md)
+- Maven Central 发布手册：[docs/PUBLISH_MAVEN_CENTRAL.md](/Users/magic/Desktop/reborn/MVICore/docs/PUBLISH_MAVEN_CENTRAL.md)
 
 ## 快速验证
 
 ```bash
 ./gradlew mviCoreCheck
 ./gradlew mviFrameworkCheck
+./gradlew verifyMavenCentralConfig
 ./gradlew :mvi-core-contract:check
 ./gradlew :mvi-core-runtime:check
 ./gradlew :mvi-extensions:check

@@ -22,6 +22,7 @@
 ## 发布前检查
 
 ```bash
+./gradlew verifyMavenCentralConfig
 ./gradlew mviCoreCheck
 ./gradlew mviFrameworkCheck
 ```

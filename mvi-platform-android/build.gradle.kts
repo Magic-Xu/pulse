@@ -3,6 +3,8 @@ plugins {
     alias(libs.plugins.kotlin.compose)
 }
 
+description = "MVICore Android adapter: ViewModel + Compose bindings."
+
 android {
     namespace = "com.magic.mvicore.android"
     compileSdk {

@@ -3,6 +3,8 @@ plugins {
     id("java-library")
 }
 
+description = "MVICore runtime: minimal DefaultStore implementation."
+
 kotlin {
     jvmToolchain(11)
 }

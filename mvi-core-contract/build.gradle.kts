@@ -2,6 +2,8 @@ plugins {
     id("org.jetbrains.kotlin.jvm")
 }
 
+description = "MVICore contract definitions: Intent/State/Effect/Reducer/Store."
+
 kotlin {
     jvmToolchain(11)
 }

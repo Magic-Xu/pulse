@@ -8,3 +8,13 @@
 .externalNativeBuild
 .cxx
 local.properties
+
+# Local secret configs (never commit)
+/gradle/maven-central-secrets.properties
+/gradle/maven-central-secrets.local.properties
+/signing.properties
+/.env
+/.env.local
+/.env.*.local
+*.jks
+*.keystore
