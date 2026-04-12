@@ -17,8 +17,11 @@
    - Android 子组件（ViewModel + Compose 绑定）
    - Android 能力后置，避免污染核心模块
 
-4. 后续计划（待实现）
-   - 插件增强（日志、埋点、调试）
+4. `mvi-extensions`
+   - 可插拔扩展模块（日志插件、状态变化观察插件）
+   - 不改核心 API，通过 StorePlugin 扩展能力
+
+5. 后续计划（待实现）
    - 更完整的生命周期策略
    - 多平台适配（如 Desktop / iOS 对接层）
 
@@ -26,6 +29,9 @@
 
 ```text
 app
+ ├─ mvi-extensions (optional)
+ │   └─ mvi-core-runtime
+ │       └─ mvi-core-contract
  └─ mvi-platform-android
      └─ mvi-core-runtime
          └─ mvi-core-contract
@@ -51,11 +57,13 @@ app
 - Step 1 已完成：契约层
 - Step 2 已完成：极简运行时
 - Step 3 已完成：Android 子组件 + app 最小接入示例
+- Step 4 已完成：扩展机制落地（日志插件、状态变化插件）
 
 ## 快速验证
 
 ```bash
 ./gradlew :mvi-core-contract:check
 ./gradlew :mvi-core-runtime:check
+./gradlew :mvi-extensions:check
 ./gradlew :app:assembleDebug
 ```
