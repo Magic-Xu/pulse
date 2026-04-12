@@ -58,10 +58,18 @@ app
 - Step 2 已完成：极简运行时
 - Step 3 已完成：Android 子组件 + app 最小接入示例
 - Step 4 已完成：扩展机制落地（日志插件、状态变化插件）
+- Step 5 已完成：发布形态整理（根级验证任务 + 接入/发布文档）
+
+## 文档导航
+
+- 使用方接入指南：[docs/CONSUMER_GUIDE.md](/Users/magic/Desktop/reborn/MVICore/docs/CONSUMER_GUIDE.md)
+- 最小发布计划：[docs/RELEASE_PLAN.md](/Users/magic/Desktop/reborn/MVICore/docs/RELEASE_PLAN.md)
 
 ## 快速验证
 
 ```bash
+./gradlew mviCoreCheck
+./gradlew mviFrameworkCheck
 ./gradlew :mvi-core-contract:check
 ./gradlew :mvi-core-runtime:check
 ./gradlew :mvi-extensions:check
