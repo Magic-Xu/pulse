@@ -1,5 +1,6 @@
 plugins {
     id("org.jetbrains.kotlin.jvm")
+    id("java-library")
 }
 
 kotlin {
@@ -7,7 +8,7 @@ kotlin {
 }
 
 dependencies {
-    implementation(project(":mvi-core-contract"))
+    api(project(":mvi-core-contract"))
 }
 
 val testSourceSet = sourceSets.named("test")

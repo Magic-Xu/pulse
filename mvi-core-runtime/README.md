@@ -7,6 +7,7 @@
 - 提供一个真正可运行的 `Store`：`dispatch(intent)` 后能推进状态并分发 effect
 - 保持平台无关（无 Android 依赖）
 - 在不增加复杂度的前提下，预留扩展点（插件机制）
+- 对上层通过 `api` 透出 `mvi-core-contract`，简化使用方依赖
 
 ## 目录结构
 
