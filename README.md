@@ -5,8 +5,8 @@ Pulse represents each state transition in MVI — a clear, observable signal of 
 Minimal, cross-platform-first MVI framework.
 
 [![GitHub Repo](https://img.shields.io/badge/GitHub-Magic--Xu%2Fpulse-181717?logo=github)](https://github.com/Magic-Xu/pulse)
-[![GitHub Stars](https://img.shields.io/github/stars/Magic-Xu/pulse?style=flat)](https://github.com/Magic-Xu/pulse/stargazers)
-[![License](https://img.shields.io/github/license/Magic-Xu/pulse)](https://github.com/Magic-Xu/pulse/blob/main/LICENSE)
+[![GitHub Stars](https://img.shields.io/github/stars/magic-xu/pulse?style=flat)](https://github.com/Magic-Xu/pulse/stargazers)
+[![License](https://img.shields.io/github/license/magic-xu/pulse)](https://github.com/Magic-Xu/pulse/blob/main/LICENSE)
 [![Maven Central Core](https://img.shields.io/maven-central/v/io.github.magic-xu/mvi-core-runtime?label=Maven%20Central%20(core))](https://central.sonatype.com/artifact/io.github.magic-xu/mvi-core-runtime)
 [![Maven Central Android](https://img.shields.io/maven-central/v/io.github.magic-xu/mvi-platform-android?label=Maven%20Central%20(android))](https://central.sonatype.com/artifact/io.github.magic-xu/mvi-platform-android)
 [![Maven Central Compose](https://img.shields.io/maven-central/v/io.github.magic-xu/mvi-platform-android-compose?label=Maven%20Central%20(compose))](https://central.sonatype.com/artifact/io.github.magic-xu/mvi-platform-android-compose)
