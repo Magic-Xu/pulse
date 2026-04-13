@@ -1,8 +1,8 @@
 # Pulse
 
-Pulse represents each state transition in MVI — a clear, observable signal of change.
+Pulse 表示 MVI 中的每一次状态变化，是系统对输入的清晰响应信号。
 
-Minimal, cross-platform-first MVI framework.
+极简、跨平台优先的 MVI 框架。
 
 [![GitHub Repo](https://img.shields.io/badge/GitHub-Magic--Xu%2Fpulse-181717?logo=github)](https://github.com/Magic-Xu/pulse)
 [![GitHub Stars](https://img.shields.io/github/stars/Magic-Xu/pulse?style=flat)](https://github.com/Magic-Xu/pulse/stargazers)
@@ -11,28 +11,28 @@ Minimal, cross-platform-first MVI framework.
 [![Maven Central Android](https://img.shields.io/maven-central/v/io.github.magic-xu/mvi-platform-android?label=Maven%20Central%20(android))](https://central.sonatype.com/artifact/io.github.magic-xu/mvi-platform-android)
 [![Maven Central Compose](https://img.shields.io/maven-central/v/io.github.magic-xu/mvi-platform-android-compose?label=Maven%20Central%20(compose))](https://central.sonatype.com/artifact/io.github.magic-xu/mvi-platform-android-compose)
 
-Current version: `0.1.0`
+当前版本：`0.1.0`
 
-Chinese README: [README.zh-CN.md](/Users/magic/Desktop/reborn/MVICore/README.zh-CN.md)
+英文 README： [README.md](/Users/magic/Desktop/reborn/MVICore/README.md)
 
-## Overview
+## 简介
 
-- Unidirectional flow: `Intent -> Reducer -> State (+ Effect)`
-- Clear separation of `State` (replayable) and `Effect` (one-shot)
-- Core modules are platform-agnostic
-- Android and Compose integrations are optional platform modules
+- 单向数据流：`Intent -> Reducer -> State (+ Effect)`
+- `State` 与 `Effect` 分离（状态可重放，事件一次性）
+- 核心模块不依赖 Android
+- Android/Compose 通过子模块按需接入
 
-## Modules
+## 模块
 
-- `mvi-core-contract`: core contracts (`MviState`, `MviIntent`, `MviEffect`, `Reducer`, `Store`)
-- `mvi-core-runtime`: runtime implementation (`DefaultStore`, `StorePlugin`)
-- `mvi-platform-android`: Android `ViewModel` adapter
-- `mvi-platform-android-compose`: Compose bindings (`collectStateAsState`, `observeEffects`)
-- `mvi-extensions`: optional plugins (logging, state transition tracking)
+- `mvi-core-contract`：跨平台契约（`MviState` / `MviIntent` / `MviEffect` / `Reducer` / `Store`）
+- `mvi-core-runtime`：跨平台运行时（`DefaultStore` + `StorePlugin`）
+- `mvi-platform-android`：Android `ViewModel` 适配
+- `mvi-platform-android-compose`：Compose 绑定（`collectStateAsState` / `observeEffects`）
+- `mvi-extensions`：可选扩展（日志插件、状态迁移插件）
 
-## Maven Central Setup
+## Maven Central 依赖方式
 
-Ensure `mavenCentral()` is configured:
+确保 `settings.gradle.kts` 包含 `mavenCentral()`：
 
 ```kotlin
 dependencyResolutionManagement {
@@ -43,7 +43,7 @@ dependencyResolutionManagement {
 }
 ```
 
-Recommended for Android + Compose:
+Compose Android 项目（推荐）：
 
 ```kotlin
 dependencies {
@@ -51,7 +51,7 @@ dependencies {
 }
 ```
 
-Android without Compose:
+非 Compose Android 项目：
 
 ```kotlin
 dependencies {
@@ -59,7 +59,7 @@ dependencies {
 }
 ```
 
-Optional extensions:
+可选扩展：
 
 ```kotlin
 dependencies {
@@ -67,7 +67,7 @@ dependencies {
 }
 ```
 
-Core-only usage:
+纯核心（跨平台）：
 
 ```kotlin
 dependencies {
@@ -75,7 +75,7 @@ dependencies {
 }
 ```
 
-## Quick Usage (Android + Compose)
+## 最小使用示例（Android + Compose）
 
 ```kotlin
 import com.magic.mvicore.android.MviViewModel
@@ -135,17 +135,17 @@ fun CounterScreen(viewModel: CounterViewModel) {
 }
 ```
 
-## Links
+## 链接
 
 - GitHub: [https://github.com/Magic-Xu/pulse](https://github.com/Magic-Xu/pulse)
 - Releases: [https://github.com/Magic-Xu/pulse/releases](https://github.com/Magic-Xu/pulse/releases)
 - Issues: [https://github.com/Magic-Xu/pulse/issues](https://github.com/Magic-Xu/pulse/issues)
-- API (Contract Source): [https://github.com/Magic-Xu/pulse/tree/main/mvi-core-contract/src/main/kotlin/com/magic/mvicore/contract](https://github.com/Magic-Xu/pulse/tree/main/mvi-core-contract/src/main/kotlin/com/magic/mvicore/contract)
-- API (Runtime Source): [https://github.com/Magic-Xu/pulse/tree/main/mvi-core-runtime/src/main/kotlin/com/magic/mvicore/runtime](https://github.com/Magic-Xu/pulse/tree/main/mvi-core-runtime/src/main/kotlin/com/magic/mvicore/runtime)
-- API (Android Source): [https://github.com/Magic-Xu/pulse/tree/main/mvi-platform-android/src/main/java/com/magic/mvicore/android](https://github.com/Magic-Xu/pulse/tree/main/mvi-platform-android/src/main/java/com/magic/mvicore/android)
+- API（Contract 源码）: [https://github.com/Magic-Xu/pulse/tree/main/mvi-core-contract/src/main/kotlin/com/magic/mvicore/contract](https://github.com/Magic-Xu/pulse/tree/main/mvi-core-contract/src/main/kotlin/com/magic/mvicore/contract)
+- API（Runtime 源码）: [https://github.com/Magic-Xu/pulse/tree/main/mvi-core-runtime/src/main/kotlin/com/magic/mvicore/runtime](https://github.com/Magic-Xu/pulse/tree/main/mvi-core-runtime/src/main/kotlin/com/magic/mvicore/runtime)
+- API（Android 源码）: [https://github.com/Magic-Xu/pulse/tree/main/mvi-platform-android/src/main/java/com/magic/mvicore/android](https://github.com/Magic-Xu/pulse/tree/main/mvi-platform-android/src/main/java/com/magic/mvicore/android)
 
-## Docs
+## 文档
 
-- Consumer guide: [docs/CONSUMER_GUIDE.md](/Users/magic/Desktop/reborn/MVICore/docs/CONSUMER_GUIDE.md)
-- Release plan: [docs/RELEASE_PLAN.md](/Users/magic/Desktop/reborn/MVICore/docs/RELEASE_PLAN.md)
-- Maven Central publishing: [docs/PUBLISH_MAVEN_CENTRAL.md](/Users/magic/Desktop/reborn/MVICore/docs/PUBLISH_MAVEN_CENTRAL.md)
+- 使用方接入指南：[docs/CONSUMER_GUIDE.md](/Users/magic/Desktop/reborn/MVICore/docs/CONSUMER_GUIDE.md)
+- 发布规划：[docs/RELEASE_PLAN.md](/Users/magic/Desktop/reborn/MVICore/docs/RELEASE_PLAN.md)
+- Maven Central 发布手册：[docs/PUBLISH_MAVEN_CENTRAL.md](/Users/magic/Desktop/reborn/MVICore/docs/PUBLISH_MAVEN_CENTRAL.md)
