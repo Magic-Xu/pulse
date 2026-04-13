@@ -1,5 +1,3 @@
-import com.vanniktech.maven.publish.MavenPublishBaseExtension
-
 // Top-level build file where you can add configuration options common to all sub-projects/modules.
 plugins {
     alias(libs.plugins.android.application) apply false
@@ -28,39 +26,9 @@ subprojects {
 
 subprojects {
     plugins.withId("com.vanniktech.maven.publish") {
-        extensions.configure(MavenPublishBaseExtension::class.java) {
+        configure<com.vanniktech.maven.publish.MavenPublishBaseExtension> {
             publishToMavenCentral()
             signAllPublications()
-            pom {
-                name.set(providers.gradleProperty("POM_NAME").orElse("MVICore"))
-                description.set(providers.gradleProperty("POM_DESCRIPTION").orElse("A minimal, cross-platform-first MVI framework."))
-                url.set(providers.gradleProperty("POM_URL").orElse("https://github.com/Magic-Xu/pulse"))
-                inceptionYear.set(providers.gradleProperty("POM_INCEPTION_YEAR").orElse("2026"))
-
-                licenses {
-                    license {
-                        name.set(providers.gradleProperty("POM_LICENSE_NAME").orElse("The Apache License, Version 2.0"))
-                        url.set(providers.gradleProperty("POM_LICENSE_URL").orElse("https://www.apache.org/licenses/LICENSE-2.0.txt"))
-                    }
-                }
-
-                developers {
-                    developer {
-                        id.set(providers.gradleProperty("POM_DEVELOPER_ID").orElse("magic-xu"))
-                        name.set(providers.gradleProperty("POM_DEVELOPER_NAME").orElse("TODO_REPLACE_WITH_YOUR_NAME"))
-                        email.set(providers.gradleProperty("POM_DEVELOPER_EMAIL").orElse("TODO_REPLACE_WITH_YOUR_EMAIL"))
-                    }
-                }
-
-                scm {
-                    url.set(providers.gradleProperty("POM_SCM_URL").orElse("https://github.com/Magic-Xu/pulse"))
-                    connection.set(providers.gradleProperty("POM_SCM_CONNECTION").orElse("scm:git:git://github.com/Magic-Xu/pulse.git"))
-                    developerConnection.set(
-                        providers.gradleProperty("POM_SCM_DEV_CONNECTION")
-                            .orElse("scm:git:ssh://git@github.com/Magic-Xu/pulse.git")
-                    )
-                }
-            }
         }
     }
 }
