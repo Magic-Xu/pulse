@@ -13,6 +13,28 @@ val publishableModules = setOf(
     "mvi-extensions",
 )
 
+val appDepModePropertyKey = "PULSE_APP_DEP_MODE"
+val rootGradlePropertiesFile = rootProject.file("gradle.properties")
+
+fun setRootGradleProperty(key: String, value: String) {
+    val lines = if (rootGradlePropertiesFile.exists()) {
+        rootGradlePropertiesFile.readLines().toMutableList()
+    } else {
+        mutableListOf()
+    }
+    val targetLine = "$key=$value"
+    val index = lines.indexOfFirst { it.startsWith("$key=") }
+    if (index >= 0) {
+        lines[index] = targetLine
+    } else {
+        if (lines.isNotEmpty() && lines.last().isNotBlank()) {
+            lines.add("")
+        }
+        lines.add(targetLine)
+    }
+    rootGradlePropertiesFile.writeText(lines.joinToString("\n") + "\n")
+}
+
 allprojects {
     group = providers.gradleProperty("POM_GROUP_ID").orElse("io.github.magic-xu").get()
     version = providers.gradleProperty("POM_VERSION_NAME").orElse("0.1.0-SNAPSHOT").get()
@@ -73,5 +95,43 @@ tasks.register("verifyMavenCentralConfig") {
                     "Please replace TODO values for: ${invalid.joinToString(", ")}"
             )
         }
+    }
+}
+
+tasks.register("printPulseDepMode") {
+    group = "help"
+    description = "Prints current app dependency mode (local or remote)."
+    doLast {
+        val modeFromFile = if (rootGradlePropertiesFile.exists()) {
+            rootGradlePropertiesFile
+                .readLines()
+                .firstOrNull { it.startsWith("$appDepModePropertyKey=") }
+                ?.substringAfter("=")
+                ?.trim()
+        } else {
+            null
+        }
+        val mode = modeFromFile?.ifBlank { "local" } ?: "local"
+        println("Current app dependency mode: $mode")
+    }
+}
+
+tasks.register("useLocalPulseDeps") {
+    group = "build setup"
+    description = "Switches app to local project dependencies."
+    doLast {
+        setRootGradleProperty(appDepModePropertyKey, "local")
+        println("Switched app dependencies to LOCAL mode.")
+        println("Run Sync/Reload Gradle Project in IDE, then build again.")
+    }
+}
+
+tasks.register("useRemotePulseDeps") {
+    group = "build setup"
+    description = "Switches app to Maven Central remote dependencies."
+    doLast {
+        setRootGradleProperty(appDepModePropertyKey, "remote")
+        println("Switched app dependencies to REMOTE mode.")
+        println("Run Sync/Reload Gradle Project in IDE, then build again.")
     }
 }

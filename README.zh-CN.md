@@ -75,6 +75,28 @@ dependencies {
 }
 ```
 
+## App 依赖模式（本地/远端）
+
+`app` 模块支持两种模式：
+
+- `local`：依赖工程内 `project(:xxx)`（默认）
+- `remote`：依赖 Maven Central 已发布构件
+
+一键切换命令：
+
+```bash
+./gradlew useLocalPulseDeps
+./gradlew useRemotePulseDeps
+./gradlew printPulseDepMode
+```
+
+单次构建临时覆盖：
+
+```bash
+./gradlew :app:assembleDebug -PPULSE_APP_DEP_MODE=remote
+./gradlew :app:assembleDebug -PPULSE_APP_DEP_MODE=local
+```
+
 ## 最小使用示例（Android + Compose）
 
 ```kotlin

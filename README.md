@@ -75,6 +75,28 @@ dependencies {
 }
 ```
 
+## App Dependency Mode (Local/Remote)
+
+The `app` module supports two modes:
+
+- `local`: depend on included project libs (default)
+- `remote`: depend on Maven Central artifacts
+
+One-click switch:
+
+```bash
+./gradlew useLocalPulseDeps
+./gradlew useRemotePulseDeps
+./gradlew printPulseDepMode
+```
+
+Manual override for one build:
+
+```bash
+./gradlew :app:assembleDebug -PPULSE_APP_DEP_MODE=remote
+./gradlew :app:assembleDebug -PPULSE_APP_DEP_MODE=local
+```
+
 ## Quick Usage (Android + Compose)
 
 ```kotlin

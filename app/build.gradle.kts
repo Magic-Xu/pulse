@@ -3,6 +3,12 @@ plugins {
     alias(libs.plugins.kotlin.compose)
 }
 
+val pulseDepMode = providers.gradleProperty("PULSE_APP_DEP_MODE").orElse("local")
+val pulseRemoteGroup = providers.gradleProperty("POM_GROUP_ID").orElse("io.github.magic-xu")
+val pulseRemoteVersion = providers.gradleProperty("PULSE_APP_REMOTE_VERSION")
+    .orElse(providers.gradleProperty("POM_VERSION_NAME"))
+    .orElse("0.1.0")
+
 android {
     namespace = "com.magic.pulse"
     compileSdk {
@@ -40,7 +46,11 @@ android {
 }
 
 dependencies {
-    implementation(project(":mvi-platform-android-compose"))
+    if (pulseDepMode.get().equals("remote", ignoreCase = true)) {
+        implementation("${pulseRemoteGroup.get()}:mvi-platform-android-compose:${pulseRemoteVersion.get()}")
+    } else {
+        implementation(project(":mvi-platform-android-compose"))
+    }
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.ktx)
