@@ -1,10 +1,11 @@
 package com.magic.pulse.samples.network.mvi
 
 import com.magic.mvicore.contract.MviEffect
-import com.magic.mvicore.contract.MviIntent
+import com.magic.mvicore.contract.MviMutation
 import com.magic.mvicore.contract.MviState
+import com.magic.mvicore.contract.MviUiIntent
+import com.magic.mvicore.contract.MutationReducer
 import com.magic.mvicore.contract.Next
-import com.magic.mvicore.contract.Reducer
 import com.magic.pulse.samples.network.data.model.ImageModel
 import com.magic.pulse.samples.network.data.model.VideoModel
 
@@ -21,13 +22,17 @@ data class NetworkModelsState(
     val lastUpdatedLabel: String? = null,
 ) : MviState
 
-sealed interface NetworkModelsIntent : MviIntent {
-    data object LoadImageModels : NetworkModelsIntent
-    data object LoadVideoModels : NetworkModelsIntent
-    data class ImageModelsLoaded(val models: List<ImageModel>) : NetworkModelsIntent
-    data class VideoModelsLoaded(val models: List<VideoModel>) : NetworkModelsIntent
-    data object LoadCompleted : NetworkModelsIntent
-    data class LoadFailed(val message: String) : NetworkModelsIntent
+sealed interface NetworkModelsUiIntent : MviUiIntent {
+    data object LoadImageModelsClicked : NetworkModelsUiIntent
+    data object LoadVideoModelsClicked : NetworkModelsUiIntent
+}
+
+sealed interface NetworkModelsMutation : MviMutation {
+    data class LoadingStarted(val target: LoadingTarget) : NetworkModelsMutation
+    data class ImageModelsLoaded(val models: List<ImageModel>) : NetworkModelsMutation
+    data class VideoModelsLoaded(val models: List<VideoModel>) : NetworkModelsMutation
+    data object LoadingCompleted : NetworkModelsMutation
+    data class LoadFailed(val message: String) : NetworkModelsMutation
 }
 
 sealed interface NetworkModelsEffect : MviEffect {
@@ -35,50 +40,41 @@ sealed interface NetworkModelsEffect : MviEffect {
 }
 
 object NetworkModelsReducer :
-    Reducer<NetworkModelsState, NetworkModelsIntent, NetworkModelsEffect> {
+    MutationReducer<NetworkModelsState, NetworkModelsMutation, NetworkModelsEffect> {
 
     override fun reduce(
         previous: NetworkModelsState,
-        intent: NetworkModelsIntent,
+        mutation: NetworkModelsMutation,
     ): Next<NetworkModelsState, NetworkModelsEffect> {
-        return when (intent) {
-            NetworkModelsIntent.LoadImageModels -> {
+        return when (mutation) {
+            is NetworkModelsMutation.LoadingStarted -> {
                 Next.just(
                     previous.copy(
                         isLoading = true,
-                        loadingTarget = LoadingTarget.IMAGE,
+                        loadingTarget = mutation.target,
                     )
                 )
             }
 
-            NetworkModelsIntent.LoadVideoModels -> {
+            is NetworkModelsMutation.ImageModelsLoaded -> {
                 Next.just(
                     previous.copy(
-                        isLoading = true,
-                        loadingTarget = LoadingTarget.VIDEO,
-                    )
-                )
-            }
-
-            is NetworkModelsIntent.ImageModelsLoaded -> {
-                Next.just(
-                    previous.copy(
-                        imageModels = intent.models,
+                        imageModels = mutation.models,
                         lastUpdatedLabel = "Image models updated",
                     )
                 )
             }
 
-            is NetworkModelsIntent.VideoModelsLoaded -> {
+            is NetworkModelsMutation.VideoModelsLoaded -> {
                 Next.just(
                     previous.copy(
-                        videoModels = intent.models,
+                        videoModels = mutation.models,
                         lastUpdatedLabel = "Video models updated",
                     )
                 )
             }
 
-            NetworkModelsIntent.LoadCompleted -> {
+            NetworkModelsMutation.LoadingCompleted -> {
                 Next.just(
                     previous.copy(
                         isLoading = false,
@@ -87,13 +83,13 @@ object NetworkModelsReducer :
                 )
             }
 
-            is NetworkModelsIntent.LoadFailed -> {
+            is NetworkModelsMutation.LoadFailed -> {
                 Next.withEffect(
                     previous.copy(
                         isLoading = false,
                         loadingTarget = null,
                     ),
-                    NetworkModelsEffect.ShowMessage(intent.message),
+                    NetworkModelsEffect.ShowMessage(mutation.message),
                 )
             }
         }

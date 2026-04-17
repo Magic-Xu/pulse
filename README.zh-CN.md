@@ -30,6 +30,16 @@ Pulse 表示 MVI 中的每一次状态变化，是系统对输入的清晰响应
 - `mvi-platform-android-compose`：Compose 绑定（`collectStateAsState` / `observeEffects`）
 - `mvi-extensions`：可选扩展（日志插件、状态迁移插件）
 
+## 双通道 Intent 模型
+
+Pulse 现已支持复杂业务的 Intent 拆分：
+
+- `MviUiIntent`：来自 UI/用户动作的外部输入
+- `MviMutation`：仅用于 reducer 的内部状态变更消息
+- `PulseSplitViewModel`：`send(uiIntent)` -> 副作用执行 -> `dispatchMutation(mutation)` -> reducer
+
+这样 reducer 只负责纯状态变更，IO/业务编排不会混入 mutation 逻辑。
+
 ## Maven Central 依赖方式
 
 确保 `settings.gradle.kts` 包含 `mavenCentral()`：
@@ -100,7 +110,7 @@ dependencies {
 ## 最小使用示例（Android + Compose）
 
 ```kotlin
-import com.magic.mvicore.android.MviViewModel
+import com.magic.mvicore.android.PulseViewModel
 import com.magic.mvicore.android.compose.collectStateAsState
 import com.magic.mvicore.android.compose.observeEffects
 import com.magic.mvicore.contract.MviEffect
@@ -132,10 +142,12 @@ object CounterReducer : Reducer<CounterState, CounterIntent, CounterEffect> {
     }
 }
 
-class CounterViewModel : MviViewModel<CounterState, CounterIntent, CounterEffect>(
+class CounterViewModel : PulseViewModel<CounterState, CounterIntent, CounterEffect>(
     initialState = CounterState(),
     reducer = CounterReducer
-)
+) {
+    fun increase() = dispatch(CounterIntent.Increase)
+}
 ```
 
 ```kotlin
@@ -151,7 +163,7 @@ fun CounterScreen(viewModel: CounterViewModel) {
         }
     }
 
-    Button(onClick = { viewModel.dispatch(CounterIntent.Increase) }) {
+    Button(onClick = { viewModel.increase() }) {
         Text("Count = ${state.count}")
     }
 }
@@ -168,6 +180,43 @@ fun CounterScreen(viewModel: CounterViewModel) {
 
 ## 文档
 
-- 使用方接入指南：[docs/CONSUMER_GUIDE.md](/Users/magic/Desktop/reborn/MVICore/docs/CONSUMER_GUIDE.md)
-- 发布规划：[docs/RELEASE_PLAN.md](/Users/magic/Desktop/reborn/MVICore/docs/RELEASE_PLAN.md)
-- Maven Central 发布手册：[docs/PUBLISH_MAVEN_CENTRAL.md](/Users/magic/Desktop/reborn/MVICore/docs/PUBLISH_MAVEN_CENTRAL.md)
+- 使用方接入指南（中文）：[docs/CONSUMER_GUIDE.zh-CN.md](/Users/magic/Desktop/reborn/MVICore/docs/CONSUMER_GUIDE.zh-CN.md)
+- 使用方接入指南（EN）：[docs/CONSUMER_GUIDE.md](/Users/magic/Desktop/reborn/MVICore/docs/CONSUMER_GUIDE.md)
+- 迭代路线图（中文）：[docs/ITERATION_ROADMAP.zh-CN.md](/Users/magic/Desktop/reborn/MVICore/docs/ITERATION_ROADMAP.zh-CN.md)
+- 迭代路线图（EN）：[docs/ITERATION_ROADMAP.md](/Users/magic/Desktop/reborn/MVICore/docs/ITERATION_ROADMAP.md)
+- 发布规划（中文）：[docs/RELEASE_PLAN.zh-CN.md](/Users/magic/Desktop/reborn/MVICore/docs/RELEASE_PLAN.zh-CN.md)
+- 发布规划（EN）：[docs/RELEASE_PLAN.md](/Users/magic/Desktop/reborn/MVICore/docs/RELEASE_PLAN.md)
+- Maven Central 发布手册（中文）：[docs/PUBLISH_MAVEN_CENTRAL.zh-CN.md](/Users/magic/Desktop/reborn/MVICore/docs/PUBLISH_MAVEN_CENTRAL.zh-CN.md)
+- Maven Central 发布手册（EN）：[docs/PUBLISH_MAVEN_CENTRAL.md](/Users/magic/Desktop/reborn/MVICore/docs/PUBLISH_MAVEN_CENTRAL.md)
+
+## 迭代路线图
+
+Pulse v0.2 面向生产规模的迭代清单：
+
+1. Reducer 入口不变量。
+   状态：已完成
+   结果：`PulseViewModel` + `IntentExecutionScope`
+
+2. Intent 双通道拆分（UI intent / mutation）。
+   状态：已完成
+   结果：`MviUiIntent` + `MviMutation` + `PulseSplitViewModel` + `UiIntentExecutor`
+
+3. State 拆分工具集。
+   状态：计划中
+   目标：子状态 reducer + 分域状态组合
+
+4. Feature/Store 组合能力。
+   状态：计划中
+   目标：复杂页面父子 Store 编排
+
+5. Effect 执行中间层。
+   状态：计划中
+   目标：把 IO/导航/埋点从 reducer 中分离
+
+6. 调试工具。
+   状态：计划中
+   目标：intent 轨迹 + state diff 时间线
+
+7. 测试 DSL。
+   状态：计划中
+   目标：低样板代码的 reducer/store 可预测断言

@@ -1,40 +1,42 @@
 # Publish To Maven Central
 
-这份文档是“可直接替换信息后发布”的操作手册。
+Chinese version: [PUBLISH_MAVEN_CENTRAL.zh-CN.md](/Users/magic/Desktop/reborn/MVICore/docs/PUBLISH_MAVEN_CENTRAL.zh-CN.md)
 
-## 0. 先准备（一次性）
+This is the operational guide for publishing after replacing project-specific metadata.
 
-1. 在 Sonatype Central Portal 完成账号与 namespace 准备（建议使用 `io.github.<your-github-id>`）。
-2. 在 Central Portal 创建发布 token（用户名 + 密码）。
-3. 准备 GPG 私钥（ASCII armored）与密码，用于签名。
+## 0. One-time prerequisites
 
-参考官方：
+1. Prepare account and namespace in Sonatype Central Portal (`io.github.<your-github-id>` is recommended).
+2. Create publishing token in Central Portal (username + password).
+3. Prepare GPG private key (ASCII armored) and passphrase for signing.
 
-- Central Portal 发布入口与流程：[https://central.sonatype.com/publishing](https://central.sonatype.com/publishing)
-- 发布要求（坐标、签名、Javadoc/Sources、POM 元数据）：[https://central.sonatype.org/publish/requirements/](https://central.sonatype.org/publish/requirements/)
+Official references:
 
-## 1. 替换项目内 TODO 元数据
+- Central publishing flow: [https://central.sonatype.com/publishing](https://central.sonatype.com/publishing)
+- Publishing requirements (coordinates, signing, Javadoc/Sources, POM metadata): [https://central.sonatype.org/publish/requirements/](https://central.sonatype.org/publish/requirements/)
 
-编辑 [gradle.properties](/Users/magic/Desktop/reborn/MVICore/gradle.properties) 中的 TODO：
+## 1. Replace TODO metadata in project
+
+Edit TODO entries in [gradle.properties](/Users/magic/Desktop/reborn/MVICore/gradle.properties):
 
 - `POM_DEVELOPER_NAME`
 - `POM_DEVELOPER_EMAIL`
-- 以及你希望的 `POM_GROUP_ID`、`POM_VERSION_NAME`
+- and your intended `POM_GROUP_ID` / `POM_VERSION_NAME`
 
-## 2. 配置本地/CI 密钥（不要提交到仓库）
+## 2. Configure local/CI secrets (do not commit)
 
-使用模板 [gradle/maven-central-secrets.template.properties](/Users/magic/Desktop/reborn/MVICore/gradle/maven-central-secrets.template.properties)。
+Use template: [gradle/maven-central-secrets.template.properties](/Users/magic/Desktop/reborn/MVICore/gradle/maven-central-secrets.template.properties)
 
-推荐写到 `~/.gradle/gradle.properties`：
+Recommended location: `~/.gradle/gradle.properties`
 
 - `mavenCentralUsername`
 - `mavenCentralPassword`
 - `signingInMemoryKey`
 - `signingInMemoryKeyPassword`
 
-CI 中可使用同名环境变量或注入到 Gradle properties。
+In CI, use environment variables with same keys or inject Gradle properties securely.
 
-## 3. 发布前校验
+## 3. Pre-publish verification
 
 ```bash
 ./gradlew verifyMavenCentralConfig
@@ -42,23 +44,23 @@ CI 中可使用同名环境变量或注入到 Gradle properties。
 ./gradlew mviFrameworkCheck
 ```
 
-## 4. 执行发布
+## 4. Publish
 
 ```bash
 ./gradlew publishAndReleaseToMavenCentral
 ```
 
-如果你只想先上传不释放（做人工确认），使用：
+If you want to upload first and release later (manual confirmation):
 
 ```bash
 ./gradlew publishToMavenCentral
 ```
 
-## 5. 常见注意事项
+## 5. Common notes
 
-- 不要在仓库中提交真实 token 和私钥。
-- 对外发布版本不要用 `-SNAPSHOT`。
-- 如果发布失败，优先检查：
-  - POM 元数据是否完整
-  - GPG 私钥是否可用
-  - Central Portal token 是否有效
+- Never commit real tokens or private keys.
+- Avoid `-SNAPSHOT` for public releases.
+- If publish fails, check first:
+  - POM metadata completeness
+  - GPG key validity
+  - Central Portal token validity

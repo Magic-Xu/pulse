@@ -26,4 +26,5 @@ android {
 dependencies {
     api(project(":mvi-core-runtime"))
     api(libs.androidx.lifecycle.viewmodel)
+    implementation(libs.androidx.lifecycle.viewmodel.ktx)
 }

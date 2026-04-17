@@ -1,27 +1,29 @@
 # Release Plan (v0 Minimal)
 
-当前版本定位：**极简可用内核 + Android 适配 + 基础插件扩展**。
+Chinese version: [RELEASE_PLAN.zh-CN.md](/Users/magic/Desktop/reborn/MVICore/docs/RELEASE_PLAN.zh-CN.md)
 
-## 模块清单
+Current positioning: **minimal usable core + Android adapter + foundational extensions**.
+
+## Module Scope
 
 1. `mvi-core-contract`
-   - 仅契约定义
+   - Contract definitions only
 2. `mvi-core-runtime`
-   - 默认 Store 运行时
+   - Default Store runtime
 3. `mvi-platform-android`
-   - Android ViewModel 适配层（无 Compose 依赖）
+   - Android ViewModel adapter layer (no Compose dependency)
 4. `mvi-platform-android-compose`
-   - Compose 绑定层
+   - Compose binding layer
 5. `mvi-extensions`
-   - 日志插件、状态迁移插件
+   - Logging and state transition tracking plugins
 
-## 版本策略建议
+## Versioning Strategy
 
-- 早期阶段建议使用 `0.x.y`
-- `x`（minor）用于功能新增
-- `y`（patch）用于 bugfix 或文档修订
+- Use `0.x.y` in early stage
+- `x` (minor): feature additions
+- `y` (patch): bug fixes and documentation updates
 
-## 发布前检查
+## Pre-release Checklist
 
 ```bash
 ./gradlew verifyMavenCentralConfig
@@ -29,14 +31,14 @@
 ./gradlew mviFrameworkCheck
 ```
 
-如果环境可访问 Android 仓库，补充：
+If Android repositories are reachable, also run:
 
 ```bash
 ./gradlew :app:assembleDebug
 ```
 
-## 向后兼容建议
+## Compatibility Guidelines
 
-- `mvi-core-contract` 的接口变更优先谨慎（影响最大）
-- 新能力优先走插件或新模块，不要直接膨胀 `DefaultStore`
-- Android 特性始终放在 `mvi-platform-android`，避免侵入 core
+- Treat `mvi-core-contract` changes cautiously (highest blast radius)
+- Prefer new modules/plugins for new capabilities; avoid bloating `DefaultStore`
+- Keep Android-specific features in `mvi-platform-android`, not in core modules
