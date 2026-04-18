@@ -1,8 +1,10 @@
 package com.magic.pulse.samples.counter
 
-import com.magic.mvicore.android.MviViewModel
+import com.magic.mvicore.android.PulseViewModel
 
-class CounterViewModel : MviViewModel<CounterState, CounterIntent, CounterEffect>(
+typealias CounterViewModel = PulseViewModel<CounterState, CounterIntent, CounterEffect>
+
+fun createCounterViewModel(): CounterViewModel = PulseViewModel(
     initialState = CounterState(),
     reducer = CounterReducer,
 )

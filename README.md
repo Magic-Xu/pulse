@@ -11,7 +11,7 @@ Minimal, cross-platform-first MVI framework.
 [![Maven Central Android](https://img.shields.io/maven-central/v/io.github.magic-xu/mvi-platform-android?label=Maven%20Central%20(android))](https://central.sonatype.com/artifact/io.github.magic-xu/mvi-platform-android)
 [![Maven Central Compose](https://img.shields.io/maven-central/v/io.github.magic-xu/mvi-platform-android-compose?label=Maven%20Central%20(compose))](https://central.sonatype.com/artifact/io.github.magic-xu/mvi-platform-android-compose)
 
-Current version: `0.1.0`
+Current version: `0.2.0`
 
 Chinese README: [README.zh-CN.md](/Users/magic/Desktop/reborn/MVICore/README.zh-CN.md)
 
@@ -30,6 +30,16 @@ Chinese README: [README.zh-CN.md](/Users/magic/Desktop/reborn/MVICore/README.zh-
 - `mvi-platform-android-compose`: Compose bindings (`collectStateAsState`, `observeEffects`)
 - `mvi-extensions`: optional plugins (logging, state transition tracking)
 
+## Two-Lane Intent Model
+
+Pulse now supports split intents for complex features:
+
+- `MviUiIntent`: external input from UI/user actions
+- `MviMutation`: internal state transition messages consumed by reducer
+- `PulseSplitViewModel`: `send(uiIntent)` -> executor side effects -> `dispatchMutation(mutation)` -> reducer
+
+This keeps reducers pure and keeps IO/business orchestration out of mutation logic.
+
 ## Maven Central Setup
 
 Ensure `mavenCentral()` is configured:
@@ -47,7 +57,7 @@ Recommended for Android + Compose:
 
 ```kotlin
 dependencies {
-    implementation("io.github.magic-xu:mvi-platform-android-compose:0.1.0")
+    implementation("io.github.magic-xu:mvi-platform-android-compose:0.2.0")
 }
 ```
 
@@ -55,7 +65,7 @@ Android without Compose:
 
 ```kotlin
 dependencies {
-    implementation("io.github.magic-xu:mvi-platform-android:0.1.0")
+    implementation("io.github.magic-xu:mvi-platform-android:0.2.0")
 }
 ```
 
@@ -63,7 +73,7 @@ Optional extensions:
 
 ```kotlin
 dependencies {
-    implementation("io.github.magic-xu:mvi-extensions:0.1.0")
+    implementation("io.github.magic-xu:mvi-extensions:0.2.0")
 }
 ```
 
@@ -71,7 +81,7 @@ Core-only usage:
 
 ```kotlin
 dependencies {
-    implementation("io.github.magic-xu:mvi-core-runtime:0.1.0")
+    implementation("io.github.magic-xu:mvi-core-runtime:0.2.0")
 }
 ```
 
@@ -100,7 +110,7 @@ Manual override for one build:
 ## Quick Usage (Android + Compose)
 
 ```kotlin
-import com.magic.mvicore.android.MviViewModel
+import com.magic.mvicore.android.PulseViewModel
 import com.magic.mvicore.android.compose.collectStateAsState
 import com.magic.mvicore.android.compose.observeEffects
 import com.magic.mvicore.contract.MviEffect
@@ -132,10 +142,12 @@ object CounterReducer : Reducer<CounterState, CounterIntent, CounterEffect> {
     }
 }
 
-class CounterViewModel : MviViewModel<CounterState, CounterIntent, CounterEffect>(
+class CounterViewModel : PulseViewModel<CounterState, CounterIntent, CounterEffect>(
     initialState = CounterState(),
     reducer = CounterReducer
-)
+) {
+    fun increase() = dispatch(CounterIntent.Increase)
+}
 ```
 
 ```kotlin
@@ -151,7 +163,7 @@ fun CounterScreen(viewModel: CounterViewModel) {
         }
     }
 
-    Button(onClick = { viewModel.dispatch(CounterIntent.Increase) }) {
+    Button(onClick = { viewModel.increase() }) {
         Text("Count = ${state.count}")
     }
 }
@@ -168,6 +180,43 @@ fun CounterScreen(viewModel: CounterViewModel) {
 
 ## Docs
 
-- Consumer guide: [docs/CONSUMER_GUIDE.md](/Users/magic/Desktop/reborn/MVICore/docs/CONSUMER_GUIDE.md)
-- Release plan: [docs/RELEASE_PLAN.md](/Users/magic/Desktop/reborn/MVICore/docs/RELEASE_PLAN.md)
-- Maven Central publishing: [docs/PUBLISH_MAVEN_CENTRAL.md](/Users/magic/Desktop/reborn/MVICore/docs/PUBLISH_MAVEN_CENTRAL.md)
+- Consumer guide (EN): [docs/CONSUMER_GUIDE.md](/Users/magic/Desktop/reborn/MVICore/docs/CONSUMER_GUIDE.md)
+- Consumer guide (中文): [docs/CONSUMER_GUIDE.zh-CN.md](/Users/magic/Desktop/reborn/MVICore/docs/CONSUMER_GUIDE.zh-CN.md)
+- Iteration roadmap (EN): [docs/ITERATION_ROADMAP.md](/Users/magic/Desktop/reborn/MVICore/docs/ITERATION_ROADMAP.md)
+- Iteration roadmap (中文): [docs/ITERATION_ROADMAP.zh-CN.md](/Users/magic/Desktop/reborn/MVICore/docs/ITERATION_ROADMAP.zh-CN.md)
+- Release plan (EN): [docs/RELEASE_PLAN.md](/Users/magic/Desktop/reborn/MVICore/docs/RELEASE_PLAN.md)
+- Release plan (中文): [docs/RELEASE_PLAN.zh-CN.md](/Users/magic/Desktop/reborn/MVICore/docs/RELEASE_PLAN.zh-CN.md)
+- Maven Central publishing (EN): [docs/PUBLISH_MAVEN_CENTRAL.md](/Users/magic/Desktop/reborn/MVICore/docs/PUBLISH_MAVEN_CENTRAL.md)
+- Maven Central publishing (中文): [docs/PUBLISH_MAVEN_CENTRAL.zh-CN.md](/Users/magic/Desktop/reborn/MVICore/docs/PUBLISH_MAVEN_CENTRAL.zh-CN.md)
+
+## Iteration Roadmap
+
+Pulse v0.2 roadmap for production-scale MVI:
+
+1. Reducer entry invariants.
+   status: done
+   result: `PulseViewModel` + `IntentExecutionScope`
+
+2. Split intent channels (UI intent vs mutation).
+   status: done
+   result: `MviUiIntent` + `MviMutation` + `PulseSplitViewModel` + `UiIntentExecutor`
+
+3. State decomposition toolkit.
+   status: planned
+   target: sub-state reducers and state-domain composition
+
+4. Feature/store composition.
+   status: planned
+   target: parent-child store orchestration for complex screens
+
+5. Effect execution middle layer.
+   status: planned
+   target: isolate IO/navigation/analytics from reducer
+
+6. Debug tooling.
+   status: planned
+   target: intent trace + state diff timeline
+
+7. Test DSL.
+   status: planned
+   target: deterministic reducer/store assertions with low boilerplate

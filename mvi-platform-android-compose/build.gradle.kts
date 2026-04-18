@@ -3,7 +3,7 @@ plugins {
     alias(libs.plugins.kotlin.compose)
 }
 
-description = "MVICore Android Compose adapter: Store <-> Compose bindings."
+description = "Pulse Android Compose adapter: Store <-> Compose bindings."
 
 android {
     namespace = "com.magic.mvicore.android.compose"

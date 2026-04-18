@@ -15,8 +15,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.magic.mvicore.android.compose.collectStateAsState
 import com.magic.mvicore.android.compose.observeEffects
-import com.magic.pulse.samples.network.mvi.LoadingTarget
 import com.magic.pulse.samples.network.mvi.NetworkModelsEffect
+import com.magic.pulse.samples.network.mvi.NetworkModelsUiIntent
 import com.magic.pulse.samples.network.mvi.NetworkModelsViewModel
 
 @Composable
@@ -46,8 +46,8 @@ fun NetworkModelsScreen(
         NetworkActionButtons(
             isLoading = state.isLoading,
             loadingTarget = state.loadingTarget,
-            onLoadImages = viewModel::loadImageModels,
-            onLoadVideos = viewModel::loadVideoModels,
+            onLoadImages = { viewModel.send(NetworkModelsUiIntent.LoadImageModelsClicked) },
+            onLoadVideos = { viewModel.send(NetworkModelsUiIntent.LoadVideoModelsClicked) },
         )
 
         state.lastUpdatedLabel?.let { label ->
