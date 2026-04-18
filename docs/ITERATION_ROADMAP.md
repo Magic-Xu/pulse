@@ -1,6 +1,6 @@
 # Iteration Roadmap
 
-Chinese version: [ITERATION_ROADMAP.zh-CN.md](/Users/magic/Desktop/reborn/MVICore/docs/ITERATION_ROADMAP.zh-CN.md)
+Chinese version: [ITERATION_ROADMAP.zh-CN.md](https://github.com/Magic-Xu/pulse/blob/master/docs/ITERATION_ROADMAP.zh-CN.md)
 
 Pulse current architecture baseline:
 

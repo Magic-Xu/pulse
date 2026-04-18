@@ -1,6 +1,6 @@
 # 迭代路线图
 
-英文版：[ITERATION_ROADMAP.md](/Users/magic/Desktop/reborn/MVICore/docs/ITERATION_ROADMAP.md)
+英文版：[ITERATION_ROADMAP.md](https://github.com/Magic-Xu/pulse/blob/master/docs/ITERATION_ROADMAP.md)
 
 Pulse 当前架构基线：
 

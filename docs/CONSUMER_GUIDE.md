@@ -1,6 +1,6 @@
 # Consumer Guide
 
-Chinese version: [CONSUMER_GUIDE.zh-CN.md](/Users/magic/Desktop/reborn/MVICore/docs/CONSUMER_GUIDE.zh-CN.md)
+Chinese version: [CONSUMER_GUIDE.zh-CN.md](https://github.com/Magic-Xu/pulse/blob/master/docs/CONSUMER_GUIDE.zh-CN.md)
 
 Integration guide for projects consuming Pulse.
 

@@ -1,6 +1,6 @@
 # Publish To Maven Central
 
-Chinese version: [PUBLISH_MAVEN_CENTRAL.zh-CN.md](/Users/magic/Desktop/reborn/MVICore/docs/PUBLISH_MAVEN_CENTRAL.zh-CN.md)
+Chinese version: [PUBLISH_MAVEN_CENTRAL.zh-CN.md](https://github.com/Magic-Xu/pulse/blob/master/docs/PUBLISH_MAVEN_CENTRAL.zh-CN.md)
 
 This is the operational guide for publishing after replacing project-specific metadata.
 
@@ -17,7 +17,7 @@ Official references:
 
 ## 1. Replace TODO metadata in project
 
-Edit TODO entries in [gradle.properties](/Users/magic/Desktop/reborn/MVICore/gradle.properties):
+Edit TODO entries in [gradle.properties](https://github.com/Magic-Xu/pulse/blob/master/gradle.properties):
 
 - `POM_DEVELOPER_NAME`
 - `POM_DEVELOPER_EMAIL`
@@ -25,7 +25,7 @@ Edit TODO entries in [gradle.properties](/Users/magic/Desktop/reborn/MVICore/gra
 
 ## 2. Configure local/CI secrets (do not commit)
 
-Use template: [gradle/maven-central-secrets.template.properties](/Users/magic/Desktop/reborn/MVICore/gradle/maven-central-secrets.template.properties)
+Use template: [gradle/maven-central-secrets.template.properties](https://github.com/Magic-Xu/pulse/blob/master/gradle/maven-central-secrets.template.properties)
 
 Recommended location: `~/.gradle/gradle.properties`
 

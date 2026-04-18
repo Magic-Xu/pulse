@@ -1,6 +1,6 @@
 # Release Plan (v0.2 Split-Intent Baseline)
 
-Chinese version: [RELEASE_PLAN.zh-CN.md](/Users/magic/Desktop/reborn/MVICore/docs/RELEASE_PLAN.zh-CN.md)
+Chinese version: [RELEASE_PLAN.zh-CN.md](https://github.com/Magic-Xu/pulse/blob/master/docs/RELEASE_PLAN.zh-CN.md)
 
 Current positioning: **split-intent architecture baseline + Android adapter + foundational extensions**.
 

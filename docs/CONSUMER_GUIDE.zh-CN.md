@@ -1,6 +1,6 @@
 # 使用方接入指南
 
-英文版：[CONSUMER_GUIDE.md](/Users/magic/Desktop/reborn/MVICore/docs/CONSUMER_GUIDE.md)
+英文版：[CONSUMER_GUIDE.md](https://github.com/Magic-Xu/pulse/blob/master/docs/CONSUMER_GUIDE.md)
 
 面向“使用 Pulse 框架”的项目接入说明。
 

@@ -1,6 +1,6 @@
 # 发布到 Maven Central
 
-英文版：[PUBLISH_MAVEN_CENTRAL.md](/Users/magic/Desktop/reborn/MVICore/docs/PUBLISH_MAVEN_CENTRAL.md)
+英文版：[PUBLISH_MAVEN_CENTRAL.md](https://github.com/Magic-Xu/pulse/blob/master/docs/PUBLISH_MAVEN_CENTRAL.md)
 
 这份文档是“替换信息后可直接发布”的操作手册。
 
@@ -17,7 +17,7 @@
 
 ## 1. 替换项目内 TODO 元数据
 
-编辑 [gradle.properties](/Users/magic/Desktop/reborn/MVICore/gradle.properties) 中的 TODO：
+编辑 [gradle.properties](https://github.com/Magic-Xu/pulse/blob/master/gradle.properties) 中的 TODO：
 
 - `POM_DEVELOPER_NAME`
 - `POM_DEVELOPER_EMAIL`
@@ -25,7 +25,7 @@
 
 ## 2. 配置本地/CI 密钥（不要提交到仓库）
 
-使用模板 [gradle/maven-central-secrets.template.properties](/Users/magic/Desktop/reborn/MVICore/gradle/maven-central-secrets.template.properties)。
+使用模板 [gradle/maven-central-secrets.template.properties](https://github.com/Magic-Xu/pulse/blob/master/gradle/maven-central-secrets.template.properties)。
 
 推荐写到 `~/.gradle/gradle.properties`：
 

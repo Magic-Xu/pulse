@@ -1,6 +1,6 @@
 # 发布规划（v0.2 双通道基线）
 
-英文版：[RELEASE_PLAN.md](/Users/magic/Desktop/reborn/MVICore/docs/RELEASE_PLAN.md)
+英文版：[RELEASE_PLAN.md](https://github.com/Magic-Xu/pulse/blob/master/docs/RELEASE_PLAN.md)
 
 当前版本定位：**双通道 Intent 架构基线 + Android 适配 + 基础插件扩展**。
 
