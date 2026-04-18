@@ -1,7 +1,6 @@
 package com.magic.mvicore.android
 
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
 import com.magic.mvicore.contract.DispatchResult
 import com.magic.mvicore.contract.MviEffect
 import com.magic.mvicore.contract.MviIntent
@@ -11,6 +10,7 @@ import com.magic.mvicore.contract.Store
 import com.magic.mvicore.contract.Subscription
 import com.magic.mvicore.runtime.DefaultStore
 import com.magic.mvicore.runtime.StorePlugin
+import kotlinx.coroutines.cancel
 
 /**
  * Open, inheritance-friendly Pulse ViewModel base.
@@ -25,6 +25,8 @@ open class PulseViewModel<S : MviState, I : MviIntent, E : MviEffect>(
     autoStart: Boolean = true,
 ) : ViewModel(), Store<S, I, E> {
 
+    private val pulseScope = createPulseCoroutineScope()
+
     private val store = DefaultStore(
         initialState = initialState,
         reducer = reducer,
@@ -34,7 +36,7 @@ open class PulseViewModel<S : MviState, I : MviIntent, E : MviEffect>(
 
     protected val intentExecutionScope = IntentExecutionScope(
         store = store,
-        coroutineScope = viewModelScope,
+        coroutineScope = pulseScope,
     )
 
     override val currentState: S
@@ -73,6 +75,7 @@ open class PulseViewModel<S : MviState, I : MviIntent, E : MviEffect>(
     ) = Unit
 
     override fun onCleared() {
+        pulseScope.cancel()
         store.close()
     }
 }
