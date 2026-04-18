@@ -2,9 +2,10 @@ name: Publish Maven Central
 
 on:
   workflow_dispatch:
-  push:
-    tags:
-      - "v*"
+
+concurrency:
+  group: publish-maven-central
+  cancel-in-progress: false
 
 jobs:
   publish:
