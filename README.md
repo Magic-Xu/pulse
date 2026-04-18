@@ -11,7 +11,7 @@ Minimal, cross-platform-first MVI framework.
 [![Maven Central Android](https://img.shields.io/maven-central/v/io.github.magic-xu/mvi-platform-android?label=Maven%20Central%20(android))](https://central.sonatype.com/artifact/io.github.magic-xu/mvi-platform-android)
 [![Maven Central Compose](https://img.shields.io/maven-central/v/io.github.magic-xu/mvi-platform-android-compose?label=Maven%20Central%20(compose))](https://central.sonatype.com/artifact/io.github.magic-xu/mvi-platform-android-compose)
 
-Current version: `0.1.0`
+Current version: `0.2.0`
 
 Chinese README: [README.zh-CN.md](/Users/magic/Desktop/reborn/MVICore/README.zh-CN.md)
 
@@ -57,7 +57,7 @@ Recommended for Android + Compose:
 
 ```kotlin
 dependencies {
-    implementation("io.github.magic-xu:mvi-platform-android-compose:0.1.0")
+    implementation("io.github.magic-xu:mvi-platform-android-compose:0.2.0")
 }
 ```
 
@@ -65,7 +65,7 @@ Android without Compose:
 
 ```kotlin
 dependencies {
-    implementation("io.github.magic-xu:mvi-platform-android:0.1.0")
+    implementation("io.github.magic-xu:mvi-platform-android:0.2.0")
 }
 ```
 
@@ -73,7 +73,7 @@ Optional extensions:
 
 ```kotlin
 dependencies {
-    implementation("io.github.magic-xu:mvi-extensions:0.1.0")
+    implementation("io.github.magic-xu:mvi-extensions:0.2.0")
 }
 ```
 
@@ -81,7 +81,7 @@ Core-only usage:
 
 ```kotlin
 dependencies {
-    implementation("io.github.magic-xu:mvi-core-runtime:0.1.0")
+    implementation("io.github.magic-xu:mvi-core-runtime:0.2.0")
 }
 ```
 

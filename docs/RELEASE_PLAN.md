@@ -1,8 +1,8 @@
-# Release Plan (v0 Minimal)
+# Release Plan (v0.2 Split-Intent Baseline)
 
 Chinese version: [RELEASE_PLAN.zh-CN.md](/Users/magic/Desktop/reborn/MVICore/docs/RELEASE_PLAN.zh-CN.md)
 
-Current positioning: **minimal usable core + Android adapter + foundational extensions**.
+Current positioning: **split-intent architecture baseline + Android adapter + foundational extensions**.
 
 ## Module Scope
 

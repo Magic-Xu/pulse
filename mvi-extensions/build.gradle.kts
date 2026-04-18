@@ -3,7 +3,7 @@ plugins {
     id("java-library")
 }
 
-description = "MVICore optional plugins: logging and state transition observers."
+description = "Pulse optional plugins: logging and state transition observers."
 
 kotlin {
     jvmToolchain(11)

@@ -2,7 +2,7 @@ plugins {
     id("com.android.library")
 }
 
-description = "MVICore Android adapter: ViewModel-based Store ownership."
+description = "Pulse Android adapter: ViewModel-based Store ownership."
 
 android {
     namespace = "com.magic.mvicore.android"

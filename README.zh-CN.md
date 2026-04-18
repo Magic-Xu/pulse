@@ -11,7 +11,7 @@ Pulse 表示 MVI 中的每一次状态变化，是系统对输入的清晰响应
 [![Maven Central Android](https://img.shields.io/maven-central/v/io.github.magic-xu/mvi-platform-android?label=Maven%20Central%20(android))](https://central.sonatype.com/artifact/io.github.magic-xu/mvi-platform-android)
 [![Maven Central Compose](https://img.shields.io/maven-central/v/io.github.magic-xu/mvi-platform-android-compose?label=Maven%20Central%20(compose))](https://central.sonatype.com/artifact/io.github.magic-xu/mvi-platform-android-compose)
 
-当前版本：`0.1.0`
+当前版本：`0.2.0`
 
 英文 README： [README.md](/Users/magic/Desktop/reborn/MVICore/README.md)
 
@@ -57,7 +57,7 @@ Compose Android 项目（推荐）：
 
 ```kotlin
 dependencies {
-    implementation("io.github.magic-xu:mvi-platform-android-compose:0.1.0")
+    implementation("io.github.magic-xu:mvi-platform-android-compose:0.2.0")
 }
 ```
 
@@ -65,7 +65,7 @@ dependencies {
 
 ```kotlin
 dependencies {
-    implementation("io.github.magic-xu:mvi-platform-android:0.1.0")
+    implementation("io.github.magic-xu:mvi-platform-android:0.2.0")
 }
 ```
 
@@ -73,7 +73,7 @@ dependencies {
 
 ```kotlin
 dependencies {
-    implementation("io.github.magic-xu:mvi-extensions:0.1.0")
+    implementation("io.github.magic-xu:mvi-extensions:0.2.0")
 }
 ```
 
@@ -81,7 +81,7 @@ dependencies {
 
 ```kotlin
 dependencies {
-    implementation("io.github.magic-xu:mvi-core-runtime:0.1.0")
+    implementation("io.github.magic-xu:mvi-core-runtime:0.2.0")
 }
 ```
 

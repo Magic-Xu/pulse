@@ -7,7 +7,7 @@ val pulseDepMode = providers.gradleProperty("PULSE_APP_DEP_MODE").orElse("local"
 val pulseRemoteGroup = providers.gradleProperty("POM_GROUP_ID").orElse("io.github.magic-xu")
 val pulseRemoteVersion = providers.gradleProperty("PULSE_APP_REMOTE_VERSION")
     .orElse(providers.gradleProperty("POM_VERSION_NAME"))
-    .orElse("0.1.0")
+    .orElse("0.2.0")
 
 android {
     namespace = "com.magic.pulse"
