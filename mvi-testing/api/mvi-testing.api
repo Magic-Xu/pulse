@@ -146,3 +146,4 @@ public final class com/magic/mvicore/testing/TransitionProbe {
 	public final fun latest ()Lcom/magic/mvicore/contract/TransitionFrame;
 	public final fun snapshot ()Ljava/util/List;
 }
+

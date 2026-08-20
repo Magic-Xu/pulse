@@ -137,3 +137,4 @@ public final class com/magic/mvicore/runtime/TypeOnlyPulseRedactor : com/magic/m
 public abstract interface class com/magic/mvicore/runtime/UiEffectStream {
 	public abstract fun collect (Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
+

@@ -119,3 +119,4 @@ public abstract interface class com/magic/mvicore/android/UiIntentExecutor {
 public final class com/magic/mvicore/android/UiIntentExecutor$Companion {
 	public final fun noop ()Lcom/magic/mvicore/android/UiIntentExecutor;
 }
+

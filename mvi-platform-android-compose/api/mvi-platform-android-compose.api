@@ -11,3 +11,4 @@ public final class com/magic/mvicore/android/compose/StoreComposeKt {
 	public static final fun observeEffects (Lcom/magic/mvicore/contract/Store;Landroidx/lifecycle/LifecycleOwner;Landroidx/lifecycle/Lifecycle$State;Lkotlin/jvm/functions/Function1;Landroidx/compose/runtime/Composer;II)V
 	public static final fun observeEffects (Lcom/magic/mvicore/contract/Store;Lkotlin/jvm/functions/Function1;Landroidx/compose/runtime/Composer;I)V
 }
+

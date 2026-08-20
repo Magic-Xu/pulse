@@ -690,3 +690,4 @@ public final class com/magic/mvicore/contract/TransitionResult$Rejected : com/ma
 
 public abstract interface class com/magic/mvicore/contract/UiEffect : com/magic/mvicore/contract/MviEffect {
 }
+

@@ -89,3 +89,4 @@ public final class com/magic/mvicore/extensions/SubStateNext {
 	public final fun getEffects ()Ljava/util/List;
 	public final fun getState ()Ljava/lang/Object;
 }
+
