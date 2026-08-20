@@ -1,222 +1,121 @@
 # Pulse
 
-Pulse represents each state transition in MVI — a clear, observable signal of change.
+[简体中文](README.zh-CN.md)
 
-Minimal, cross-platform-first MVI framework.
+Pulse is an ordered, coroutine-first MVI runtime for Kotlin and Android. A store owns one bounded
+input mailbox and one processor, publishes state through `StateFlow`, records every processed input
+as a correlated transition frame, and delivers replay-zero UI effects through one coordinator.
 
-[![GitHub Repo](https://img.shields.io/badge/GitHub-Magic--Xu%2Fpulse-181717?logo=github)](https://github.com/Magic-Xu/pulse)
-[![GitHub Stars](https://img.shields.io/github/stars/magic-xu/pulse?style=flat)](https://github.com/Magic-Xu/pulse/stargazers)
-[![License](https://img.shields.io/github/license/magic-xu/pulse)](https://github.com/Magic-Xu/pulse/blob/master/LICENSE)
-[![Maven Central Core](https://img.shields.io/maven-central/v/io.github.magic-xu/mvi-core-runtime?label=Maven%20Central%20(core))](https://central.sonatype.com/artifact/io.github.magic-xu/mvi-core-runtime)
-[![Maven Central Android](https://img.shields.io/maven-central/v/io.github.magic-xu/mvi-platform-android?label=Maven%20Central%20(android))](https://central.sonatype.com/artifact/io.github.magic-xu/mvi-platform-android)
-[![Maven Central Compose](https://img.shields.io/maven-central/v/io.github.magic-xu/mvi-platform-android-compose?label=Maven%20Central%20(compose))](https://central.sonatype.com/artifact/io.github.magic-xu/mvi-platform-android-compose)
-
-Current version: `0.2.0`
-
-Chinese README: [README.zh-CN.md](https://github.com/Magic-Xu/pulse/blob/master/README.zh-CN.md)
-
-## Overview
-
-- Unidirectional flow: `Intent -> Reducer -> State (+ Effect)`
-- Clear separation of `State` (replayable) and `Effect` (one-shot)
-- Core modules are platform-agnostic
-- Android and Compose integrations are optional platform modules
+The repository is currently preparing **0.3.0-SNAPSHOT**. The latest Maven Central release remains
+0.2.0 until the 0.3 release gate passes.
 
 ## Modules
 
-- `mvi-core-contract`: core contracts (`MviState`, `MviIntent`, `MviEffect`, `Reducer`, `Store`)
-- `mvi-core-runtime`: runtime implementation (`DefaultStore`, `StorePlugin`)
-- `mvi-platform-android`: Android `ViewModel` adapter
-- `mvi-platform-android-compose`: Compose bindings (`collectStateAsState`, `observeEffects`)
-- `mvi-extensions`: optional plugins (logging, state transition tracking)
+| Artifact | Purpose |
+| --- | --- |
+| `mvi-core-contract` | Stable state, input, reducer, transition, result, and failure contracts |
+| `mvi-core-runtime` | Ordered store engine, effects, plugins, keyed tasks, and v0.2 adapter |
+| `mvi-platform-android` | Split Intent ViewModel, explicit owner, SavedState, and Android runtime defaults |
+| `mvi-platform-android-compose` | Lifecycle-aware state, selector, effect, and ViewModel bindings |
+| `mvi-extensions` | Optional logging, transition helpers, and State Decomposition DSL |
+| `mvi-testing` | Virtual-time helpers, probes, `TestPulseStore`, and reusable Store TCK |
 
-## Two-Lane Intent Model
+All published artifacts use group `io.github.magic-xu`.
 
-Pulse now supports split intents for complex features:
+## Runtime contract
 
-- `MviUiIntent`: external input from UI/user actions
-- `MviMutation`: internal state transition messages consumed by reducer
-- `PulseSplitViewModel`: `send(uiIntent)` -> executor side effects -> `dispatchMutation(mutation)` -> reducer
+For each admitted input, Pulse executes one ordered frame:
 
-This keeps reducers pure and keeps IO/business orchestration out of mutation logic.
+1. read the current state;
+2. reduce to `Changed`, `Unchanged`, or `Ignored`;
+3. commit a changed state;
+4. publish the transition frame;
+5. deliver zero or more correlated UI effects;
+6. complete `send`.
 
-## Maven Central Setup
+`trySend` only reports mailbox admission. `close` establishes an ordered cutoff: inputs accepted
+before it drain, while later inputs are rejected. Cancellation and fatal JVM errors are never
+converted to business failures; controlled non-fatal boundaries report typed `PulseFailure` values.
 
-Ensure `mavenCentral()` is configured:
+## Minimal store
 
 ```kotlin
-dependencyResolutionManagement {
-    repositories {
-        google()
-        mavenCentral()
-    }
+data class CounterState(val value: Int) : MviState
+
+sealed interface CounterInput : MviIntent {
+    data object Increment : CounterInput
+}
+
+sealed interface CounterEffect : UiEffect
+
+val store = DefaultPulseStore<CounterState, CounterInput, CounterEffect>(
+    initialState = CounterState(0),
+    reducer = PulseReducer { state, input ->
+        when (input) {
+            CounterInput.Increment -> ReduceOutcome.Changed(
+                state.copy(value = state.value + 1)
+            )
+        }
+    },
+)
+
+scope.launch {
+    store.send(CounterInput.Increment)
 }
 ```
 
-Recommended for Android + Compose:
+For Android features, prefer `PulseSplitStoreViewModel`: UI code only receives `send(UI)` and
+`trySend(UI)`. Mutations and keyed tasks are available only inside `PulseIntentContext`.
+
+## Dependency setup
+
+The 0.3 artifacts are not public until release. For a locally staged candidate:
 
 ```kotlin
+repositories {
+    maven { url = uri("<checkout>/build/staging-repo") }
+    google()
+    mavenCentral()
+}
+
+val pulseVersion = "0.3.0-SNAPSHOT"
 dependencies {
-    implementation("io.github.magic-xu:mvi-platform-android-compose:0.2.0")
+    implementation("io.github.magic-xu:mvi-core-runtime:$pulseVersion")
+    implementation("io.github.magic-xu:mvi-platform-android-compose:$pulseVersion")
+    implementation("io.github.magic-xu:mvi-extensions:$pulseVersion")
+    testImplementation("io.github.magic-xu:mvi-testing:$pulseVersion")
 }
 ```
 
-Android without Compose:
+Use only the modules your feature needs. Android Compose already brings the Android, runtime, and
+contract layers transitively.
 
-```kotlin
-dependencies {
-    implementation("io.github.magic-xu:mvi-platform-android:0.2.0")
-}
-```
+## Samples
 
-Optional extensions:
+- `app/.../split_intent_basic`: explicit Split Intent wiring without convenience DSLs.
+- `app/.../network`: a standard repository-backed feature.
+- `app/.../state_decomposition`: one root store split into image and video sub-state reducers.
+- `samples/simple-sync-consumer`: isolated Maven-only synchronous consumer.
+- `samples/async-latest-consumer`: isolated Maven-only Latest-task, SavedState, selector consumer.
 
-```kotlin
-dependencies {
-    implementation("io.github.magic-xu:mvi-extensions:0.2.0")
-}
-```
-
-Core-only usage:
-
-```kotlin
-dependencies {
-    implementation("io.github.magic-xu:mvi-core-runtime:0.2.0")
-}
-```
-
-## App Dependency Mode (Local/Remote)
-
-The `app` module supports two modes:
-
-- `local`: depend on included project libs (default)
-- `remote`: depend on Maven Central artifacts
-
-One-click switch:
+## Verification
 
 ```bash
-./gradlew useLocalPulseDeps
-./gradlew useRemotePulseDeps
-./gradlew printPulseDepMode
+# Deterministic pull-request gate
+./gradlew mviFrameworkCheck
+
+# Full release candidate gate
+./gradlew clean mviReleaseCheck
 ```
 
-Manual override for one build:
+The release gate includes standard tests, Store TCK, six-module API/ABI dumps, a five-artifact v0.2
+source/binary compatibility fixture, Android/Compose checks, candidate publication verification,
+artifact-only samples, multi-seed stress, and a portable performance-floor harness.
 
-```bash
-./gradlew :app:assembleDebug -PPULSE_APP_DEP_MODE=remote
-./gradlew :app:assembleDebug -PPULSE_APP_DEP_MODE=local
-```
+See [Consumer Guide](docs/CONSUMER_GUIDE.md),
+[0.2 to 0.3 Migration](docs/MIGRATION_0.2_TO_0.3.md), and
+[release decisions](docs/decisions/).
 
-## Quick Usage (Android + Compose)
+## License
 
-```kotlin
-import com.magic.mvicore.android.PulseViewModel
-import com.magic.mvicore.android.compose.collectStateAsState
-import com.magic.mvicore.android.compose.observeEffects
-import com.magic.mvicore.contract.MviEffect
-import com.magic.mvicore.contract.MviIntent
-import com.magic.mvicore.contract.MviState
-import com.magic.mvicore.contract.Next
-import com.magic.mvicore.contract.Reducer
-
-data class CounterState(val count: Int = 0) : MviState
-
-sealed interface CounterIntent : MviIntent {
-    data object Increase : CounterIntent
-    data object Decrease : CounterIntent
-}
-
-sealed interface CounterEffect : MviEffect {
-    data object ReachTen : CounterEffect
-}
-
-object CounterReducer : Reducer<CounterState, CounterIntent, CounterEffect> {
-    override fun reduce(previous: CounterState, intent: CounterIntent): Next<CounterState, CounterEffect> {
-        return when (intent) {
-            CounterIntent.Increase -> {
-                val next = previous.copy(count = previous.count + 1)
-                if (next.count == 10) Next.withEffect(next, CounterEffect.ReachTen) else Next.just(next)
-            }
-            CounterIntent.Decrease -> Next.just(previous.copy(count = previous.count - 1))
-        }
-    }
-}
-
-class CounterViewModel : PulseViewModel<CounterState, CounterIntent, CounterEffect>(
-    initialState = CounterState(),
-    reducer = CounterReducer
-) {
-    fun increase() = dispatch(CounterIntent.Increase)
-}
-```
-
-```kotlin
-@Composable
-fun CounterScreen(viewModel: CounterViewModel) {
-    val state by viewModel.collectStateAsState()
-
-    viewModel.observeEffects { effect ->
-        when (effect) {
-            CounterEffect.ReachTen -> {
-                // show toast / navigate
-            }
-        }
-    }
-
-    Button(onClick = { viewModel.increase() }) {
-        Text("Count = ${state.count}")
-    }
-}
-```
-
-## Links
-
-- GitHub: [https://github.com/Magic-Xu/pulse](https://github.com/Magic-Xu/pulse)
-- Releases: [https://github.com/Magic-Xu/pulse/releases](https://github.com/Magic-Xu/pulse/releases)
-- Issues: [https://github.com/Magic-Xu/pulse/issues](https://github.com/Magic-Xu/pulse/issues)
-- API (Contract Source): [https://github.com/Magic-Xu/pulse/tree/master/mvi-core-contract/src/main/kotlin/com/magic/mvicore/contract](https://github.com/Magic-Xu/pulse/tree/master/mvi-core-contract/src/main/kotlin/com/magic/mvicore/contract)
-- API (Runtime Source): [https://github.com/Magic-Xu/pulse/tree/master/mvi-core-runtime/src/main/kotlin/com/magic/mvicore/runtime](https://github.com/Magic-Xu/pulse/tree/master/mvi-core-runtime/src/main/kotlin/com/magic/mvicore/runtime)
-- API (Android Source): [https://github.com/Magic-Xu/pulse/tree/master/mvi-platform-android/src/main/java/com/magic/mvicore/android](https://github.com/Magic-Xu/pulse/tree/master/mvi-platform-android/src/main/java/com/magic/mvicore/android)
-
-## Docs
-
-- Consumer guide (EN): [docs/CONSUMER_GUIDE.md](https://github.com/Magic-Xu/pulse/blob/master/docs/CONSUMER_GUIDE.md)
-- Consumer guide (中文): [docs/CONSUMER_GUIDE.zh-CN.md](https://github.com/Magic-Xu/pulse/blob/master/docs/CONSUMER_GUIDE.zh-CN.md)
-- Iteration roadmap (EN): [docs/ITERATION_ROADMAP.md](https://github.com/Magic-Xu/pulse/blob/master/docs/ITERATION_ROADMAP.md)
-- Iteration roadmap (中文): [docs/ITERATION_ROADMAP.zh-CN.md](https://github.com/Magic-Xu/pulse/blob/master/docs/ITERATION_ROADMAP.zh-CN.md)
-- Release plan (EN): [docs/RELEASE_PLAN.md](https://github.com/Magic-Xu/pulse/blob/master/docs/RELEASE_PLAN.md)
-- Release plan (中文): [docs/RELEASE_PLAN.zh-CN.md](https://github.com/Magic-Xu/pulse/blob/master/docs/RELEASE_PLAN.zh-CN.md)
-- Maven Central publishing (EN): [docs/PUBLISH_MAVEN_CENTRAL.md](https://github.com/Magic-Xu/pulse/blob/master/docs/PUBLISH_MAVEN_CENTRAL.md)
-- Maven Central publishing (中文): [docs/PUBLISH_MAVEN_CENTRAL.zh-CN.md](https://github.com/Magic-Xu/pulse/blob/master/docs/PUBLISH_MAVEN_CENTRAL.zh-CN.md)
-
-## Iteration Roadmap
-
-Pulse v0.2 roadmap for production-scale MVI:
-
-1. Reducer entry invariants.
-   status: done
-   result: `PulseViewModel` + `IntentExecutionScope`
-
-2. Split intent channels (UI intent vs mutation).
-   status: done
-   result: `MviUiIntent` + `MviMutation` + `PulseSplitViewModel` + `UiIntentExecutor`
-
-3. State decomposition toolkit.
-   status: planned
-   target: sub-state reducers and state-domain composition
-
-4. Feature/store composition.
-   status: planned
-   target: parent-child store orchestration for complex screens
-
-5. Effect execution middle layer.
-   status: planned
-   target: isolate IO/navigation/analytics from reducer
-
-6. Debug tooling.
-   status: planned
-   target: intent trace + state diff timeline
-
-7. Test DSL.
-   status: planned
-   target: deterministic reducer/store assertions with low boilerplate
+Apache License 2.0.

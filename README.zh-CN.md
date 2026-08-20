@@ -1,222 +1,119 @@
 # Pulse
 
-Pulse 表示 MVI 中的每一次状态变化，是系统对输入的清晰响应信号。
+[English](README.md)
 
-极简、跨平台优先的 MVI 框架。
+Pulse 是一个面向 Kotlin 与 Android 的有序、协程优先 MVI 运行时。每个 Store 只拥有一个有界
+输入邮箱和一个处理器，通过 `StateFlow` 发布唯一状态，把每次输入记录成可关联的 Transition
+Frame，并由单一协调者交付 replay=0 的 UI Effect。
 
-[![GitHub Repo](https://img.shields.io/badge/GitHub-Magic--Xu%2Fpulse-181717?logo=github)](https://github.com/Magic-Xu/pulse)
-[![GitHub Stars](https://img.shields.io/github/stars/magic-xu/pulse?style=flat)](https://github.com/Magic-Xu/pulse/stargazers)
-[![License](https://img.shields.io/github/license/magic-xu/pulse)](https://github.com/Magic-Xu/pulse/blob/master/LICENSE)
-[![Maven Central Core](https://img.shields.io/maven-central/v/io.github.magic-xu/mvi-core-runtime?label=Maven%20Central%20(core))](https://central.sonatype.com/artifact/io.github.magic-xu/mvi-core-runtime)
-[![Maven Central Android](https://img.shields.io/maven-central/v/io.github.magic-xu/mvi-platform-android?label=Maven%20Central%20(android))](https://central.sonatype.com/artifact/io.github.magic-xu/mvi-platform-android)
-[![Maven Central Compose](https://img.shields.io/maven-central/v/io.github.magic-xu/mvi-platform-android-compose?label=Maven%20Central%20(compose))](https://central.sonatype.com/artifact/io.github.magic-xu/mvi-platform-android-compose)
-
-当前版本：`0.2.0`
-
-英文 README： [README.md](https://github.com/Magic-Xu/pulse/blob/master/README.md)
-
-## 简介
-
-- 单向数据流：`Intent -> Reducer -> State (+ Effect)`
-- `State` 与 `Effect` 分离（状态可重放，事件一次性）
-- 核心模块不依赖 Android
-- Android/Compose 通过子模块按需接入
+仓库当前处于 **0.3.0-SNAPSHOT** 开发阶段；在 0.3 发布门禁通过前，Maven Central 最新稳定版
+仍是 0.2.0。
 
 ## 模块
 
-- `mvi-core-contract`：跨平台契约（`MviState` / `MviIntent` / `MviEffect` / `Reducer` / `Store`）
-- `mvi-core-runtime`：跨平台运行时（`DefaultStore` + `StorePlugin`）
-- `mvi-platform-android`：Android `ViewModel` 适配
-- `mvi-platform-android-compose`：Compose 绑定（`collectStateAsState` / `observeEffects`）
-- `mvi-extensions`：可选扩展（日志插件、状态迁移插件）
+| 制品 | 职责 |
+| --- | --- |
+| `mvi-core-contract` | State、Input、Reducer、Transition、结果与失败契约 |
+| `mvi-core-runtime` | 有序 Store 引擎、Effect、Plugin、Keyed Task 与 v0.2 适配器 |
+| `mvi-platform-android` | Split Intent ViewModel、显式 Owner、SavedState 与 Android 默认运行环境 |
+| `mvi-platform-android-compose` | 生命周期感知的 State、Selector、Effect 与 ViewModel 绑定 |
+| `mvi-extensions` | 可选日志、Transition 辅助与 State Decomposition DSL |
+| `mvi-testing` | 虚拟时间、Probe、`TestPulseStore` 与可复用 Store TCK |
 
-## 双通道 Intent 模型
+所有发布制品的 group 均为 `io.github.magic-xu`。
 
-Pulse 现已支持复杂业务的 Intent 拆分：
+## 运行时契约
 
-- `MviUiIntent`：来自 UI/用户动作的外部输入
-- `MviMutation`：仅用于 reducer 的内部状态变更消息
-- `PulseSplitViewModel`：`send(uiIntent)` -> 副作用执行 -> `dispatchMutation(mutation)` -> reducer
+每个被接纳的输入只执行一个有序 Frame：
 
-这样 reducer 只负责纯状态变更，IO/业务编排不会混入 mutation 逻辑。
+1. 读取当前 State；
+2. 归约为 `Changed`、`Unchanged` 或 `Ignored`；
+3. 提交变化后的 State；
+4. 发布 Transition Frame；
+5. 交付零到多个带关联信息的 UI Effect；
+6. 完成 `send`。
 
-## Maven Central 依赖方式
+`trySend` 只表示是否进入邮箱。`close` 建立有序截止点：截止点前已接纳的输入会排空，之后的
+输入被拒绝。取消和 JVM 致命错误不会被转成业务失败；框架受控边界中的普通异常统一报告为
+具名 `PulseFailure`。
 
-确保 `settings.gradle.kts` 包含 `mavenCentral()`：
+## 最小 Store
 
 ```kotlin
-dependencyResolutionManagement {
-    repositories {
-        google()
-        mavenCentral()
-    }
+data class CounterState(val value: Int) : MviState
+
+sealed interface CounterInput : MviIntent {
+    data object Increment : CounterInput
+}
+
+sealed interface CounterEffect : UiEffect
+
+val store = DefaultPulseStore<CounterState, CounterInput, CounterEffect>(
+    initialState = CounterState(0),
+    reducer = PulseReducer { state, input ->
+        when (input) {
+            CounterInput.Increment -> ReduceOutcome.Changed(
+                state.copy(value = state.value + 1)
+            )
+        }
+    },
+)
+
+scope.launch {
+    store.send(CounterInput.Increment)
 }
 ```
 
-Compose Android 项目（推荐）：
+Android 功能优先使用 `PulseSplitStoreViewModel`：UI 侧只能看到 `send(UI)` 与 `trySend(UI)`；
+Mutation 和 Keyed Task 只存在于 `PulseIntentContext` 内。
+
+## 依赖配置
+
+0.3 正式发布前不会出现在公共仓库。本地候选制品的使用方式：
 
 ```kotlin
+repositories {
+    maven { url = uri("<checkout>/build/staging-repo") }
+    google()
+    mavenCentral()
+}
+
+val pulseVersion = "0.3.0-SNAPSHOT"
 dependencies {
-    implementation("io.github.magic-xu:mvi-platform-android-compose:0.2.0")
+    implementation("io.github.magic-xu:mvi-core-runtime:$pulseVersion")
+    implementation("io.github.magic-xu:mvi-platform-android-compose:$pulseVersion")
+    implementation("io.github.magic-xu:mvi-extensions:$pulseVersion")
+    testImplementation("io.github.magic-xu:mvi-testing:$pulseVersion")
 }
 ```
 
-非 Compose Android 项目：
+只添加功能真正需要的模块。Android Compose 模块会传递引入 Android、runtime 与 contract 层。
 
-```kotlin
-dependencies {
-    implementation("io.github.magic-xu:mvi-platform-android:0.2.0")
-}
-```
+## 示例
 
-可选扩展：
+- `app/.../split_intent_basic`：不使用便捷 DSL 的显式 Split Intent 接线。
+- `app/.../network`：带 Repository 的标准功能。
+- `app/.../state_decomposition`：一个 Root Store 拆成 image/video 两个子状态 Reducer。
+- `samples/simple-sync-consumer`：只消费 Maven 候选制品的同步示例。
+- `samples/async-latest-consumer`：只消费 Maven 候选制品，覆盖 Latest、SavedState、Selector。
 
-```kotlin
-dependencies {
-    implementation("io.github.magic-xu:mvi-extensions:0.2.0")
-}
-```
-
-纯核心（跨平台）：
-
-```kotlin
-dependencies {
-    implementation("io.github.magic-xu:mvi-core-runtime:0.2.0")
-}
-```
-
-## App 依赖模式（本地/远端）
-
-`app` 模块支持两种模式：
-
-- `local`：依赖工程内 `project(:xxx)`（默认）
-- `remote`：依赖 Maven Central 已发布构件
-
-一键切换命令：
+## 验证
 
 ```bash
-./gradlew useLocalPulseDeps
-./gradlew useRemotePulseDeps
-./gradlew printPulseDepMode
+# 确定性的 PR 门禁
+./gradlew mviFrameworkCheck
+
+# 完整发布候选门禁
+./gradlew clean mviReleaseCheck
 ```
 
-单次构建临时覆盖：
+发布门禁包含标准测试、Store TCK、六模块 API/ABI dump、五制品 v0.2 源码/二进制兼容
+fixture、Android/Compose 检查、候选制品校验、纯制品示例、多种子压力与可移植性能下限 harness。
 
-```bash
-./gradlew :app:assembleDebug -PPULSE_APP_DEP_MODE=remote
-./gradlew :app:assembleDebug -PPULSE_APP_DEP_MODE=local
-```
+继续阅读：[接入指南](docs/CONSUMER_GUIDE.zh-CN.md)、
+[0.2 到 0.3 迁移](docs/MIGRATION_0.2_TO_0.3.zh-CN.md) 与
+[架构决策](docs/decisions/)。
 
-## 最小使用示例（Android + Compose）
+## License
 
-```kotlin
-import com.magic.mvicore.android.PulseViewModel
-import com.magic.mvicore.android.compose.collectStateAsState
-import com.magic.mvicore.android.compose.observeEffects
-import com.magic.mvicore.contract.MviEffect
-import com.magic.mvicore.contract.MviIntent
-import com.magic.mvicore.contract.MviState
-import com.magic.mvicore.contract.Next
-import com.magic.mvicore.contract.Reducer
-
-data class CounterState(val count: Int = 0) : MviState
-
-sealed interface CounterIntent : MviIntent {
-    data object Increase : CounterIntent
-    data object Decrease : CounterIntent
-}
-
-sealed interface CounterEffect : MviEffect {
-    data object ReachTen : CounterEffect
-}
-
-object CounterReducer : Reducer<CounterState, CounterIntent, CounterEffect> {
-    override fun reduce(previous: CounterState, intent: CounterIntent): Next<CounterState, CounterEffect> {
-        return when (intent) {
-            CounterIntent.Increase -> {
-                val next = previous.copy(count = previous.count + 1)
-                if (next.count == 10) Next.withEffect(next, CounterEffect.ReachTen) else Next.just(next)
-            }
-            CounterIntent.Decrease -> Next.just(previous.copy(count = previous.count - 1))
-        }
-    }
-}
-
-class CounterViewModel : PulseViewModel<CounterState, CounterIntent, CounterEffect>(
-    initialState = CounterState(),
-    reducer = CounterReducer
-) {
-    fun increase() = dispatch(CounterIntent.Increase)
-}
-```
-
-```kotlin
-@Composable
-fun CounterScreen(viewModel: CounterViewModel) {
-    val state by viewModel.collectStateAsState()
-
-    viewModel.observeEffects { effect ->
-        when (effect) {
-            CounterEffect.ReachTen -> {
-                // show toast / navigate
-            }
-        }
-    }
-
-    Button(onClick = { viewModel.increase() }) {
-        Text("Count = ${state.count}")
-    }
-}
-```
-
-## 链接
-
-- GitHub: [https://github.com/Magic-Xu/pulse](https://github.com/Magic-Xu/pulse)
-- Releases: [https://github.com/Magic-Xu/pulse/releases](https://github.com/Magic-Xu/pulse/releases)
-- Issues: [https://github.com/Magic-Xu/pulse/issues](https://github.com/Magic-Xu/pulse/issues)
-- API（Contract 源码）: [https://github.com/Magic-Xu/pulse/tree/master/mvi-core-contract/src/main/kotlin/com/magic/mvicore/contract](https://github.com/Magic-Xu/pulse/tree/master/mvi-core-contract/src/main/kotlin/com/magic/mvicore/contract)
-- API（Runtime 源码）: [https://github.com/Magic-Xu/pulse/tree/master/mvi-core-runtime/src/main/kotlin/com/magic/mvicore/runtime](https://github.com/Magic-Xu/pulse/tree/master/mvi-core-runtime/src/main/kotlin/com/magic/mvicore/runtime)
-- API（Android 源码）: [https://github.com/Magic-Xu/pulse/tree/master/mvi-platform-android/src/main/java/com/magic/mvicore/android](https://github.com/Magic-Xu/pulse/tree/master/mvi-platform-android/src/main/java/com/magic/mvicore/android)
-
-## 文档
-
-- 使用方接入指南（中文）：[docs/CONSUMER_GUIDE.zh-CN.md](https://github.com/Magic-Xu/pulse/blob/master/docs/CONSUMER_GUIDE.zh-CN.md)
-- 使用方接入指南（EN）：[docs/CONSUMER_GUIDE.md](https://github.com/Magic-Xu/pulse/blob/master/docs/CONSUMER_GUIDE.md)
-- 迭代路线图（中文）：[docs/ITERATION_ROADMAP.zh-CN.md](https://github.com/Magic-Xu/pulse/blob/master/docs/ITERATION_ROADMAP.zh-CN.md)
-- 迭代路线图（EN）：[docs/ITERATION_ROADMAP.md](https://github.com/Magic-Xu/pulse/blob/master/docs/ITERATION_ROADMAP.md)
-- 发布规划（中文）：[docs/RELEASE_PLAN.zh-CN.md](https://github.com/Magic-Xu/pulse/blob/master/docs/RELEASE_PLAN.zh-CN.md)
-- 发布规划（EN）：[docs/RELEASE_PLAN.md](https://github.com/Magic-Xu/pulse/blob/master/docs/RELEASE_PLAN.md)
-- Maven Central 发布手册（中文）：[docs/PUBLISH_MAVEN_CENTRAL.zh-CN.md](https://github.com/Magic-Xu/pulse/blob/master/docs/PUBLISH_MAVEN_CENTRAL.zh-CN.md)
-- Maven Central 发布手册（EN）：[docs/PUBLISH_MAVEN_CENTRAL.md](https://github.com/Magic-Xu/pulse/blob/master/docs/PUBLISH_MAVEN_CENTRAL.md)
-
-## 迭代路线图
-
-Pulse v0.2 面向生产规模的迭代清单：
-
-1. Reducer 入口不变量。
-   状态：已完成
-   结果：`PulseViewModel` + `IntentExecutionScope`
-
-2. Intent 双通道拆分（UI intent / mutation）。
-   状态：已完成
-   结果：`MviUiIntent` + `MviMutation` + `PulseSplitViewModel` + `UiIntentExecutor`
-
-3. State 拆分工具集。
-   状态：计划中
-   目标：子状态 reducer + 分域状态组合
-
-4. Feature/Store 组合能力。
-   状态：计划中
-   目标：复杂页面父子 Store 编排
-
-5. Effect 执行中间层。
-   状态：计划中
-   目标：把 IO/导航/埋点从 reducer 中分离
-
-6. 调试工具。
-   状态：计划中
-   目标：intent 轨迹 + state diff 时间线
-
-7. 测试 DSL。
-   状态：计划中
-   目标：低样板代码的 reducer/store 可预测断言
+Apache License 2.0。

@@ -1,66 +1,84 @@
-# 发布到 Maven Central
+# 将 Pulse 0.3.0 发布到 Maven Central
 
-英文版：[PUBLISH_MAVEN_CENTRAL.md](https://github.com/Magic-Xu/pulse/blob/master/docs/PUBLISH_MAVEN_CENTRAL.md)
+英文版：[PUBLISH_MAVEN_CENTRAL.md](./PUBLISH_MAVEN_CENTRAL.md)
 
-这份文档是“替换信息后可直接发布”的操作手册。
+> `0.3.0-SNAPSHOT` 尚未发布。本文面向准备唯一稳定版 `v0.3.0` 的发布维护者。分支、snapshot、
+> RC 和手动 workflow 都不能发布。
 
-## 0. 一次性准备
+## 一次性准备
 
-1. 在 Sonatype Central Portal 完成账号与 namespace 准备（建议 `io.github.<your-github-id>`）。
-2. 在 Central Portal 创建发布 token（用户名 + 密码）。
-3. 准备 GPG 私钥（ASCII armored）和密码，用于签名。
+1. 在 [Sonatype Central Portal](https://central.sonatype.com/publishing) 验证
+   `io.github.magic-xu` namespace 所有权。
+2. 创建 Central Portal 发布 token。
+3. 创建 ASCII-armored GPG 私钥和制品签名密码。
+4. 添加以下 GitHub Actions secrets：
+   - `MAVEN_CENTRAL_USERNAME`
+   - `MAVEN_CENTRAL_PASSWORD`
+   - `SIGNING_IN_MEMORY_KEY`
+   - `SIGNING_IN_MEMORY_KEY_PASSWORD`
 
-官方参考：
+不要提交凭据或私钥。本地属性名和可选开发者模板记录在
+`gradle/maven-central-secrets.template.properties`。
 
-- Central Portal 发布入口与流程：[https://central.sonatype.com/publishing](https://central.sonatype.com/publishing)
-- 发布要求（坐标、签名、Javadoc/Sources、POM 元数据）：[https://central.sonatype.org/publish/requirements/](https://central.sonatype.org/publish/requirements/)
+Maven Central 对坐标、签名、source archive 和 POM metadata 的要求参见
+[发布要求](https://central.sonatype.org/publish/requirements/)。
 
-## 1. 替换项目内 TODO 元数据
+## 准备候选版本
 
-编辑 [gradle.properties](https://github.com/Magic-Xu/pulse/blob/master/gradle.properties) 中的 TODO：
+使用 JDK 21。创建发布提交前：
 
-- `POM_DEVELOPER_NAME`
-- `POM_DEVELOPER_EMAIL`
-- 以及你希望使用的 `POM_GROUP_ID`、`POM_VERSION_NAME`
+1. 把 `gradle.properties` 中的 `POM_VERSION_NAME` 设为 `0.3.0`。
+2. 确认 group 为 `io.github.magic-xu`，并替换所有残留的开发者 metadata 占位值。
+3. 评审有意修改的公开 API 及六份受控基线。只能在该评审中生成新基线，不能自动接受
+   `apiDump` 差异。
+4. 确认 release notes 和 migration 文档中的可用状态仍然准确。
 
-## 2. 配置本地/CI 密钥（不要提交到仓库）
-
-使用模板 [gradle/maven-central-secrets.template.properties](https://github.com/Magic-Xu/pulse/blob/master/gradle/maven-central-secrets.template.properties)。
-
-推荐写到 `~/.gradle/gradle.properties`：
-
-- `mavenCentralUsername`
-- `mavenCentralPassword`
-- `signingInMemoryKey`
-- `signingInMemoryKeyPassword`
-
-CI 中可使用同名环境变量或安全注入到 Gradle properties。
-
-## 3. 发布前校验
+运行与发布 workflow 相同的本地门禁：
 
 ```bash
 ./gradlew verifyMavenCentralConfig
-./gradlew mviCoreCheck
 ./gradlew mviFrameworkCheck
+./gradlew mviReleaseCheck
 ```
 
-## 4. 执行发布
+`mviFrameworkCheck` 包含模块、Android、Compose、示例应用、API 基线、暂存制品、纯制品消费者、
+五制品 0.2 兼容和版本检查。`mviReleaseCheck` 还会运行多 seed 压力检查和可移植性能下限 harness。
+门禁通过不代表兼容或性能证据超出了这些 fixture 的实际覆盖范围。
 
-```bash
-./gradlew publishAndReleaseToMavenCentral
-```
+## 发布稳定 tag
 
-如果想先上传不释放（人工确认后再 release）：
+官方发布路径是 `.github/workflows/publish-maven-central.yml`：
 
-```bash
-./gradlew publishToMavenCentral
-```
+1. 提交已评审的 `0.3.0` 候选版本。
+2. 在该提交上创建 annotated tag `v0.3.0`。
+3. 推送提交和 tag，不移动或复用已有发布 tag。
+4. 观察 `Publish Maven Central` workflow。
 
-## 5. 常见注意事项
+workflow 只由准确 tag `v0.3.0` 触发。`release-check` job 会验证 GitHub ref、
+`POM_VERSION_NAME=0.3.0`、必要 metadata，并在 JDK 21 上运行 `mviReleaseCheck`。`publish` job 显式
+依赖 `release-check`，并发布同一个 workflow commit。
 
-- 不要在仓库里提交真实 token 和私钥。
-- 对外发布版本不要使用 `-SNAPSHOT`。
-- 发布失败优先检查：
-  - POM 元数据是否完整
-  - GPG 私钥是否可用
-  - Central Portal token 是否有效
+不要为正式 v0.3.0 手动运行 `publishAndReleaseToMavenCentral`。远程发布只属于受保护的 workflow；
+Gradle publish task 也不会反向依赖 `mviReleaseCheck`。
+
+## 发布包
+
+workflow 会用同一个版本发布六个制品：
+
+- `mvi-core-contract`
+- `mvi-core-runtime`
+- `mvi-platform-android`
+- `mvi-platform-android-compose`
+- `mvi-extensions`
+- `mvi-testing`
+
+远程发布前，本地 staging 会检查每个 binary（`jar` 或 `aar`）、sources archive、POM、Gradle
+module metadata、版本和内部 Pulse 依赖版本。
+
+## 发布后
+
+等待 Central Portal 显示部署已 release，然后只从 Maven Central 解析全部六个坐标，不使用 local
+或 staging repository。正式宣布可用前，再针对公开坐标运行两个纯制品消费者。
+
+如果 `release-check` 失败，publish job 不会运行。应修复根因，不能削弱或绕过门禁。如果 tag 或
+deployment 已对外可见，不要移动、复用或覆盖；选择新版本，并明确更新受保护的发布目标。

@@ -1,150 +1,67 @@
-# 迭代路线图
+# Pulse 迭代路线图
 
-英文版：[ITERATION_ROADMAP.md](https://github.com/Magic-Xu/pulse/blob/master/docs/ITERATION_ROADMAP.md)
+[English](ITERATION_ROADMAP.md)
 
-Pulse 当前架构基线：
+## 当前版本线
 
-- `PulseViewModel`：可继承的基础 VM
-- `PulseSplitViewModel`：双通道意图模型（`UiIntent` + `Mutation`）
-- reducer 聚焦纯状态转移
+源码当前目标为 `0.3.0-SNAPSHOT`。0.3 是一次整体发布：运行时有序性、Split Intent Task、
+Android/Compose 生命周期、State Decomposition、测试、兼容与发布证据必须一起交付。
 
-本路线图定义了后续面向生产规模的迭代方向。
+## 0.3 范围
 
-## 版本演进列表
+### 有序 Core
 
-### v0.1.0（第一版极简可用版本）
+- `StateFlow` 是唯一状态真相源。
+- 一个有界 FIFO Mailbox 串行化 Input 与生命周期命令。
+- 一个 Processor 独占 read、reduce、commit、transition、effect 与 completion 顺序。
+- 结果明确区分 `Changed`、`Unchanged` 与 `Ignored`。
+- `close` 建立有序接纳截止点并排空已接纳任务。
+- 受控异常转为 Typed Failure；取消与致命错误原样传播。
+- v0.2 `DefaultStore` 委托同一个 Engine。
 
-- 定位：
-  - 极简可运行 MVI 基线
-- 设计：
-  - 单通道 intent（`MviIntent`）
-  - reducer 消费所有 intent
-  - Android 层使用 ViewModel + Store 组合
-- 取得效果：
-  - 形成跨平台优先模块化（`contract/runtime/platform`）
-  - 能快速跑通示例，学习成本低
-  - 基础能力可端到端运行
-- 缺点：
-  - 触发型 intent 与纯状态 mutation 混在一起
-  - 复杂业务下 reducer 容易膨胀
-  - 副作用编排和状态变更边界不够清晰
-  - VM 公共方法增长后扩展性变差
+### 异步与 Effect
 
-### v0.2.x（当前迭代：双通道 Intent 架构）
+- Keyed Task 支持 Latest、DropWhileRunning、Queue、Parallel、Conflate。
+- 不透明代际 Token 会拒绝任务替换或取消后的迟到 Mutation。
+- UI Effect replay=0、有界，且只允许一个活跃协调者。
+- 未交付 Effect 与 Consumer 失败均可观测。
 
-- 定位：
-  - 在 v0.1 基础上的生产级可扩展升级
-- 新增能力：
-  - `MviUiIntent` + `MviMutation` 双通道模型
-  - `SplitIntent`、`MutationReducer`、`SplitIntentReducer`
-  - `PulseSplitViewModel` + `UiIntentExecutor` + `UiIntentExecutionScope`
-  - 示例迁移为 `send(uiIntent) -> dispatchMutation(mutation)` 流程
-- 解决的问题：
-  - 外部触发与纯状态变更语义分离
-  - reducer 更聚焦于确定性状态演进
-  - 副作用编排迁移到 UI intent 执行层
-  - 大型业务场景下可读性、可追踪性提升
-- 当前仍存在的问题：
-  - State 拆分工具集尚未落地
-  - 父子 Feature/Store 组合能力尚未实现
-  - Effect 中间层与统一执行管线未完成
-  - 并发策略工具（`drop/cancel/queue/latest`）尚未标准化
+### Android 与 Compose
 
-## v0.1 -> v0.2 更新清单
+- Split Intent 对 UI 只公开 `send(UI)` 与 `trySend(UI)`。
+- Mutation 能力只存在于 `PulseIntentContext` 和 Task Context。
+- Android 默认在 `Main.immediate` 运行 Reducer 与受控交付。
+- ViewModel 获取必须显式提供 Owner 与稳定 key。
+- SavedState 使用功能自定义 Adapter，不强迫 State Parcelable。
+- Compose 收集感知 Lifecycle，并支持 Selector 级相等判断。
 
-1. Intent 模型升级：
-   - 从单通道升级为双通道（`UiIntent` / `Mutation`）
-2. Reducer 职责收敛：
-   - 双通道模式下 reducer 仅处理 mutation
-3. ViewModel 执行模型升级：
-   - 引入 `PulseSplitViewModel`，支持 UI 触发副作用与 mutation 回写
-4. 示例架构迁移：
-   - 网络示例已迁移为双通道流程并完成验证
-5. 文档体系升级：
-   - 根 README 与模块 README 已与新语义对齐
+### Extensions 与 Testing
 
-## 优先级顺序
+- State Decomposition 属于 `mvi-extensions`，不属于 contract 模块。
+- Lens 子状态不绑定 Marker，并由三条 Lens Law 验证。
+- Mutation 路由默认 fail-fast；ignore 必须显式；重复或重叠路由被拒绝。
+- `mvi-testing` 发布虚拟时间、Probe、`TestPulseStore` 与 Store TCK。
 
-1. State 拆分工具集
-2. Feature/Store 组合能力
-3. Effect 执行中间层
-4. 并发与生命周期策略
-5. 调试工具
-6. 测试 DSL
+### 发布证据
 
-## 里程碑
+- 六个公开制品都有受控 API/ABI dump，包含两个 Android AAR。
+- v0.2 Consumer 源码编译与二进制链接均对候选制品执行。
+- 候选发布物在隔离 Maven 仓库中校验。
+- 两个独立示例只通过 Maven 坐标消费制品，不依赖 Project。
+- 固定种子 PR 测试、多种子压力与性能回归分层执行。
 
-### 1) State 拆分工具集
+## 发布边界
 
-- 目标：
-  - 解决复杂页面状态臃肿问题
-- 交付物：
-  - 子状态组合模型
-  - `combineMutationReducer` 组合工具
-  - 局部状态更新辅助工具
-- 验收标准：
-  - 一个复杂页面可拆成多个领域子状态，且 reducer 测试仍清晰可预测
+只有以下命令在干净检出中通过，`0.3.0` 才可发布：
 
-### 2) Feature/Store 组合能力
+```bash
+./gradlew clean mviReleaseCheck
+```
 
-- 目标：
-  - 支持父子 Feature 编排
-- 交付物：
-  - 父 Store 路由子 `UiIntent` / `Mutation`
-  - 子状态挂载到父状态
-  - 复杂页面的组合约定
-- 验收标准：
-  - 多功能页面不再依赖单个超大 reducer
+同时要求发布 tag 为 `v0.3.0`、配置版本为 `0.3.0`，且发布 Workflow 必须依赖本次成功门禁。
+普通分支、RC 或 SNAPSHOT 不能直接发布到 Maven Central。
 
-### 3) Effect 执行中间层
+## 0.3 之后
 
-- 目标：
-  - 让 IO/导航/埋点与 VM 编排进一步解耦
-- 交付物：
-  - `EffectHandler` 抽象
-  - 可插拔 `EffectPipeline`
-  - 真实/Mock 执行策略
-- 验收标准：
-  - 不改 reducer/mutation 逻辑即可切换 effect 执行后端
-
-### 4) 并发与生命周期策略
-
-- 目标：
-  - 统一重复触发和生命周期行为
-- 交付物：
-  - in-flight 策略（`drop` / `cancel` / `queue` / `latest`）
-  - 生命周期感知的状态/事件观察策略
-- 验收标准：
-  - 重复点击、前后台切换行为在各模块中保持可预测
-
-### 5) 调试工具
-
-- 目标：
-  - 提升可观测性和排障效率
-- 交付物：
-  - `UiIntent` / `Mutation` 时间线
-  - state diff 检视能力
-  - 性能追踪插件挂点
-- 验收标准：
-  - 能快速回答“哪个 mutation 导致了这次状态变化”
-
-### 6) 测试 DSL
-
-- 目标：
-  - 降低测试样板代码，提高可读性
-- 交付物：
-  - given-when-then 风格 DSL
-  - 可预测的时序断言
-  - state/effect 断言助手
-- 验收标准：
-  - 业务模块能以低成本补齐 reducer/store 测试
-
-## 迭代规则
-
-每个里程碑遵循：
-
-1. 先定 contract/API
-2. 实现最小可运行版本
-3. 更新对应模块 README
-4. 跑检查与示例验证
-5. 停下评审，确认后再进入下一里程碑
+后续能力独立评估，不能削弱 0.3 的顺序与兼容契约。候选方向包括 Multiplatform Runtime、
+更丰富的诊断导出与额外的纯制品导航示例。

@@ -1,150 +1,70 @@
-# Iteration Roadmap
+# Pulse Iteration Roadmap
 
-Chinese version: [ITERATION_ROADMAP.zh-CN.md](https://github.com/Magic-Xu/pulse/blob/master/docs/ITERATION_ROADMAP.zh-CN.md)
+[简体中文](ITERATION_ROADMAP.zh-CN.md)
 
-Pulse current architecture baseline:
+## Current line
 
-- `PulseViewModel`: inheritance-friendly base
-- `PulseSplitViewModel`: two-lane intent model (`UiIntent` + `Mutation`)
-- reducer focuses on pure state transitions
+The source tree targets `0.3.0-SNAPSHOT`. Version 0.3 is one coordinated release: runtime ordering,
+Split Intent tasks, Android/Compose lifecycle support, State Decomposition, testing, compatibility,
+and publication evidence ship together.
 
-This roadmap defines the next production-oriented iterations.
+## 0.3 scope
 
-## Version Evolution List
+### Ordered core
 
-### v0.1.0 (First Minimal Version)
+- `StateFlow` is the state truth.
+- One bounded FIFO mailbox serializes inputs and lifecycle commands.
+- One processor owns read, reduce, commit, transition, effect, and completion ordering.
+- Outcomes distinguish `Changed`, `Unchanged`, and `Ignored`.
+- `close` creates an ordered admission cutoff and drains accepted work.
+- Controlled failures are typed; cancellation and fatal errors propagate.
+- The v0.2 `DefaultStore` delegates to the same engine.
 
-- Positioning:
-  - Minimal usable MVI baseline
-- Design:
-  - Single intent lane (`MviIntent`)
-  - reducer consumes all intents
-  - Android base is ViewModel + Store composition
-- What worked:
-  - Cross-platform-first modularization (`contract/runtime/platform`)
-  - Minimal runnable architecture with low learning cost
-  - Basic sample can run end-to-end
-- Limitations:
-  - Trigger intents and pure mutation intents are mixed together
-  - reducer can become huge in complex features
-  - side-effect orchestration and state mutation boundaries are not explicit enough
-  - difficult to scale cleanly when business methods grow in ViewModel
+### Async and effects
 
-### v0.2.x (Current Iteration - Split Intent Architecture)
+- Keyed tasks support Latest, DropWhileRunning, Queue, Parallel, and Conflate.
+- Opaque generations reject late mutations after replacement or cancellation.
+- UI effects are replay-zero, bounded, and owned by one active coordinator.
+- Undelivered effects and consumer failures are observable diagnostics.
 
-- Positioning:
-  - Production-oriented architecture upgrade on top of v0.1
-- Added:
-  - `MviUiIntent` + `MviMutation` two-lane intent model
-  - `SplitIntent`, `MutationReducer`, `SplitIntentReducer`
-  - `PulseSplitViewModel` + `UiIntentExecutor` + `UiIntentExecutionScope`
-  - sample migration to `send(uiIntent) -> dispatchMutation(mutation)`
-- Solved from v0.1:
-  - separates "external trigger" from "pure reducer mutation"
-  - keeps reducer focused on deterministic state transitions
-  - side-effect orchestration moved to UI intent executor lane
-  - improves readability and traceability in larger features
-- Current limitations:
-  - state decomposition toolkit is still missing
-  - parent-child feature/store composition is not built yet
-  - effect middle layer and unified effect pipeline are not finalized
-  - concurrency policy toolkit (`drop/cancel/queue/latest`) is not standardized yet
+### Android and Compose
 
-## v0.1 -> v0.2 Update List
+- Split Intent exposes only `send(UI)` and `trySend(UI)` to UI callers.
+- Mutation capability is confined to `PulseIntentContext` and task contexts.
+- Android defaults run reducer and controlled delivery on `Main.immediate`.
+- ViewModel lookup requires an explicit owner and stable key.
+- SavedState uses feature-owned adapters instead of requiring Parcelable state.
+- Compose collection is lifecycle-aware and supports selected-state equality.
 
-1. Intent model upgrade:
-   - from single-lane intent to two-lane (`UiIntent` / `Mutation`)
-2. Reducer responsibility tightening:
-   - reducer now focuses on mutation-only state transitions in split mode
-3. ViewModel execution model upgrade:
-   - introduced `PulseSplitViewModel` for UI-triggered side effects and mutation writeback
-4. Sample architecture migration:
-   - network sample adapted to split lane flow for practical validation
-5. Documentation upgrade:
-   - README and module docs aligned with the new architecture semantics
+### Extensions and testing
 
-## Priority Order
+- State Decomposition belongs to `mvi-extensions`, not the contract module.
+- Lens sub-state is marker-free and covered by the three lens laws.
+- Mutation routing is fail-fast; ignore is explicit; duplicate/overlapping routes are rejected.
+- `mvi-testing` publishes virtual-time helpers, probes, `TestPulseStore`, and Store TCK.
 
-1. State decomposition toolkit
-2. Feature/store composition
-3. Effect execution middle layer
-4. Concurrency and lifecycle policies
-5. Debug tooling
-6. Test DSL
+### Release evidence
 
-## Milestones
+- Six public artifacts have controlled API/ABI dumps, including both Android AARs.
+- v0.2 consumer source compilation and binary linkage run against the candidate.
+- Candidate publications are verified from an isolated Maven repository.
+- Two independent samples consume Maven artifacts without project dependencies.
+- Fixed-seed PR tests, multi-seed stress, and performance regression gates are separate.
 
-### 1) State decomposition toolkit
+## Release boundary
 
-- Goal:
-  - Solve state-bloat in complex pages
-- Deliverables:
-  - sub-state composition model
-  - `combineMutationReducer` utilities
-  - localized state update helpers
-- Acceptance:
-  - one complex screen can be split into domain sub-states while keeping reducer tests readable and deterministic
+`0.3.0` is releasable only when:
 
-### 2) Feature/store composition
+```bash
+./gradlew clean mviReleaseCheck
+```
 
-- Goal:
-  - Enable parent-child feature orchestration
-- Deliverables:
-  - parent store -> child `UiIntent`/`Mutation` routing
-  - child state mounting into parent state
-  - composition conventions for large pages
-- Acceptance:
-  - multi-feature page no longer requires a single giant reducer
+passes from a clean checkout, the release tag equals `v0.3.0`, the configured publication version is
+`0.3.0`, and the publish workflow consumes that successful gate. A branch, RC, or SNAPSHOT cannot
+release directly to Maven Central.
 
-### 3) Effect execution middle layer
+## After 0.3
 
-- Goal:
-  - decouple IO/navigation/analytics from ViewModel orchestration code
-- Deliverables:
-  - `EffectHandler` abstraction
-  - pluggable `EffectPipeline`
-  - real/mock execution strategies
-- Acceptance:
-  - business flow can switch effect execution backend without changing reducer/mutation logic
-
-### 4) Concurrency and lifecycle policies
-
-- Goal:
-  - unify repeated-action and lifecycle behavior
-- Deliverables:
-  - in-flight strategy options (`drop`, `cancel`, `queue`, `latest`)
-  - lifecycle-aware state/effect observation policies
-- Acceptance:
-  - repeated clicks, background/foreground transitions have predictable behavior across modules
-
-### 5) Debug tooling
-
-- Goal:
-  - improve observability and troubleshooting speed
-- Deliverables:
-  - `UiIntent`/`Mutation` timeline
-  - state diff inspector
-  - performance tracing plugin hooks
-- Acceptance:
-  - can quickly answer: "which mutation caused this state change?"
-
-### 6) Test DSL
-
-- Goal:
-  - reduce test boilerplate and increase readability
-- Deliverables:
-  - given-when-then style test DSL
-  - deterministic timeline assertions
-  - state/effect assertion helpers
-- Acceptance:
-  - business modules can add reducer/store tests with low setup cost
-
-## Iteration Rule
-
-For each milestone:
-
-1. finalize contract/API
-2. implement minimal runnable version
-3. add module README updates
-4. run checks and sample verification
-5. stop for review before next milestone
+Future work is evaluated independently and must not weaken the 0.3 ordering or compatibility
+contracts. Candidate topics include multiplatform runtime support, richer diagnostic exporters, and
+additional artifact-only navigation samples.
