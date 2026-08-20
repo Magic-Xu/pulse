@@ -114,6 +114,21 @@ class LegacyStoreAdapterTest {
     }
 
     @Test
+    fun `equal legacy state does not rebroadcast state callbacks or plugin state hooks`() {
+        val events = mutableListOf<String>()
+        val store = store(plugins = listOf(RecordingPlugin(events)))
+        val states = mutableListOf<State>()
+        store.observeState(states::add)
+        events.clear()
+
+        assertEquals(DispatchResult.Accepted, store.dispatch(Intent.NoOp))
+
+        assertEquals(listOf(State(0)), states)
+        assertEquals(listOf("intent:0"), events)
+        store.close()
+    }
+
+    @Test
     fun `concurrent dispatch observers follow committed state order`() {
         val store = store()
         val observed = Collections.synchronizedList(mutableListOf<Int>())
@@ -384,6 +399,7 @@ class LegacyStoreAdapterTest {
                     )
 
                     Intent.Fail -> error("legacy reducer failed")
+                    Intent.NoOp -> Next.just(previous)
                 }
             },
             plugins = plugins,
@@ -427,6 +443,7 @@ class LegacyStoreAdapterTest {
         ) : Intent
 
         data object Fail : Intent
+        data object NoOp : Intent
     }
 
     private sealed interface Effect : MviEffect {

@@ -99,8 +99,18 @@ public final class com/magic/mvicore/android/PulseIntentExecutionResult$Rejected
 	public fun toString ()Ljava/lang/String;
 }
 
+public final class com/magic/mvicore/android/PulseRestoreFailurePolicy : java/lang/Enum {
+	public static final field FAIL_CREATION Lcom/magic/mvicore/android/PulseRestoreFailurePolicy;
+	public static final field FALLBACK_TO_INITIAL_STATE Lcom/magic/mvicore/android/PulseRestoreFailurePolicy;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/magic/mvicore/android/PulseRestoreFailurePolicy;
+	public static fun values ()[Lcom/magic/mvicore/android/PulseRestoreFailurePolicy;
+}
+
 public final class com/magic/mvicore/android/PulseSavedState {
-	public fun <init> (Landroidx/lifecycle/SavedStateHandle;Lcom/magic/mvicore/android/PulseSavedStateAdapter;)V
+	public fun <init> (Landroidx/lifecycle/SavedStateHandle;Lcom/magic/mvicore/android/PulseSavedStateAdapter;Lcom/magic/mvicore/android/PulseRestoreFailurePolicy;)V
+	public synthetic fun <init> (Landroidx/lifecycle/SavedStateHandle;Lcom/magic/mvicore/android/PulseSavedStateAdapter;Lcom/magic/mvicore/android/PulseRestoreFailurePolicy;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getRestoreFailurePolicy ()Lcom/magic/mvicore/android/PulseRestoreFailurePolicy;
 }
 
 public abstract interface class com/magic/mvicore/android/PulseSavedStateAdapter {
@@ -116,6 +126,7 @@ public class com/magic/mvicore/android/PulseSplitStoreViewModel : androidx/lifec
 	public final fun getState ()Lkotlinx/coroutines/flow/StateFlow;
 	public final fun getUiEffects ()Lcom/magic/mvicore/runtime/UiEffectStream;
 	protected final fun onCleared ()V
+	protected fun onPulseCleared ()V
 	public final fun send (Lcom/magic/mvicore/contract/MviUiIntent;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public final fun trySend (Lcom/magic/mvicore/contract/MviUiIntent;)Lcom/magic/mvicore/contract/EnqueueResult;
 }

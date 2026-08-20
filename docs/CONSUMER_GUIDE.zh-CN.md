@@ -25,10 +25,26 @@ Reducer 必须返回显式结果：
 如果 `Changed` 携带的 State 与当前值相等，运行时会归一成 `Unchanged`。`send` 等待完整 Frame
 结束；`trySend` 非阻塞返回 `Enqueued`、`Full` 或 `Rejected`。
 
-以 `store.state` 作为状态真相源；`store.transitions` 用于诊断与测试；`store.effects` 只能绑定一个
-协调者，且 replay=0、有界。
+以 `store.state` 作为状态真相源；`store.transitions` 用于诊断与测试，Frame 会记录处理耗时、开始时
+mailbox 深度和已观察到的历史高水位；`store.effects` 只能绑定一个协调者，且 replay=0、有界。
 
 销毁时调用 `close`；需要观察异步清理完成时再调用 `awaitClosed`。
+
+## 失败处理与不可变 State
+
+为 `PulseRuntimeConfig` 配置稳定的 `storeId`、`PulseErrorHandler` 和 `PulseRedactor`。每个受控
+框架失败都会在 `FailureContext` 中携带相同的 `storeId`，并尽可能包含 request、sequence、
+revision、输入类型、线程和组件信息。默认 Redactor 只暴露类型，不暴露业务值；转发到日志或遥测时
+也应保留这条脱敏边界。
+
+Pulse 只把受控边界中的普通 `Exception` 转换成带类型的 `PulseFailure`，不会转换
+`CancellationException` 或 JVM 致命错误。需要由 UI 展示的业务失败应建模成领域 Mutation；
+框架诊断交给 `PulseErrorHandler`。开发期可启用 `strictMode`，让损坏的诊断处理器终止所属运行时；
+生产处理器应保持不抛异常。
+
+State 必须是不可变值：优先使用只含 `val` 的 `data class`，外部集合通过 `toList()` 或 `toMap()`
+形成快照；不要把可变集合、Coroutine Job、Android View 或 Effect Handler 放进 State。相等 State
+不会重复发射。需要隔离读写时使用 Selector 或 `StateLens`，不要在 `StateFlow` 背后修改共享对象。
 
 ## Android Split Intent
 
@@ -136,8 +152,11 @@ viewModel.ObserveUiEffects(lifecycleOwner) { effect ->
 }
 ```
 
-使用 `PulseSavedStateAdapter` 只保存稳定、可恢复的业务数据。不要保存 Job、Task Token 或 UI Effect，
-也不需要为了框架让整个 State 实现 `Parcelable`。
+使用 `PulseSavedStateAdapter` 只保存稳定、可恢复的业务数据，Schema 版本和迁移逻辑由 Feature 管理。
+`PulseRestoreFailurePolicy.FALLBACK_TO_INITIAL_STATE` 会上报恢复失败并使用构造参数 State；
+`FAIL_CREATION` 会上报后终止 ViewModel 创建。不要保存 Job、Task Token 或 UI Effect，也不需要为了
+框架让整个 State 实现 `Parcelable`。子类需要额外清理时覆写 `onPulseCleared`；`onCleared` 由框架
+最终实现，不能替换。
 
 ## State Decomposition
 
@@ -176,7 +195,10 @@ fun refresh() = runPulseTest {
 ```
 
 Transition、Effect 与 Failure Probe 用于有序断言；自定义 Runtime 实现可复用 `PulseStoreTck`
-校验 Store 契约。
+校验 Store 契约。Probe 断言消息会携带最新 Transition sequence，并通过配置的 Redactor 处理 State
+和 Effect；只有确认数据可打印时才使用自定义测试 Redactor。Task 取消通过 `TaskHandle.awaitOutcome`
+断言，关闭通过 `awaitClosed` 断言；Android 生命周期和 SavedState 行为应在平台测试中验证，不要依赖
+延时碰运气。
 
 ## 迁移
 

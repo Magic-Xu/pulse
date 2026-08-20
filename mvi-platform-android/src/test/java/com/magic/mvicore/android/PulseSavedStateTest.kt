@@ -133,6 +133,47 @@ class PulseSavedStateTest {
         }
 
     @Test
+    fun `restore failure policy can report and abort ViewModel construction`() {
+        val parentJob = SupervisorJob()
+        val failures = mutableListOf<PulseFailure>()
+        val expected = IllegalStateException("restore must block creation")
+        val config = PulseRuntimeConfig(
+            storeDispatcher = mainDispatcherRule.dispatcher,
+            consumerDispatcher = mainDispatcherRule.dispatcher,
+            errorHandler = PulseErrorHandler { _, failure, _ -> failures += failure },
+            storeId = "restore-policy-test",
+        )
+        val binding = PulseSavedState(
+            handle = SavedStateHandle(),
+            adapter = object : PulseSavedStateAdapter<TestState> {
+                override fun restore(handle: SavedStateHandle): TestState? = throw expected
+
+                override fun save(state: TestState, handle: SavedStateHandle) = Unit
+            },
+            restoreFailurePolicy = PulseRestoreFailurePolicy.FAIL_CREATION,
+        )
+
+        val thrown = assertFailsWith<IllegalStateException> {
+            PulseSplitStoreViewModel<TestState, TestUi, TestMutation, TestEffect>(
+                initialState = TestState(9),
+                mutationReducer = REDUCER,
+                runtimeConfig = config,
+                savedState = binding,
+                executionOwner = PulseAndroidExecutionOwner.from(
+                    CoroutineScope(parentJob + mainDispatcherRule.dispatcher)
+                ),
+            )
+        }
+
+        assertSame(expected, thrown)
+        val reported = assertTypedSavedStateFailure(failures.single())
+        assertSame(expected, reported.cause)
+        assertEquals("restore-policy-test", reported.context.storeId)
+        assertFalse(parentJob.children.any())
+        parentJob.cancel()
+    }
+
+    @Test
     fun `ordinary save failure is typed without rolling back committed state`() =
         runTest(mainDispatcherRule.dispatcher) {
             val failures = mutableListOf<PulseFailure>()

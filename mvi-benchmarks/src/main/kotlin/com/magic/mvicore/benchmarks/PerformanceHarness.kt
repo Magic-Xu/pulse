@@ -13,13 +13,17 @@ import com.magic.mvicore.runtime.DefaultStore
 import com.magic.mvicore.runtime.PulseRuntimeConfig
 import com.magic.mvicore.extensions.selectDistinct
 import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.yield
 import java.io.File
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicInteger
 import kotlin.math.max
 
 private const val ITERATIONS = 10_000
@@ -120,7 +124,7 @@ private fun measureV03(iterations: Int): Result = runBlocking {
     )
 }
 
-private fun measureMailboxHighWater(): Int {
+private fun measureMailboxHighWater(): Int = runBlocking {
     val reducerStarted = CountDownLatch(1)
     val releaseReducer = CountDownLatch(1)
     val store = DefaultPulseStore(
@@ -132,6 +136,15 @@ private fun measureMailboxHighWater(): Int {
         },
         config = PulseRuntimeConfig(mailboxCapacity = MAILBOX_CAPACITY),
     )
+    val observedHighWater = AtomicInteger(0)
+    val collectorStarted = CountDownLatch(1)
+    val collector = launch(start = CoroutineStart.UNDISPATCHED) {
+        collectorStarted.countDown()
+        store.transitions.collect { frame ->
+            observedHighWater.updateAndGet { previous -> max(previous, frame.mailboxHighWater) }
+        }
+    }
+    check(collectorStarted.await(5, TimeUnit.SECONDS))
     check(store.trySend(BenchmarkIntent.Increment) is com.magic.mvicore.contract.EnqueueResult.Enqueued)
     check(reducerStarted.await(5, TimeUnit.SECONDS))
     var queued = 0
@@ -140,8 +153,15 @@ private fun measureMailboxHighWater(): Int {
     }
     releaseReducer.countDown()
     store.close()
-    runBlocking { store.awaitClosed() }
-    return queued
+    store.awaitClosed()
+    withTimeout(5_000L) {
+        while (observedHighWater.get() < queued) yield()
+    }
+    collector.cancelAndJoin()
+    check(observedHighWater.get() == queued) {
+        "Observed mailbox high-water ${observedHighWater.get()} did not match admitted depth $queued."
+    }
+    observedHighWater.get()
 }
 
 private fun measureSelectorHits(): Int = runBlocking {

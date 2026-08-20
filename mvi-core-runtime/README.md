@@ -19,6 +19,7 @@ dependencies {
 `DefaultPulseStore<S, I, E>` 实现 `PulseStore<S, I, E>`，主要语义如下：
 
 - 所有已接纳输入按单一全序规约：`requestId` 标识请求，`sequenceId` 逐 frame 递增，`stateRevision` 只在状态实际变化时递增。
+- 每个 frame 记录离开 mailbox 时的排队深度和截至该 frame 的历史高水位，可直接用于容量诊断。
 - `state` 是包含原子初始快照的 `StateFlow`；相等的新状态会归一化为 `Unchanged`。
 - `transitions` 发布完成后的 `TransitionFrame`。
 - `effects` 是 replay-zero 的 `UiEffectStream`，同一时刻只允许一个活跃协调者；没有协调者时不会缓存等待重放。
@@ -45,14 +46,14 @@ store.awaitClosed()
 
 `PulseRuntimeConfig` 控制邮箱容量、溢出策略、effect 缓冲、dispatcher、时钟、脱敏器和
 `PulseErrorHandler`。受控边界内的普通异常会上报为 `PulseFailure`，并携带请求、序列、阶段、
-输入类型、线程和 Store 关联信息；它不会阻断后续输入或其他消费者。
+输入类型、线程和 `FailureContext.storeId`；它不会阻断后续输入或其他消费者。
 `CancellationException` 保持取消语义。
 
 `PulseStorePlugin` 通过 `onTransition` 和 `onFailure` 观察完成 frame 与失败。插件自身的普通异常会被隔离并上报。
 
 ## v0.2 兼容
 
-`DefaultStore`、callback observer 和 `StorePlugin` 继续保留。它们是同一 v0.3 `PulseEngine` 上的兼容外观，不维护第二套 reducer 顺序或生命周期实现。
+`DefaultStore`、callback observer 和 `StorePlugin` 继续保留。它们是同一 v0.3 `PulseEngine` 上的兼容外观，不维护第二套 reducer 顺序或生命周期实现。与新 StateFlow 语义一致，相等 State 不会重复触发 legacy state callback 或 plugin state hook。
 
 ## 验证
 

@@ -73,6 +73,8 @@ internal class PulseEngine<S : MviState, I : MviIntent, E : UiEffect>(
     private val publishedSequence = AtomicLong(0L)
     private val publishedStateRevision = AtomicLong(0L)
     private val overflowDiagnosticPending = AtomicBoolean(false)
+    private val mailboxDepth = AtomicInteger(0)
+    private val mailboxHighWater = AtomicInteger(0)
 
     private var admissionState: AdmissionState = AdmissionState.OPEN
     private var started: Boolean = initiallyStarted
@@ -149,9 +151,11 @@ internal class PulseEngine<S : MviState, I : MviIntent, E : UiEffect>(
                         }
                     } else {
                         pending.requestId = nextRequestId.incrementAndGet()
+                        recordInputAdmission()
                         if (commands.trySend(Command.Input(pending)).isSuccess) {
                             EnqueueResult.Enqueued(pending.requestId)
                         } else {
+                            recordInputDequeued()
                             inputPermits.release()
                             admissionState = AdmissionState.CLOSED
                             EnqueueResult.Rejected(RejectionReason.Closed)
@@ -217,9 +221,11 @@ internal class PulseEngine<S : MviState, I : MviIntent, E : UiEffect>(
                         RejectionReason.NotStarted
                     } else {
                         pending.requestId = nextRequestId.incrementAndGet()
+                        recordInputAdmission()
                         if (commands.trySend(Command.Input(pending)).isSuccess) {
                             null
                         } else {
+                            recordInputDequeued()
                             admissionState = AdmissionState.CLOSED
                             RejectionReason.Closed
                         }
@@ -266,10 +272,11 @@ internal class PulseEngine<S : MviState, I : MviIntent, E : UiEffect>(
 
     private suspend fun processInput(pending: PendingInput<S, I, E>) {
         inputPermits.release()
+        val mailboxDepthAtStart = recordInputDequeued()
         if (!pending.markStarted()) return
 
         try {
-            processStartedInput(pending)
+            processStartedInput(pending, mailboxDepthAtStart)
         } catch (failure: Throwable) {
             // Once an input has left the mailbox it is no longer visible to drainPendingCommands.
             // Every terminal failure after that point must complete its waiter before the engine
@@ -279,7 +286,10 @@ internal class PulseEngine<S : MviState, I : MviIntent, E : UiEffect>(
         }
     }
 
-    private suspend fun processStartedInput(pending: PendingInput<S, I, E>) {
+    private suspend fun processStartedInput(
+        pending: PendingInput<S, I, E>,
+        mailboxDepthAtStart: Int,
+    ) {
         sequenceId += 1L
         val frameSequence = sequenceId
         val stateBefore = mutableState.value
@@ -299,6 +309,7 @@ internal class PulseEngine<S : MviState, I : MviIntent, E : UiEffect>(
                 startedAt = startedAt,
                 dispatcher = dispatcher,
                 cause = failure,
+                mailboxDepthAtStart = mailboxDepthAtStart,
             )
             return
         } catch (fatal: Throwable) {
@@ -334,6 +345,8 @@ internal class PulseEngine<S : MviState, I : MviIntent, E : UiEffect>(
             startedAtNanos = startedAt,
             completedAtNanos = config.clock.nanoTime(),
             dispatcher = dispatcher,
+            mailboxDepthAtStart = mailboxDepthAtStart,
+            mailboxHighWater = mailboxHighWater.get(),
         )
         publishFrame(frame)
         pending.completion?.complete(TransitionResult.Completed(frame))
@@ -346,9 +359,11 @@ internal class PulseEngine<S : MviState, I : MviIntent, E : UiEffect>(
         startedAt: Long,
         dispatcher: String,
         cause: Exception,
+        mailboxDepthAtStart: Int,
     ) {
         val failure = PulseFailure.ReducerFailure(
             context = FailureContext(
+                storeId = config.storeId,
                 requestId = pending.requestId,
                 sequenceId = sequence,
                 stateRevision = stateRevision,
@@ -369,6 +384,8 @@ internal class PulseEngine<S : MviState, I : MviIntent, E : UiEffect>(
             completedAtNanos = config.clock.nanoTime(),
             dispatcher = dispatcher,
             reducerFailure = failure,
+            mailboxDepthAtStart = mailboxDepthAtStart,
+            mailboxHighWater = mailboxHighWater.get(),
         )
         publishFrame(frame)
         reportFailure(failure)
@@ -429,9 +446,10 @@ internal class PulseEngine<S : MviState, I : MviIntent, E : UiEffect>(
         failure: PulseFailure,
         closeOnTerminal: Boolean = true,
     ) {
+        val contextualizedFailure = failure.withStoreId(config.storeId)
         try {
-            config.reportFailure(failure)
-            pluginHub.publishFailure(failure)
+            config.reportFailure(contextualizedFailure)
+            pluginHub.publishFailure(contextualizedFailure)
         } catch (terminalFailure: Throwable) {
             // Failure callbacks can also originate outside the processor (for example mailbox
             // overflow or a task diagnostic). A terminal callback failure must still establish the
@@ -509,12 +527,25 @@ internal class PulseEngine<S : MviState, I : MviIntent, E : UiEffect>(
         return current
     }
 
+    private fun recordInputAdmission() {
+        val depth = mailboxDepth.incrementAndGet()
+        while (true) {
+            val previous = mailboxHighWater.get()
+            if (depth <= previous || mailboxHighWater.compareAndSet(previous, depth)) return
+        }
+    }
+
+    private fun recordInputDequeued(): Int {
+        return mailboxDepth.updateAndGet { depth -> maxOf(0, depth - 1) }
+    }
+
     private fun drainPendingCommands(terminalFailure: Throwable?) {
         while (true) {
             val command = commands.tryReceive().getOrNull() ?: break
             when (command) {
                 is Command.Input -> {
                     inputPermits.release()
+                    recordInputDequeued()
                     val completion = command.pending.completion
                     if (terminalFailure == null) {
                         completion?.complete(TransitionResult.Rejected(RejectionReason.Closed))

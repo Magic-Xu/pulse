@@ -16,6 +16,7 @@ enum class FailurePhase {
 
 /** Redacted correlation metadata shared by all Pulse failures. */
 data class FailureContext(
+    val storeId: String? = null,
     val requestId: Long? = null,
     val sequenceId: Long? = null,
     val stateRevision: Long? = null,

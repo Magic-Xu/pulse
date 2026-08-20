@@ -29,7 +29,8 @@ dependencies {
   `cancelTask`/`cancelAllTasks` 显式取消任务。
 - task token 失效后的 mutation 会被拒绝并报告 `PulseFailure.LateMutation`。
 - `PulseStateHost` 只公开 `StateFlow` 状态和 replay-zero `UiEffectStream`。
-- `PulseSavedStateAdapter` 由 feature 决定保存格式，不要求整个状态实现 `Parcelable`。
+- `PulseSavedStateAdapter` 由 feature 决定保存格式，不要求整个状态实现 `Parcelable`；恢复失败可选
+  上报后回退初始 State，或上报后终止 ViewModel 创建。
 
 ```kotlin
 fun createScreenViewModel(repository: ScreenRepository) =
@@ -63,6 +64,9 @@ fun createScreenViewModel(repository: ScreenRepository) =
 默认生命周期绑定到 `viewModelScope`。测试或自定义 owner 可通过
 `PulseAndroidExecutionOwner.from(scope)` 注入父级生命周期；Pulse 只创建并取消自己的子 Job，
 不会取消调用方的 scope，实际执行线程仍由 `PulseRuntimeConfig` 决定。
+
+`PulseSplitStoreViewModel.onCleared` 是 final。子类需要释放自己的非 Pulse 资源时覆写
+`onPulseCleared`，不要建立第二套关闭路径。
 
 ## 显式 ViewModel owner
 

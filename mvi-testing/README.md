@@ -44,7 +44,8 @@ fun increment() = runPulseTest {
 - `TransitionProbe`：frame、sequence 和 outcome。
 - `EffectProbe`：带关联信息的 `EffectEnvelope`。
 - `FailureProbe`：类型化 `PulseFailure` 和 phase。
-- `TestRuntimeConfig`：统一测试 dispatcher、单调时钟、容量和失败探针。
+- `TestRuntimeConfig`：统一测试 dispatcher、单调时钟、容量、失败探针和脱敏器。Probe 断言默认只
+  输出脱敏后的 State/Effect 类型，并携带最新 sequence。
 - `PulseTestScope.sendConcurrently`、`runCurrent`、`advanceTimeBy`、`advanceUntilIdle`：并发与虚拟时间控制。
 
 ## 验证自定义 Store

@@ -8,6 +8,7 @@ import com.magic.mvicore.contract.PulseFailure
 import com.magic.mvicore.contract.TransitionFrame
 import com.magic.mvicore.contract.TransitionOutcome
 import com.magic.mvicore.contract.UiEffect
+import com.magic.mvicore.runtime.PulseRedactor
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withTimeout
@@ -15,7 +16,10 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 /** Recorded StateFlow values, including the initial snapshot. */
-class StateProbe<S : MviState> internal constructor() {
+class StateProbe<S : MviState> internal constructor(
+    private val redactor: PulseRedactor,
+    private val latestSequence: () -> Long?,
+) {
     private val buffer = ProbeBuffer<S>()
 
     internal fun record(state: S) = buffer.record(state)
@@ -38,9 +42,24 @@ class StateProbe<S : MviState> internal constructor() {
         timeoutMillis: Long = DEFAULT_PROBE_TIMEOUT_MILLIS,
     ): S = await(timeoutMillis) { it == expected }
 
-    fun assertLatest(expected: S) = assertEquals(expected, latest())
+    fun assertLatest(expected: S) {
+        val actual = latest()
+        assertTrue(
+            expected == actual,
+            "State mismatch at sequenceId=${latestSequence()}: " +
+                "expected=${redactor.redact(expected)} actual=${redactor.redact(actual)}",
+        )
+    }
 
-    fun assertValues(vararg expected: S) = assertEquals(expected.toList(), snapshot())
+    fun assertValues(vararg expected: S) {
+        val actual = snapshot()
+        assertTrue(
+            expected.toList() == actual,
+            "State history mismatch at sequenceId=${latestSequence()}: " +
+                "expected=${redactor.redact(expected.toList())} " +
+                "actual=${redactor.redact(actual)}",
+        )
+    }
 }
 
 /** Completed transition frames in publication order. */
@@ -73,7 +92,9 @@ class TransitionProbe<S : MviState, I : MviIntent, E : UiEffect> internal constr
 }
 
 /** UI-effect envelopes consumed by the test-owned coordinator. */
-class EffectProbe<E : UiEffect> internal constructor() {
+class EffectProbe<E : UiEffect> internal constructor(
+    private val redactor: PulseRedactor,
+) {
     private val buffer = ProbeBuffer<EffectEnvelope<E>>()
 
     internal fun record(effect: EffectEnvelope<E>) = buffer.record(effect)
@@ -93,7 +114,12 @@ class EffectProbe<E : UiEffect> internal constructor() {
     ): EffectEnvelope<E> = buffer.await(timeoutMillis) { it.payload == expected }
 
     fun assertPayloads(vararg expected: E) {
-        assertEquals(expected.toList(), snapshot().map { it.payload })
+        val actual = snapshot().map { it.payload }
+        assertTrue(
+            expected.toList() == actual,
+            "UI effect mismatch: expected=${redactor.redact(expected.toList())} " +
+                "actual=${redactor.redact(actual)}",
+        )
     }
 }
 

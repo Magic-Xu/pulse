@@ -18,7 +18,7 @@ diagnosable UI-effect delivery, lifecycle ownership, and reusable conformance te
 - One bounded FIFO mailbox serializes accepted inputs and lifecycle controls. Concurrent and
   reentrant sends cannot enter the reducer recursively.
 - Every processed input produces an immutable `TransitionFrame` with request, sequence, revision,
-  state, outcome, effect, timing, and failure correlation.
+  state, outcome, effect, timing, mailbox depth/high-water, and failure correlation.
 - `ReduceOutcome.Changed`, `Unchanged`, and `Ignored` make no-op and inapplicable inputs observable.
   Equal candidate state is normalized to `Unchanged`.
 
@@ -52,7 +52,8 @@ diagnosable UI-effect delivery, lifecycle ownership, and reusable conformance te
 - Compose adds lifecycle-aware whole-state and selector collection plus `ObserveUiEffects`; owners
   are explicit and collection is `STARTED` by default.
 - ViewModel closure is final and idempotent. Saved-state integration restores committed state only,
-  not tasks, effects, or pending runtime objects.
+  not tasks, effects, or pending runtime objects. Features choose whether an ordinary restore
+  failure falls back to initial state or aborts ViewModel creation.
 
 ### Extensions and testing
 
@@ -83,7 +84,8 @@ engine. Migration can be performed one feature at a time.
 
 Behavior that depended on callback timing should be re-tested. In particular, 0.3 defines FIFO
 reentrancy, callback isolation, cancellation handling, and an ordered close cutoff. These stronger
-rules can change timing without changing accepted API calls.
+rules can change timing without changing accepted API calls. Equal legacy state no longer triggers
+a duplicate state callback or plugin state hook.
 
 See [Compatibility Policy](./COMPATIBILITY.md) and
 [Migrating from Pulse 0.2 to 0.3](./MIGRATION_0.2_TO_0.3.md).

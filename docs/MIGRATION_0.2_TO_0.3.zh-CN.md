@@ -83,6 +83,10 @@ val reducer = PulseReducer<CounterState, CounterIntent, CounterEffect> { state, 
 如果 `Changed` 的候选状态与当前状态相等，运行时会将其归一化为 `Unchanged`。`Ignored` 不能携带
 effect。创建 outcome 时，effect 集合会被快照化。
 
+0.2 兼容外观遵循相同的相等性规则：dispatch 返回相等 State 时，不再调用 state observer 或
+`StorePlugin.onState`，但已接纳 Intent 仍可观察。若旧代码把重复 State 回调当作隐式事件通道，
+需要单独迁移并测试。
+
 ## 3. 从回调式派发迁移到有序 Store
 
 ```kotlin
@@ -170,7 +174,9 @@ Executor 可用 `intentId` 关联请求、对比稳定的 `stateAtStart` 与最�
 `reportFailure` 上报已经显式处理的失败。
 
 如果提交后的状态需要在 Android 进程重建后恢复，可提供 `PulseSavedStateAdapter`。只恢复状态值；
-任务、UI effect、订阅和 mailbox 待处理项都不会恢复。
+任务、UI effect、订阅和 mailbox 待处理项都不会恢复。Codec 失败可安全恢复时选择
+`PulseRestoreFailurePolicy.FALLBACK_TO_INITIAL_STATE`；不能接受不可信初始值时选择
+`FAIL_CREATION`。
 
 ## 6. 显式传入 Android 和 Compose owner
 

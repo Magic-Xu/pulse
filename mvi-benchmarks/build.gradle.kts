@@ -19,4 +19,7 @@ tasks.register<JavaExec>("performanceRegressionCheck") {
     mainClass.set("com.magic.mvicore.benchmarks.PerformanceHarnessKt")
     systemProperty("pulse.performance.report", rootProject.layout.buildDirectory
         .file("reports/performance/pulse-performance.json").get().asFile.absolutePath)
+    // Relative throughput is meaningful only when this process is not competing with functional,
+    // lint, publication, or stress work in the same Gradle graph.
+    mustRunAfter(":mviFrameworkCheck", ":mvi-testing:multiSeedStressCheck")
 }

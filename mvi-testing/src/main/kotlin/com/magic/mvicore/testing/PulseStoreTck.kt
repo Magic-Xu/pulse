@@ -170,6 +170,8 @@ class PulseStoreTck(
         store.failureProbe.awaitFailure<PulseFailure.MailboxOverflow>()
         assertIs<PulseFailure.MailboxOverflow>(store.failureProbe.snapshot().single())
         assertEquals(CounterState(1), store.state.value)
+        assertEquals(1, store.transitionProbe.latest().mailboxHighWater)
+        assertTrue(store.transitionProbe.latest().mailboxDepthAtStart <= 1)
     }
 
     fun closeEstablishesCutoffAndDrains() = runPulseTest {

@@ -34,6 +34,16 @@ jobs:
           ./gradlew mviAndroidDeviceCheck --stacktrace
           -Pandroid.testoptions.manageddevices.emulator.gpu=swiftshader_indirect
 
+      - name: Upload managed-device results
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: pulse-release-managed-device-results
+          if-no-files-found: ignore
+          path: |
+            app/build/reports/androidTests/managedDevice/
+            app/build/outputs/androidTest-results/managedDevice/
+
   release-check:
     runs-on: ubuntu-latest
     timeout-minutes: 60

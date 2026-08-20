@@ -161,14 +161,16 @@ class DefaultStore<S : MviState, I : MviIntent, E : MviEffect>(
         callbackHub.publishAction {
             callPlugins { it.onIntent(frame.input, frame.stateBefore) }
         }
-        // Legacy reducers always return Next and historically notify state callbacks per dispatch.
+        val stateChanged = frame.outcome == TransitionOutcome.Changed
         callbackHub.publishState(
             sequence = frame.sequenceId,
             state = frame.stateAfter,
-            stateChanged = true,
+            stateChanged = stateChanged,
         )
-        callbackHub.publishAction {
-            callPlugins { it.onState(frame.stateAfter) }
+        if (stateChanged) {
+            callbackHub.publishAction {
+                callPlugins { it.onState(frame.stateAfter) }
+            }
         }
         frame.uiEffects.forEach { envelope ->
             val effect = envelope.payload.value

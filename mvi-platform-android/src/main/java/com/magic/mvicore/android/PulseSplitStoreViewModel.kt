@@ -137,6 +137,7 @@ open class PulseSplitStoreViewModel<
     private val transitionJob: Job
     private val savedStateJob: Job?
     private val cleanupStarted = AtomicBoolean(false)
+    private val pulseClearedHookInvoked = AtomicBoolean(false)
     private val platformClosed = CompletableDeferred<Unit>()
     private var parentCompletionHandle: DisposableHandle? = null
     private val cleanupScope = CoroutineScope(
@@ -321,8 +322,17 @@ open class PulseSplitStoreViewModel<
     suspend fun awaitClosed() = platformClosed.await()
 
     final override fun onCleared() {
-        close()
+        try {
+            close()
+        } finally {
+            if (pulseClearedHookInvoked.compareAndSet(false, true)) {
+                onPulseCleared()
+            }
+        }
     }
+
+    /** Optional subclass cleanup hook invoked after the final framework-owned close request. */
+    protected open fun onPulseCleared() = Unit
 
     private fun restoreInitialState(fallback: S): S {
         val binding = savedState ?: return fallback
@@ -337,7 +347,10 @@ open class PulseSplitStoreViewModel<
                     cause = failure,
                 )
             )
-            fallback
+            when (binding.restoreFailurePolicy) {
+                PulseRestoreFailurePolicy.FALLBACK_TO_INITIAL_STATE -> fallback
+                PulseRestoreFailurePolicy.FAIL_CREATION -> throw failure
+            }
         }
     }
 

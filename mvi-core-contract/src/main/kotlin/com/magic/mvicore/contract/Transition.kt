@@ -42,6 +42,10 @@ class TransitionFrame<out S : MviState, out I : MviIntent, out E : UiEffect>(
     val completedAtNanos: Long,
     val dispatcher: String,
     val reducerFailure: PulseFailure.ReducerFailure? = null,
+    /** Queued input count after this frame left the mailbox. */
+    val mailboxDepthAtStart: Int = 0,
+    /** Maximum queued input count observed by this Store up to this completed frame. */
+    val mailboxHighWater: Int = 0,
 ) {
     val uiEffects: List<EffectEnvelope<E>> = uiEffects.toList()
 
@@ -58,7 +62,9 @@ class TransitionFrame<out S : MviState, out I : MviIntent, out E : UiEffect>(
             startedAtNanos == other.startedAtNanos &&
             completedAtNanos == other.completedAtNanos &&
             dispatcher == other.dispatcher &&
-            reducerFailure == other.reducerFailure
+            reducerFailure == other.reducerFailure &&
+            mailboxDepthAtStart == other.mailboxDepthAtStart &&
+            mailboxHighWater == other.mailboxHighWater
     }
 
     override fun hashCode(): Int {
@@ -74,6 +80,8 @@ class TransitionFrame<out S : MviState, out I : MviIntent, out E : UiEffect>(
         result = 31 * result + completedAtNanos.hashCode()
         result = 31 * result + dispatcher.hashCode()
         result = 31 * result + (reducerFailure?.hashCode() ?: 0)
+        result = 31 * result + mailboxDepthAtStart
+        result = 31 * result + mailboxHighWater
         return result
     }
 
@@ -90,6 +98,8 @@ class TransitionFrame<out S : MviState, out I : MviIntent, out E : UiEffect>(
             "startedAtNanos=$startedAtNanos, " +
             "completedAtNanos=$completedAtNanos, " +
             "dispatcher='$dispatcher', " +
-            "reducerFailure=$reducerFailure)"
+            "reducerFailure=$reducerFailure, " +
+            "mailboxDepthAtStart=$mailboxDepthAtStart, " +
+            "mailboxHighWater=$mailboxHighWater)"
     }
 }

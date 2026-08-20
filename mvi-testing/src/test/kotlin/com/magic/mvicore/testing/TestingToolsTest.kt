@@ -11,7 +11,9 @@ import com.magic.mvicore.contract.UiEffect
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import org.junit.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertSame
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -36,7 +38,29 @@ class TestingToolsTest {
             capacity = 1,
         )
         runtime.reportFailure(failure)
-        assertSame(failure, config.failureProbe.awaitCount(1).single())
+        val reported = config.failureProbe.awaitCount(1).single()
+        assertEquals("testing-tools", reported.context.storeId)
+        assertEquals(failure.context.copy(storeId = "testing-tools"), reported.context)
+    }
+
+    @Test
+    fun `state probe assertion output is redacted and correlated to a sequence`() = runPulseTest {
+        val secretInitial = "customer-secret-initial"
+        val secretExpected = "customer-secret-expected"
+        val store = testStore<SecretState, SecretIntent, SecretEffect>(
+            initialState = SecretState(secretInitial),
+            reducer = PulseReducer { previous, _ -> ReduceOutcome.Unchanged() },
+        )
+        store.send(SecretIntent.Check)
+        runCurrent()
+
+        val failure = assertFailsWith<AssertionError> {
+            store.stateProbe.assertLatest(SecretState(secretExpected))
+        }
+
+        assertTrue(failure.message.orEmpty().contains("sequenceId=1"))
+        assertFalse(failure.message.orEmpty().contains(secretInitial))
+        assertFalse(failure.message.orEmpty().contains(secretExpected))
     }
 
     @Test
@@ -77,4 +101,12 @@ class TestingToolsTest {
     private sealed interface ToolEffect : UiEffect {
         data object Notice : ToolEffect
     }
+
+    private data class SecretState(val secret: String) : MviState
+
+    private sealed interface SecretIntent : MviIntent {
+        data object Check : SecretIntent
+    }
+
+    private sealed interface SecretEffect : UiEffect
 }

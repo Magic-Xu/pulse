@@ -17,7 +17,7 @@ Pulse 0.3 为新的协程 API 和保留的 0.2 兼容 API 提供同一套有序�
 - 一个有界 FIFO mailbox 串行处理已接收输入和生命周期控制。并发与重入 send 不会递归进入
   reducer。
 - 每个已处理输入都会产生不可变 `TransitionFrame`，包含 request、sequence、revision、状态、
-  outcome、effect、耗时和失败关联信息。
+  outcome、effect、耗时、mailbox 深度/高水位和失败关联信息。
 - `ReduceOutcome.Changed`、`Unchanged` 和 `Ignored` 让无状态变化和不适用输入也可观察；相等的
   候选状态会归一化为 `Unchanged`。
 
@@ -47,7 +47,7 @@ Pulse 0.3 为新的协程 API 和保留的 0.2 兼容 API 提供同一套有序�
 - Compose 新增生命周期感知的整状态/selector 收集和 `ObserveUiEffects`；owner 必须显式传入，
   默认在 `STARTED` 时收集。
 - ViewModel 关闭是 final 且幂等的。saved-state 集成只恢复已提交状态，不恢复 task、effect 或待处理
-  运行时对象。
+  运行时对象；Feature 可选择普通恢复失败后回退初始 State，或终止 ViewModel 创建。
 
 ### Extensions 与 Testing
 
@@ -75,7 +75,8 @@ Pulse 0.3 为新的协程 API 和保留的 0.2 兼容 API 提供同一套有序�
 和 Compose Store 绑定运行在有序引擎之上，可以按功能逐步迁移。
 
 依赖回调时机的行为需要重新测试。0.3 明确定义 FIFO 重入、回调隔离、取消处理和有序 close
-截止点；这些更严格的规则可能改变时机，但不会改变已接受的 API 调用。
+截止点；这些更严格的规则可能改变时机，但不会改变已接受的 API 调用。相等的 legacy State 不再
+重复触发 state callback 或 plugin state hook。
 
 详情参见[兼容性政策](./COMPATIBILITY.zh-CN.md)和
 [从 Pulse 0.2 迁移到 0.3](./MIGRATION_0.2_TO_0.3.zh-CN.md)。

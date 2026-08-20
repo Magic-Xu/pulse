@@ -85,6 +85,10 @@ val reducer = PulseReducer<CounterState, CounterIntent, CounterEffect> { state, 
 `Changed` with a state equal to the current state is normalized to `Unchanged`. `Ignored` cannot
 carry effects. Effect collections are snapshotted when the outcome is created.
 
+The 0.2 compatibility facade follows the same equality rule: a dispatch that returns an equal state
+does not invoke state observers or `StorePlugin.onState`, although the accepted intent remains
+observable. Re-test code that used duplicate callbacks as an implicit event channel.
+
 ## 3. Move from callback dispatch to the ordered store
 
 ```kotlin
@@ -178,7 +182,9 @@ latest `currentState`, and report an explicitly handled failure through `reportF
 
 If committed state should be restored after Android process recreation, provide a
 `PulseSavedStateAdapter`. Restore only state values. Tasks, UI effects, subscriptions, and pending
-mailbox entries are intentionally not restored.
+mailbox entries are intentionally not restored. Choose
+`PulseRestoreFailurePolicy.FALLBACK_TO_INITIAL_STATE` for a recoverable codec failure or
+`FAIL_CREATION` when starting from an untrusted fallback would be unsafe.
 
 ## 6. Use explicit Android and Compose owners
 

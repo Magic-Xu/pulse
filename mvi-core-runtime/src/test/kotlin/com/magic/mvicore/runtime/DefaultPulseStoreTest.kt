@@ -276,8 +276,12 @@ class DefaultPulseStoreTest {
         }
         gate.release()
 
-        withTimeout(TIMEOUT_MILLIS) { first.await() }
+        val firstFrame = assertIs<TransitionResult.Completed<TestState, TestInput, TestEffect>>(
+            withTimeout(TIMEOUT_MILLIS) { first.await() }
+        ).frame
         withTimeout(TIMEOUT_MILLIS) { store.state.first { it == TestState(2) } }
+        assertEquals(0, firstFrame.mailboxDepthAtStart)
+        assertEquals(1, firstFrame.mailboxHighWater)
         assertIs<PulseFailure.MailboxOverflow>(recorder.snapshot().single())
         close(store)
     }
@@ -663,6 +667,7 @@ class DefaultPulseStoreTest {
         val failures = recorder.snapshot().filterIsInstance<PulseFailure.PluginFailure>()
         assertEquals(2, failures.size)
         assertTrue(failures.all { it.context.component == "ordinary-throwing-plugin" })
+        assertTrue(failures.all { it.context.storeId == "ordinary-plugin-failure-test" })
         assertEquals(TestState(3), store.state.value)
         close(store)
     }

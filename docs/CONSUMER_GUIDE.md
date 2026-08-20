@@ -25,10 +25,30 @@ Reducers return an explicit outcome:
 The runtime normalizes `Changed` with an equal state to `Unchanged`. `send` waits for the complete
 frame; `trySend` is non-blocking and returns `Enqueued`, `Full`, or `Rejected`.
 
-Collect `store.state` as the state truth. Use `store.transitions` for diagnostics and testing. Bind
+Collect `store.state` as the state truth. Use `store.transitions` for diagnostics and testing;
+frames include processing duration, mailbox depth at start, and the observed mailbox high-water. Bind
 exactly one coordinator to `store.effects`; it is replay-zero and bounded.
 
 Always call `close`, then `awaitClosed` where asynchronous cleanup must be observed.
+
+## Failure handling and immutable state
+
+Configure `PulseRuntimeConfig` with a stable `storeId`, a `PulseErrorHandler`, and a
+`PulseRedactor`. Every controlled framework failure carries the same `storeId` in its
+`FailureContext`, plus the available request, sequence, revision, input type, thread, and component
+metadata. The safe default redactor exposes types rather than application values. Keep that boundary
+when forwarding diagnostics to logs or telemetry.
+
+Pulse converts ordinary `Exception` values at controlled boundaries into typed `PulseFailure`
+values. It does not convert `CancellationException` or fatal JVM errors. Use a domain mutation for a
+business failure that the UI must render; use `PulseErrorHandler` for framework diagnostics. Enable
+`strictMode` in development when a broken diagnostic handler should stop the owning runtime, and
+keep a non-throwing handler in production.
+
+Model state as immutable values: prefer `data class` properties declared with `val`, snapshot
+incoming collections with `toList()` or `toMap()`, and never store mutable collections, coroutine
+jobs, Android views, or effect handlers in state. Equal state is not emitted again. Use selectors or
+`StateLens` to isolate reads and updates instead of mutating a shared object behind `StateFlow`.
 
 ## Android Split Intent
 
@@ -138,8 +158,12 @@ viewModel.ObserveUiEffects(lifecycleOwner) { effect ->
 }
 ```
 
-Use `PulseSavedStateAdapter` to persist only stable, restorable feature data. Do not persist jobs,
-task tokens, or UI effects, and do not make the full state `Parcelable` solely for the framework.
+Use `PulseSavedStateAdapter` to persist only stable, restorable feature data. The feature owns its
+schema version and migration logic. `PulseRestoreFailurePolicy.FALLBACK_TO_INITIAL_STATE` reports a
+restore failure and uses the constructor state; `FAIL_CREATION` reports it and aborts ViewModel
+construction. Do not persist jobs, task tokens, or UI effects, and do not make the full state
+`Parcelable` solely for the framework. Subclasses that need cleanup override `onPulseCleared`;
+`onCleared` itself remains framework-owned and final.
 
 ## State Decomposition
 
@@ -178,7 +202,11 @@ fun refresh() = runPulseTest {
 ```
 
 Use the transition, effect, and failure probes for ordered assertions. Runtime implementers can run
-the reusable `PulseStoreTck` against another `PulseStore` factory.
+the reusable `PulseStoreTck` against another `PulseStore` factory. Probe assertion messages include
+the latest transition sequence and pass state/effect values through the configured redactor. Use a
+custom test redactor only for values that are safe to print. Test task cancellation through
+`TaskHandle.awaitOutcome`, close through `awaitClosed`, and Android lifecycle/SavedState behavior in
+the platform test modules rather than relying on delays.
 
 ## Migration
 

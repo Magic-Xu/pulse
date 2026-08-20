@@ -7,6 +7,7 @@ import com.magic.mvicore.contract.TransitionFrame
 import com.magic.mvicore.contract.TransitionResult
 import com.magic.mvicore.contract.UiEffect
 import com.magic.mvicore.runtime.PulseStore
+import com.magic.mvicore.runtime.PulseRedactor
 import com.magic.mvicore.runtime.PulseTasks
 import com.magic.mvicore.runtime.UiEffectStream
 import kotlinx.coroutines.CoroutineScope
@@ -28,10 +29,13 @@ class TestPulseStore<S : MviState, I : MviIntent, E : UiEffect> internal constru
     private val delegate: PulseStore<S, I, E>,
     collectorScope: CoroutineScope,
     val failureProbe: FailureProbe,
+    redactor: PulseRedactor,
 ) : PulseStore<S, I, E> {
-    val stateProbe: StateProbe<S> = StateProbe()
     val transitionProbe: TransitionProbe<S, I, E> = TransitionProbe()
-    val effectProbe: EffectProbe<E> = EffectProbe()
+    val stateProbe: StateProbe<S> = StateProbe(redactor) {
+        transitionProbe.snapshot().lastOrNull()?.sequenceId
+    }
+    val effectProbe: EffectProbe<E> = EffectProbe(redactor)
 
     private val stopped = AtomicBoolean(false)
     private val stateCollector: Job = collectorScope.launch(start = CoroutineStart.UNDISPATCHED) {

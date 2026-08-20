@@ -95,12 +95,13 @@ data class PulseRuntimeConfig(
 
     /** Reports a typed framework failure through the configured redacted boundary. */
     fun reportFailure(failure: PulseFailure) {
+        val contextualizedFailure = failure.withStoreId(storeId)
         try {
-            errorHandler.onFailure(storeId, failure, redactor)
+            errorHandler.onFailure(storeId, contextualizedFailure, redactor)
         } catch (cancellation: CancellationException) {
             throw cancellation
         } catch (error: Exception) {
-            StandardErrorPulseErrorHandler.onFailure(storeId, failure, redactor)
+            StandardErrorPulseErrorHandler.onFailure(storeId, contextualizedFailure, redactor)
             if (strictMode) throw error
         }
     }
@@ -109,5 +110,22 @@ data class PulseRuntimeConfig(
         val nextStoreNumber = AtomicLong(0L)
 
         fun nextStoreId(): String = "pulse-store-${nextStoreNumber.incrementAndGet()}"
+    }
+}
+
+internal fun PulseFailure.withStoreId(storeId: String): PulseFailure {
+    if (context.storeId == storeId) return this
+    val enrichedContext = context.copy(storeId = storeId)
+    return when (this) {
+        is PulseFailure.ReducerFailure -> copy(context = enrichedContext)
+        is PulseFailure.StateConsumerFailure -> copy(context = enrichedContext)
+        is PulseFailure.UiEffectConsumerFailure -> copy(context = enrichedContext)
+        is PulseFailure.PluginFailure -> copy(context = enrichedContext)
+        is PulseFailure.ExecutorFailure -> copy(context = enrichedContext)
+        is PulseFailure.MailboxOverflow -> copy(context = enrichedContext)
+        is PulseFailure.UndeliveredUiEffect -> copy(context = enrichedContext)
+        is PulseFailure.LateMutation -> copy(context = enrichedContext)
+        is PulseFailure.StateRestoreFailure -> copy(context = enrichedContext)
+        is PulseFailure.StateSaveFailure -> copy(context = enrichedContext)
     }
 }

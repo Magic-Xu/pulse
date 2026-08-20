@@ -512,6 +512,7 @@ class PulseSplitStoreViewModelTest {
             assertTrue(failures.none { it is PulseFailure.ExecutorFailure })
             val rejectedLateMutation = assertIs<PulseFailure.LateMutation>(failures.single())
             assertEquals("owned-task", rejectedLateMutation.taskKey)
+            assertEquals(1, owned.pulseClearedCount)
 
             val onCleared = PulseSplitStoreViewModel::class.java.getDeclaredMethod("onCleared")
             assertTrue(Modifier.isFinal(onCleared.modifiers))
@@ -765,7 +766,14 @@ class PulseSplitStoreViewModelTest {
         mutationReducer = reducer,
         uiIntentExecutor = executor,
         runtimeConfig = runtimeConfig,
-    )
+    ) {
+        var pulseClearedCount: Int = 0
+            private set
+
+        override fun onPulseCleared() {
+            pulseClearedCount += 1
+        }
+    }
 
     private data class TestState(val value: Int) : MviState
 

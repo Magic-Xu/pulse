@@ -68,7 +68,10 @@ class PulseRuntimeConfigTest {
         assertSame(Dispatchers.IO, config.consumerDispatcher)
         assertEquals(42L, config.clock.nanoTime())
         assertTrue(config.strictMode)
-        assertEquals(listOf<PulseFailure>(failure), failures)
+        val reported = failures.single()
+        assertEquals("test-store", reported.context.storeId)
+        assertEquals(failure.context.copy(storeId = "test-store"), reported.context)
+        assertEquals(failure.phase, reported.phase)
     }
 
     @Test
