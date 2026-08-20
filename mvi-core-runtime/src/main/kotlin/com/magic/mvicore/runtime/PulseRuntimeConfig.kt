@@ -9,6 +9,15 @@ import java.util.concurrent.atomic.AtomicLong
 private const val DEFAULT_MAILBOX_CAPACITY = 64
 private const val DEFAULT_EFFECT_BUFFER_CAPACITY = 16
 
+/** Full-mailbox behavior for the non-suspending [PulseStore.trySend] path. */
+enum class MailboxOverflowPolicy {
+    /** Return `EnqueueResult.Full`; the result itself is the caller-visible signal. */
+    REJECT,
+
+    /** Return `EnqueueResult.Full` and publish one coalesced typed overflow diagnostic. */
+    REJECT_AND_REPORT,
+}
+
 /** Monotonic time source used for transition timing. */
 fun interface PulseClock {
     fun nanoTime(): Long
@@ -59,7 +68,8 @@ object StandardErrorPulseErrorHandler : PulseErrorHandler {
         System.err.println(
             "[Pulse] store=$storeId phase=${failure.phase} " +
                 "requestId=${context.requestId} sequenceId=${context.sequenceId} " +
-                "stateRevision=${context.stateRevision} component=$component cause=$causeType"
+                "stateRevision=${context.stateRevision} inputType=${context.inputType} " +
+                "thread=${context.thread} component=$component cause=$causeType"
         )
     }
 }
@@ -67,6 +77,7 @@ object StandardErrorPulseErrorHandler : PulseErrorHandler {
 /** Runtime dependencies and bounded-capacity settings shared by the v0.3 engine. */
 data class PulseRuntimeConfig(
     val mailboxCapacity: Int = DEFAULT_MAILBOX_CAPACITY,
+    val overflowPolicy: MailboxOverflowPolicy = MailboxOverflowPolicy.REJECT_AND_REPORT,
     val effectBufferCapacity: Int = DEFAULT_EFFECT_BUFFER_CAPACITY,
     val storeDispatcher: CoroutineDispatcher = Dispatchers.Default,
     val consumerDispatcher: CoroutineDispatcher = Dispatchers.Default,

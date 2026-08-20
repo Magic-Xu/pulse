@@ -6,6 +6,7 @@ import com.magic.mvicore.contract.PulseReducer
 import com.magic.mvicore.contract.TransitionResult
 import com.magic.mvicore.contract.UiEffect
 import com.magic.mvicore.runtime.PulseStorePlugin
+import com.magic.mvicore.runtime.MailboxOverflowPolicy
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -30,6 +31,7 @@ class PulseTestScope internal constructor(
 
     fun runtimeConfig(
         mailboxCapacity: Int = 64,
+        overflowPolicy: MailboxOverflowPolicy = MailboxOverflowPolicy.REJECT_AND_REPORT,
         effectBufferCapacity: Int = 16,
         failureProbe: FailureProbe = FailureProbe(),
         storeId: String = "pulse-test-store",
@@ -37,6 +39,7 @@ class PulseTestScope internal constructor(
         return TestRuntimeConfig(
             dispatcher = dispatcher,
             mailboxCapacity = mailboxCapacity,
+            overflowPolicy = overflowPolicy,
             effectBufferCapacity = effectBufferCapacity,
             failureProbe = failureProbe,
             storeId = storeId,

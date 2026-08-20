@@ -136,11 +136,16 @@ internal class PulseEngine<S : MviState, I : MviIntent, E : UiEffect>(
                     if (!started) {
                         EnqueueResult.Rejected(RejectionReason.NotStarted)
                     } else if (!inputPermits.tryAcquire()) {
-                        if (enqueueOverflowDiagnostic()) {
-                            EnqueueResult.Full
-                        } else {
-                            admissionState = AdmissionState.CLOSED
-                            EnqueueResult.Rejected(RejectionReason.Closed)
+                        when (config.overflowPolicy) {
+                            MailboxOverflowPolicy.REJECT -> EnqueueResult.Full
+                            MailboxOverflowPolicy.REJECT_AND_REPORT -> {
+                                if (enqueueOverflowDiagnostic(input)) {
+                                    EnqueueResult.Full
+                                } else {
+                                    admissionState = AdmissionState.CLOSED
+                                    EnqueueResult.Rejected(RejectionReason.Closed)
+                                }
+                            }
                         }
                     } else {
                         pending.requestId = nextRequestId.incrementAndGet()
@@ -348,6 +353,7 @@ internal class PulseEngine<S : MviState, I : MviIntent, E : UiEffect>(
                 sequenceId = sequence,
                 stateRevision = stateRevision,
                 component = COMPONENT_REDUCER,
+                inputType = pending.input.typeName(),
             ),
             cause = cause,
         )
@@ -436,16 +442,21 @@ internal class PulseEngine<S : MviState, I : MviIntent, E : UiEffect>(
     }
 
     /** Keeps caller-side overflow reporting bounded while preserving an immediate Full result. */
-    private fun enqueueOverflowDiagnostic(): Boolean {
+    private fun enqueueOverflowDiagnostic(input: I): Boolean {
         if (!overflowDiagnosticPending.compareAndSet(false, true)) return true
         val failure = PulseFailure.MailboxOverflow(
-            context = FailureContext(component = COMPONENT_MAILBOX),
+            context = FailureContext(
+                component = COMPONENT_MAILBOX,
+                inputType = input.typeName(),
+            ),
             capacity = config.mailboxCapacity,
         )
         if (commands.trySend(Command.Diagnostic(failure)).isSuccess) return true
         overflowDiagnosticPending.set(false)
         return false
     }
+
+    private fun Any.typeName(): String = this::class.qualifiedName ?: javaClass.name
 
     private suspend fun finishEngine(terminalFailure: Throwable?) {
         var cleanupFailure: Throwable? = null

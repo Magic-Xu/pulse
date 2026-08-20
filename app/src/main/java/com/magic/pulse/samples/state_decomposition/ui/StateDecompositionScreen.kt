@@ -50,9 +50,9 @@ fun StateDecompositionScreen(
         ImageDomainActions(
             isLoading = state.image.isLoading,
             selectedEffect = state.image.selectedEffect,
-            onLoadModels = { viewModel.send(StateDecompositionUiIntent.LoadImageModelsClicked) },
+            onLoadModels = { viewModel.trySend(StateDecompositionUiIntent.LoadImageModelsClicked) },
             onSelectEffect = { effect ->
-                viewModel.send(StateDecompositionUiIntent.SelectImageEffect(effect))
+                viewModel.trySend(StateDecompositionUiIntent.SelectImageEffect(effect))
             },
         )
 
@@ -61,9 +61,9 @@ fun StateDecompositionScreen(
         VideoDomainActions(
             isLoading = state.video.isLoading,
             selectedTask = state.video.selectedTask,
-            onLoadModels = { viewModel.send(StateDecompositionUiIntent.LoadVideoModelsClicked) },
+            onLoadModels = { viewModel.trySend(StateDecompositionUiIntent.LoadVideoModelsClicked) },
             onSelectTask = { task ->
-                viewModel.send(StateDecompositionUiIntent.SelectVideoTask(task))
+                viewModel.trySend(StateDecompositionUiIntent.SelectVideoTask(task))
             },
         )
 

@@ -18,6 +18,9 @@ import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.collect
 
 /** Legacy Store bridge. New v0.3 hosts should use [collectStateAsStateWithLifecycle]. */
+@Deprecated(
+    message = "Use PulseStateHost.collectStateAsStateWithLifecycle.",
+)
 @Composable
 fun <S : MviState, I : MviIntent, E : MviEffect> Store<S, I, E>.collectStateAsState(
     lifecycleOwner: LifecycleOwner,
@@ -40,6 +43,9 @@ fun <S : MviState, I : MviIntent, E : MviEffect> Store<S, I, E>.collectStateAsSt
 }
 
 /** Source-compatible v0.2 overload using the current composition owner. */
+@Deprecated(
+    message = "Use PulseStateHost.collectStateAsStateWithLifecycle with an explicit owner.",
+)
 @Composable
 fun <S : MviState, I : MviIntent, E : MviEffect> Store<S, I, E>.collectStateAsState(): State<S> {
     return collectStateAsState(lifecycleOwner = LocalLifecycleOwner.current)
@@ -50,6 +56,9 @@ fun <S : MviState, I : MviIntent, E : MviEffect> Store<S, I, E>.collectStateAsSt
  * replay-zero across STOP/START boundaries.
  */
 @Composable
+@Deprecated(
+    message = "Use ObserveUiEffects with a PulseStateHost and explicit LifecycleOwner.",
+)
 fun <S : MviState, I : MviIntent, E : MviEffect> Store<S, I, E>.observeEffects(
     lifecycleOwner: LifecycleOwner,
     minActiveState: Lifecycle.State = Lifecycle.State.STARTED,
@@ -68,6 +77,9 @@ fun <S : MviState, I : MviIntent, E : MviEffect> Store<S, I, E>.observeEffects(
 }
 
 /** Source-compatible v0.2 overload using the current composition owner. */
+@Deprecated(
+    message = "Use ObserveUiEffects with an explicit LifecycleOwner.",
+)
 @Composable
 fun <S : MviState, I : MviIntent, E : MviEffect> Store<S, I, E>.observeEffects(
     onEffect: (E) -> Unit,

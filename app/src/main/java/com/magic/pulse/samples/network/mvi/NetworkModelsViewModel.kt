@@ -1,6 +1,7 @@
 package com.magic.pulse.samples.network.mvi
 
 import com.magic.mvicore.android.PulseSplitStoreViewModel
+import com.magic.mvicore.android.PulseIntentExecutionDecision
 import com.magic.mvicore.android.PulseUiIntentExecutor
 import com.magic.mvicore.contract.TaskKey
 import com.magic.mvicore.contract.TaskPolicy
@@ -56,6 +57,7 @@ private class NetworkIntentExecutor(
                 )
             }
         }
+        PulseIntentExecutionDecision.Completed
     }
 
     private companion object {

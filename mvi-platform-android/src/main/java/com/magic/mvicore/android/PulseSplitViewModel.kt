@@ -19,6 +19,10 @@ import kotlinx.coroutines.Job
  * - UI lane: send(uiIntent)
  * - reducer lane: dispatchMutation(mutation)
  */
+@Deprecated(
+    message = "Use PulseSplitStoreViewModel; it hides mutation input and owns keyed tasks.",
+    replaceWith = ReplaceWith("PulseSplitStoreViewModel<S, UI, M, E>"),
+)
 open class PulseSplitViewModel<S : MviState, UI : MviUiIntent, M : MviMutation, E : MviEffect>(
     initialState: S,
     mutationReducer: MutationReducer<S, M, E>,
@@ -63,6 +67,9 @@ open class PulseSplitViewModel<S : MviState, UI : MviUiIntent, M : MviMutation, 
     }
 }
 
+@Deprecated(
+    message = "Use PulseUiIntentExecutor with PulseSplitStoreViewModel.",
+)
 fun interface UiIntentExecutor<S : MviState, UI : MviUiIntent, M : MviMutation, E : MviEffect> {
     fun execute(intent: UI, scope: UiIntentExecutionScope<S, UI, M, E>)
 
@@ -72,6 +79,9 @@ fun interface UiIntentExecutor<S : MviState, UI : MviUiIntent, M : MviMutation, 
     }
 }
 
+@Deprecated(
+    message = "Use PulseIntentContext; it adds task tokens and stable intent correlation.",
+)
 class UiIntentExecutionScope<S : MviState, UI : MviUiIntent, M : MviMutation, E : MviEffect>
 internal constructor(
     private val delegate: IntentExecutionScope<S, SplitIntent<UI, M>, E>,

@@ -8,6 +8,7 @@ kotlin { jvmToolchain(11) }
 
 dependencies {
     implementation(project(":mvi-core-runtime"))
+    implementation(project(":mvi-extensions"))
     implementation(libs.kotlinx.coroutines.core)
 }
 

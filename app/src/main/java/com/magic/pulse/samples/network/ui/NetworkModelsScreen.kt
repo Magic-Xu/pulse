@@ -48,8 +48,8 @@ fun NetworkModelsScreen(
         NetworkActionButtons(
             isLoading = state.isLoading,
             loadingTarget = state.loadingTarget,
-            onLoadImages = { viewModel.send(NetworkModelsUiIntent.LoadImageModelsClicked) },
-            onLoadVideos = { viewModel.send(NetworkModelsUiIntent.LoadVideoModelsClicked) },
+            onLoadImages = { viewModel.trySend(NetworkModelsUiIntent.LoadImageModelsClicked) },
+            onLoadVideos = { viewModel.trySend(NetworkModelsUiIntent.LoadVideoModelsClicked) },
         )
 
         state.lastUpdatedLabel?.let { label ->

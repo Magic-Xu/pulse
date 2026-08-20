@@ -15,7 +15,7 @@ release remains `0.2.0`.
 - Explicit `ReduceOutcome` branches, correlated `EffectEnvelope` values, typed `PulseFailure`
   diagnostics, and frame-based plugins.
 - Replay-zero `UiEffect` coordination with one active consumer session.
-- Keyed process-local tasks with `Latest`, `DropWhileRunning`, `Queue`, `Parallel`, and `Conflate`
+- Keyed process-local tasks with `Latest`, `DropWhileRunning`, bounded `Queue(capacity)`, bounded `Parallel(maxConcurrency)`, and `Conflate`
   admission policies and token validation for late mutations.
 - Android Split Store APIs, explicit ViewModel ownership, optional saved-state adapters, and
   lifecycle-aware Compose state selectors and UI-effect collection.

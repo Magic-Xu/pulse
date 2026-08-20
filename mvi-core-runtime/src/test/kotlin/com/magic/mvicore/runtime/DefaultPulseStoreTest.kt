@@ -283,6 +283,34 @@ class DefaultPulseStoreTest {
     }
 
     @Test
+    fun `reject overflow policy returns Full without publishing a diagnostic`() = runBlocking {
+        val gate = ReducerGate()
+        val recorder = FailureRecorder()
+        val store = DefaultPulseStore(
+            initialState = TestState(0),
+            reducer = gatedReducer(gate),
+            config = PulseRuntimeConfig(
+                mailboxCapacity = 1,
+                overflowPolicy = MailboxOverflowPolicy.REJECT,
+                errorHandler = recorder.handler,
+                storeId = "reject-overflow-test",
+            ),
+        )
+        val first = async(start = CoroutineStart.UNDISPATCHED) {
+            store.send(TestInput.Block)
+        }
+
+        gate.awaitEntered()
+        assertIs<EnqueueResult.Enqueued>(store.trySend(TestInput.Add(1)))
+        assertEquals(EnqueueResult.Full, store.trySend(TestInput.Add(2)))
+        gate.release()
+
+        withTimeout(TIMEOUT_MILLIS) { first.await() }
+        assertTrue(recorder.snapshot().isEmpty())
+        close(store)
+    }
+
+    @Test
     fun `background trySend overflow diagnostic runs on store dispatcher`() = runBlocking {
         val gate = ReducerGate()
         val marker = ThreadLocal<Boolean>()

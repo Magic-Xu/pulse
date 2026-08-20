@@ -77,6 +77,9 @@ internal class PluginDeliveryHub<S : MviState, I : MviIntent, E : UiEffect>(
                         sequenceId = frame?.sequenceId,
                         stateRevision = frame?.stateRevision,
                         component = pluginId,
+                        inputType = frame?.input?.let { input ->
+                            input::class.qualifiedName ?: input.javaClass.name
+                        },
                     ),
                     cause = failure,
                 )

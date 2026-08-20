@@ -23,8 +23,9 @@ Pulse 0.3 为新的协程 API 和保留的 0.2 兼容 API 提供同一套有序�
 
 ### 失败与交付契约
 
-- `PulseFailure` 通过脱敏上下文报告 reducer、consumer、plugin、executor、overflow、未交付
-  effect、过期 mutation，以及状态 restore/save 等类型化失败。
+- `PulseFailure` 通过脱敏的请求、序列、输入类型、线程和 Store 关联上下文报告 reducer、
+  consumer、plugin、executor、overflow、未交付 effect、过期 mutation，以及状态 restore/save
+  等类型化失败。
 - 一个受控 consumer 或 plugin 失败不会阻断其他 consumer 或 mailbox processor。
 - 取消和 JVM 致命错误不会转换成 Pulse failure。
 - `UiEffect` 只表示一次性前台指令。交付 replay 为 0，同一时刻只有一个活动协调者；未交付的
@@ -32,14 +33,15 @@ Pulse 0.3 为新的协程 API 和保留的 0.2 兼容 API 提供同一套有序�
 
 ### 按键异步工作
 
-- 运行时管理的 task 支持 `Latest`、`DropWhileRunning`、`Queue`、`Parallel` 和 `Conflate`。
+- 运行时管理的 task 支持 `Latest`、`DropWhileRunning`、有界 `Queue(capacity)`、有界
+  `Parallel(maxConcurrency)` 和 `Conflate`，并显式返回过载与最终 outcome。
 - task token 会阻止已替换、已取消或已关闭的工作继续发送过期 mutation。
 - task 只存在于当前进程。持久操作仍需要持久状态、操作 ID，以及持久化或外部调度器。
 
 ### Android 与 Compose
 
-- `PulseSplitStoreViewModel` 只向 UI 暴露 UI 输入，mutation 权限保留在 executor 和绑定 token 的
-  task context 内。
+- `PulseSplitStoreViewModel` 向 UI 暴露返回端到端执行结果的挂起式 `send(UI)` 和只返回接纳结果的
+  非阻塞 `trySend(UI)`；mutation 权限保留在 executor 和绑定 token 的 task context 内。
 - ViewModel 获取支持显式 owner、稳定 key、`CreationExtras` 和可选 `SavedStateHandle` adapter。
 - `PulseStateHost` 只暴露只读 state 和 UI-effect 接口。
 - Compose 新增生命周期感知的整状态/selector 收集和 `ObserveUiEffects`；owner 必须显式传入，

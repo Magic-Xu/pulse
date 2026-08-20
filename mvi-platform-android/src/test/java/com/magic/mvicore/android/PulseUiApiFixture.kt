@@ -17,7 +17,7 @@ internal class PulseUiApiFixture<
 ) {
     val stateHost: PulseStateHost<S, E> = viewModel
 
-    fun send(intent: UI) = viewModel.send(intent)
+    suspend fun send(intent: UI): PulseIntentExecutionResult = viewModel.send(intent)
 
     fun trySend(intent: UI): EnqueueResult = viewModel.trySend(intent)
 }

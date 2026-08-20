@@ -127,9 +127,11 @@ context.launchTask(TaskKey("refresh"), TaskPolicy.Latest) {
 }
 ```
 
-Choose `Latest`, `DropWhileRunning`, `Queue`, `Parallel`, or `Conflate` according to the feature's
-concurrency rule. Accepted launches expose a `TaskHandle`; await it only when a coordinator needs the
-process-local final outcome. A task is not durable across process death. Work that must survive
+Choose `Latest`, `DropWhileRunning`, `Queue(capacity)`, `Parallel(maxConcurrency)`, or `Conflate`
+according to the feature's concurrency rule. Bounded overload is returned as `QueueFull` or
+`ParallelLimitReached`. Accepted launches expose a `TaskHandle`; await it only when a coordinator
+needs the process-local final outcome. Use `cancelTask`/`cancelAllTasks` instead of retaining Jobs.
+A task is not durable across process death. Work that must survive
 recreation needs durable state, an operation identifier, and persistence or an external scheduler.
 
 ## 5. Migrate Split Intent on Android
@@ -151,11 +153,14 @@ class CounterViewModel(
     },
     uiIntentExecutor = PulseUiIntentExecutor { intent, context ->
         when (intent) {
-            CounterUiIntent.Refresh -> context.launchTask(
-                key = TaskKey("refresh"),
-                policy = TaskPolicy.Latest,
-            ) {
-                mutate(CounterMutation.Loaded(repository.load()))
+            CounterUiIntent.Refresh -> {
+                context.launchTask(
+                    key = TaskKey("refresh"),
+                    policy = TaskPolicy.Latest,
+                ) {
+                    mutate(CounterMutation.Loaded(repository.load()))
+                }
+                PulseIntentExecutionDecision.Completed
             }
         }
     },
@@ -165,6 +170,11 @@ class CounterViewModel(
 UI code receives only `send(UI)` and `trySend(UI)`. Mutation authority stays inside
 `PulseIntentContext` and token-bound task contexts; do not expose a mutation dispatcher or backing
 store from the ViewModel.
+
+Unlike core Store `send`, suspending ViewModel `send(UI)` also waits for the serial executor decision
+and returns `Completed`, `Ignored`, `Failed`, `Cancelled`, or `Rejected`. `trySend(UI)` remains
+admission-only. Executor code can correlate work with `intentId`, compare `stateAtStart` with the
+latest `currentState`, and report an explicitly handled failure through `reportFailure`.
 
 If committed state should be restored after Android process recreation, provide a
 `PulseSavedStateAdapter`. Restore only state values. Tasks, UI effects, subscriptions, and pending

@@ -18,10 +18,85 @@ public final class com/magic/mvicore/android/PulseAndroidExecutionOwner {
 }
 
 public final class com/magic/mvicore/android/PulseIntentContext {
+	public final fun cancelAllTasks ()I
 	public final fun cancelTask-3UZBuMY (Ljava/lang/String;)Z
 	public final fun getCurrentState ()Lcom/magic/mvicore/contract/MviState;
+	public final fun getIntentId ()J
+	public final fun getStateAtStart ()Lcom/magic/mvicore/contract/MviState;
 	public final fun launchTask-X6WvQZY (Ljava/lang/String;Lcom/magic/mvicore/contract/TaskPolicy;Lkotlin/jvm/functions/Function2;)Lcom/magic/mvicore/contract/TaskLaunchResult;
 	public final fun mutate (Lcom/magic/mvicore/contract/MviMutation;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun reportFailure (Ljava/lang/String;Ljava/lang/Exception;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public abstract interface class com/magic/mvicore/android/PulseIntentExecutionDecision {
+}
+
+public final class com/magic/mvicore/android/PulseIntentExecutionDecision$Completed : com/magic/mvicore/android/PulseIntentExecutionDecision {
+	public static final field INSTANCE Lcom/magic/mvicore/android/PulseIntentExecutionDecision$Completed;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/magic/mvicore/android/PulseIntentExecutionDecision$Ignored : com/magic/mvicore/android/PulseIntentExecutionDecision {
+	public fun <init> (Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;)Lcom/magic/mvicore/android/PulseIntentExecutionDecision$Ignored;
+	public static synthetic fun copy$default (Lcom/magic/mvicore/android/PulseIntentExecutionDecision$Ignored;Ljava/lang/String;ILjava/lang/Object;)Lcom/magic/mvicore/android/PulseIntentExecutionDecision$Ignored;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getReason ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public abstract interface class com/magic/mvicore/android/PulseIntentExecutionResult {
+}
+
+public final class com/magic/mvicore/android/PulseIntentExecutionResult$Cancelled : com/magic/mvicore/android/PulseIntentExecutionResult {
+	public static final field INSTANCE Lcom/magic/mvicore/android/PulseIntentExecutionResult$Cancelled;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/magic/mvicore/android/PulseIntentExecutionResult$Completed : com/magic/mvicore/android/PulseIntentExecutionResult {
+	public static final field INSTANCE Lcom/magic/mvicore/android/PulseIntentExecutionResult$Completed;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/magic/mvicore/android/PulseIntentExecutionResult$Failed : com/magic/mvicore/android/PulseIntentExecutionResult {
+	public fun <init> (Ljava/lang/Exception;)V
+	public final fun component1 ()Ljava/lang/Exception;
+	public final fun copy (Ljava/lang/Exception;)Lcom/magic/mvicore/android/PulseIntentExecutionResult$Failed;
+	public static synthetic fun copy$default (Lcom/magic/mvicore/android/PulseIntentExecutionResult$Failed;Ljava/lang/Exception;ILjava/lang/Object;)Lcom/magic/mvicore/android/PulseIntentExecutionResult$Failed;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCause ()Ljava/lang/Exception;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/magic/mvicore/android/PulseIntentExecutionResult$Ignored : com/magic/mvicore/android/PulseIntentExecutionResult {
+	public fun <init> (Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;)Lcom/magic/mvicore/android/PulseIntentExecutionResult$Ignored;
+	public static synthetic fun copy$default (Lcom/magic/mvicore/android/PulseIntentExecutionResult$Ignored;Ljava/lang/String;ILjava/lang/Object;)Lcom/magic/mvicore/android/PulseIntentExecutionResult$Ignored;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getReason ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/magic/mvicore/android/PulseIntentExecutionResult$Rejected : com/magic/mvicore/android/PulseIntentExecutionResult {
+	public fun <init> (Lcom/magic/mvicore/contract/RejectionReason;)V
+	public final fun component1 ()Lcom/magic/mvicore/contract/RejectionReason;
+	public final fun copy (Lcom/magic/mvicore/contract/RejectionReason;)Lcom/magic/mvicore/android/PulseIntentExecutionResult$Rejected;
+	public static synthetic fun copy$default (Lcom/magic/mvicore/android/PulseIntentExecutionResult$Rejected;Lcom/magic/mvicore/contract/RejectionReason;ILjava/lang/Object;)Lcom/magic/mvicore/android/PulseIntentExecutionResult$Rejected;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getReason ()Lcom/magic/mvicore/contract/RejectionReason;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
 }
 
 public final class com/magic/mvicore/android/PulseSavedState {
@@ -41,7 +116,7 @@ public class com/magic/mvicore/android/PulseSplitStoreViewModel : androidx/lifec
 	public final fun getState ()Lkotlinx/coroutines/flow/StateFlow;
 	public final fun getUiEffects ()Lcom/magic/mvicore/runtime/UiEffectStream;
 	protected final fun onCleared ()V
-	public final fun send (Lcom/magic/mvicore/contract/MviUiIntent;)V
+	public final fun send (Lcom/magic/mvicore/contract/MviUiIntent;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public final fun trySend (Lcom/magic/mvicore/contract/MviUiIntent;)Lcom/magic/mvicore/contract/EnqueueResult;
 }
 

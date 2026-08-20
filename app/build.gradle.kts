@@ -37,6 +37,17 @@ android {
     buildFeatures {
         compose = true
     }
+    testOptions {
+        managedDevices {
+            localDevices {
+                create("pulseApi35") {
+                    device = "Pixel 2"
+                    apiLevel = 35
+                    systemImageSource = "aosp"
+                }
+            }
+        }
+    }
 }
 
 dependencies {

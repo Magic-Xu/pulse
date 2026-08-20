@@ -49,8 +49,8 @@ sealed interface ScreenMutation : MviMutation {
 sealed interface ScreenEffect : UiEffect
 ```
 
-Create a `PulseSplitStoreViewModel`. UI code only calls `send` or `trySend`; mutation capability is
-owned by the executor context:
+Create a `PulseSplitStoreViewModel`. UI code only calls suspending `send` or non-blocking `trySend`;
+mutation capability is owned by the executor context:
 
 ```kotlin
 private val LOAD = TaskKey("screen.load")
@@ -72,10 +72,13 @@ class ScreenViewModel : PulseSplitStoreViewModel<
     },
     uiIntentExecutor = PulseUiIntentExecutor { intent, context ->
         when (intent) {
-            ScreenUiIntent.Refresh -> context.launchTask(LOAD, TaskPolicy.Latest) {
-                mutate(ScreenMutation.Loading)
-                val value = repository.load()
-                mutate(ScreenMutation.Loaded(value))
+            ScreenUiIntent.Refresh -> {
+                context.launchTask(LOAD, TaskPolicy.Latest) {
+                    mutate(ScreenMutation.Loading)
+                    val value = repository.load()
+                    mutate(ScreenMutation.Loaded(value))
+                }
+                PulseIntentExecutionDecision.Completed
             }
         }
     },
@@ -88,15 +91,22 @@ Choose task policy by required behavior:
 | --- | --- |
 | `Latest` | cancel and invalidate the previous generation |
 | `DropWhileRunning` | reject overlap |
-| `Queue` | run every admitted block in FIFO order |
-| `Parallel` | run all blocks concurrently |
+| `Queue(capacity)` | run admitted blocks in FIFO order with a bounded pending queue |
+| `Parallel(maxConcurrency)` | run up to the declared concurrency bound; reject excess work |
 | `Conflate` | keep the active block and only the newest pending block |
 
-`launchTask` reports admission immediately. `TaskLaunchResult.Accepted` carries a narrow handle;
+`launchTask` reports admission immediately. Besides `DroppedWhileRunning` and `Closed`, bounded
+policies return `QueueFull` or `ParallelLimitReached`. `TaskLaunchResult.Accepted` carries a narrow handle;
 `awaitOutcome()` observes `Completed`, `Replaced`, `Cancelled`, `Closed`, or `Failed` without exposing
 a Job or scope. An admitted `Latest` task can later be replaced, and an admitted pending `Conflate`
 task can be superseded before it starts. The handle describes process-local execution; represent
 durable business completion in state or a durable operation model.
+
+Suspending `viewModel.send(intent)` returns the end-to-end executor result: `Completed`,
+`Ignored(reason)`, `Failed`, `Cancelled`, or `Rejected`. `trySend` returns mailbox admission only.
+Inside the executor, use `stateAtStart` for a stable decision snapshot, `currentState` for the latest
+commit, `intentId` for correlation, and `reportFailure` for an explicitly handled feature failure.
+Use `cancelTask` or `cancelAllTasks` instead of retaining coroutine jobs.
 
 Task tokens prevent cancelled or replaced work from committing a late mutation. Never catch
 `CancellationException` as a business error; rethrow it before mapping ordinary `Exception` values.
@@ -112,6 +122,10 @@ val viewModel = pulseViewModel(
     modelClass = ScreenViewModel::class.java,
 ) { extras -> createScreenViewModel(extras) }
 ```
+
+Use the Activity/Fragment owner only for activity- or fragment-scoped features. Use the destination
+`NavBackStackEntry` for navigation-scoped state, and a nested feature's explicit owner when that
+feature must have an independent lifetime.
 
 In Compose, pass the lifecycle owner explicitly:
 

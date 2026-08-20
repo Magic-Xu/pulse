@@ -40,12 +40,14 @@ Run the same local gates used by the release workflow:
 ./gradlew verifyMavenCentralConfig
 ./gradlew mviFrameworkCheck
 ./gradlew mviReleaseCheck
+./gradlew mviAndroidDeviceCheck
 ```
 
 `mviFrameworkCheck` includes module, Android, Compose, sample app, API-baseline, staged-artifact,
 artifact-consumer, five-artifact 0.2 compatibility, and version checks. `mviReleaseCheck` adds multi-seed stress and
 the portable performance-floor harness. Passing these gates does not broaden the compatibility or
 performance evidence beyond the fixtures they execute.
+`mviAndroidDeviceCheck` runs the end-to-end sample flow on a managed API 35 device.
 
 ## Publish the stable tag
 
@@ -58,8 +60,8 @@ The official release path is `.github/workflows/publish-maven-central.yml`:
 
 The workflow is triggered only by the exact tag `v0.3.0`. Its `release-check` job verifies that the
 GitHub ref is that tag, `POM_VERSION_NAME` is exactly `0.3.0`, required metadata is present, and
-`mviReleaseCheck` passes on JDK 21. The `publish` job has an explicit dependency on `release-check`
-and publishes the same workflow commit.
+`mviReleaseCheck` and the managed-device instrumentation job pass on JDK 21. The `publish` job has
+explicit dependencies on both jobs and publishes the same workflow commit.
 
 Do not run `publishAndReleaseToMavenCentral` manually for the official v0.3.0 release. Remote
 publication belongs to the guarded workflow; Gradle publish tasks deliberately do not depend back on

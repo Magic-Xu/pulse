@@ -20,6 +20,8 @@ data class FailureContext(
     val sequenceId: Long? = null,
     val stateRevision: Long? = null,
     val component: String? = null,
+    val inputType: String? = null,
+    val thread: String = Thread.currentThread().name,
 )
 
 /**

@@ -56,6 +56,11 @@ public final class com/magic/mvicore/extensions/StateLens {
 	public fun toString ()Ljava/lang/String;
 }
 
+public final class com/magic/mvicore/extensions/StateSelectionKt {
+	public static final fun selectDistinct (Lkotlinx/coroutines/flow/StateFlow;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;)Lkotlinx/coroutines/flow/Flow;
+	public static synthetic fun selectDistinct$default (Lkotlinx/coroutines/flow/StateFlow;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)Lkotlinx/coroutines/flow/Flow;
+}
+
 public final class com/magic/mvicore/extensions/StateTransition {
 	public fun <init> (Lcom/magic/mvicore/contract/MviState;Lcom/magic/mvicore/contract/MviIntent;Lcom/magic/mvicore/contract/MviState;)V
 	public final fun component1 ()Lcom/magic/mvicore/contract/MviState;

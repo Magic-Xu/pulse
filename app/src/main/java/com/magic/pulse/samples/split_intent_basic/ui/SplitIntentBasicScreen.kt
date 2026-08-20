@@ -52,9 +52,9 @@ fun SplitIntentBasicScreen(
         SplitIntentBasicActionRow(
             isLoading = state.isLoading,
             loadingTarget = state.loadingTarget,
-            onLoadImages = { viewModel.send(SplitIntentBasicUiIntent.LoadImageModelsClicked) },
-            onLoadVideos = { viewModel.send(SplitIntentBasicUiIntent.LoadVideoModelsClicked) },
-            onClear = { viewModel.send(SplitIntentBasicUiIntent.ClearAllClicked) },
+            onLoadImages = { viewModel.trySend(SplitIntentBasicUiIntent.LoadImageModelsClicked) },
+            onLoadVideos = { viewModel.trySend(SplitIntentBasicUiIntent.LoadVideoModelsClicked) },
+            onClear = { viewModel.trySend(SplitIntentBasicUiIntent.ClearAllClicked) },
         )
         Text("requestCount = ${state.requestCount}")
         Text("lastOperation = ${state.lastOperation}")

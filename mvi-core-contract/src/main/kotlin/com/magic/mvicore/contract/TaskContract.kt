@@ -20,11 +20,23 @@ sealed interface TaskPolicy {
     /** Reject new work while the key already has active work. */
     data object DropWhileRunning : TaskPolicy
 
-    /** Run admitted work serially in FIFO order. */
-    data object Queue : TaskPolicy
+    /** Run admitted work serially in FIFO order with at most [capacity] pending requests. */
+    data class Queue(
+        val capacity: Int,
+    ) : TaskPolicy {
+        init {
+            require(capacity > 0) { "Queue capacity must be greater than zero." }
+        }
+    }
 
-    /** Run all admitted work concurrently without an implicit concurrency limit. */
-    data object Parallel : TaskPolicy
+    /** Run at most [maxConcurrency] requests concurrently; excess requests are rejected. */
+    data class Parallel(
+        val maxConcurrency: Int,
+    ) : TaskPolicy {
+        init {
+            require(maxConcurrency > 0) { "Parallel maxConcurrency must be greater than zero." }
+        }
+    }
 
     /** While work is active, retain only the most recently admitted pending block. */
     data object Conflate : TaskPolicy
@@ -76,6 +88,14 @@ sealed interface TaskLaunchResult {
     ) : TaskLaunchResult
 
     data object DroppedWhileRunning : TaskLaunchResult
+
+    data class QueueFull(
+        val capacity: Int,
+    ) : TaskLaunchResult
+
+    data class ParallelLimitReached(
+        val maxConcurrency: Int,
+    ) : TaskLaunchResult
 
     data object Closed : TaskLaunchResult
 }

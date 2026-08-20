@@ -49,7 +49,8 @@ sealed interface ScreenMutation : MviMutation {
 sealed interface ScreenEffect : UiEffect
 ```
 
-创建 `PulseSplitStoreViewModel`。UI 只调用 `send` 或 `trySend`，Mutation 能力只属于 Executor：
+创建 `PulseSplitStoreViewModel`。UI 只调用挂起式 `send` 或非阻塞 `trySend`，Mutation 能力只属于
+Executor：
 
 ```kotlin
 private val LOAD = TaskKey("screen.load")
@@ -71,10 +72,13 @@ class ScreenViewModel : PulseSplitStoreViewModel<
     },
     uiIntentExecutor = PulseUiIntentExecutor { intent, context ->
         when (intent) {
-            ScreenUiIntent.Refresh -> context.launchTask(LOAD, TaskPolicy.Latest) {
-                mutate(ScreenMutation.Loading)
-                val value = repository.load()
-                mutate(ScreenMutation.Loaded(value))
+            ScreenUiIntent.Refresh -> {
+                context.launchTask(LOAD, TaskPolicy.Latest) {
+                    mutate(ScreenMutation.Loading)
+                    val value = repository.load()
+                    mutate(ScreenMutation.Loaded(value))
+                }
+                PulseIntentExecutionDecision.Completed
             }
         }
     },
@@ -87,14 +91,21 @@ class ScreenViewModel : PulseSplitStoreViewModel<
 | --- | --- |
 | `Latest` | 取消并使上一代任务失效 |
 | `DropWhileRunning` | 运行中拒绝重叠任务 |
-| `Queue` | 所有接纳任务按 FIFO 串行运行 |
-| `Parallel` | 所有接纳任务并行运行 |
+| `Queue(capacity)` | 按 FIFO 运行，并限制待执行队列容量 |
+| `Parallel(maxConcurrency)` | 最多并行到声明上限，超出请求立即拒绝 |
 | `Conflate` | 保留当前任务，并只保留最新一个待执行任务 |
 
-`launchTask` 会立即返回接纳结果。`TaskLaunchResult.Accepted` 携带一个窄 Handle；
+`launchTask` 会立即返回接纳结果。除 `DroppedWhileRunning` 和 `Closed` 外，有界策略还会返回
+`QueueFull` 或 `ParallelLimitReached`。`TaskLaunchResult.Accepted` 携带一个窄 Handle；
 `awaitOutcome()` 可观察 `Completed`、`Replaced`、`Cancelled`、`Closed` 或 `Failed`，但不会暴露
 Job 或 Scope。已接纳的 `Latest` 任务仍可能被替换，尚未开始的 `Conflate` 任务也可能被覆盖。
 Handle 只描述进程内执行；持久业务完成状态仍应建模在 State 或持久操作中。
+
+挂起式 `viewModel.send(intent)` 返回 executor 端到端结果：`Completed`、`Ignored(reason)`、
+`Failed`、`Cancelled` 或 `Rejected`；`trySend` 只返回 mailbox 接纳结果。Executor 内使用
+`stateAtStart` 做稳定快照决策、用 `currentState` 读取最新提交、用 `intentId` 做关联，并通过
+`reportFailure` 上报已经显式处理的功能失败。取消任务时使用 `cancelTask` 或 `cancelAllTasks`，
+不要保存 Coroutine Job。
 
 Task Token 会阻止被取消或替换的任务提交迟到 Mutation。绝不能把 `CancellationException` 映射为
 业务失败；应先原样抛出，再处理普通 `Exception`。
@@ -110,6 +121,9 @@ val viewModel = pulseViewModel(
     modelClass = ScreenViewModel::class.java,
 ) { extras -> createScreenViewModel(extras) }
 ```
+
+Activity/Fragment owner 只用于相同作用域的功能；导航目的地状态使用对应 `NavBackStackEntry`，
+需要独立生命周期的嵌套功能使用它自己的显式 owner。
 
 Compose 中显式传入 LifecycleOwner：
 

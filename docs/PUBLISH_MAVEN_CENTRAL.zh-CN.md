@@ -39,11 +39,13 @@ Maven Central 对坐标、签名、source archive 和 POM metadata 的要求参�
 ./gradlew verifyMavenCentralConfig
 ./gradlew mviFrameworkCheck
 ./gradlew mviReleaseCheck
+./gradlew mviAndroidDeviceCheck
 ```
 
 `mviFrameworkCheck` 包含模块、Android、Compose、示例应用、API 基线、暂存制品、纯制品消费者、
 五制品 0.2 兼容和版本检查。`mviReleaseCheck` 还会运行多 seed 压力检查和可移植性能下限 harness。
 门禁通过不代表兼容或性能证据超出了这些 fixture 的实际覆盖范围。
+`mviAndroidDeviceCheck` 会在托管 API 35 设备上运行示例端到端流程。
 
 ## 发布稳定 tag
 
@@ -55,8 +57,8 @@ Maven Central 对坐标、签名、source archive 和 POM metadata 的要求参�
 4. 观察 `Publish Maven Central` workflow。
 
 workflow 只由准确 tag `v0.3.0` 触发。`release-check` job 会验证 GitHub ref、
-`POM_VERSION_NAME=0.3.0`、必要 metadata，并在 JDK 21 上运行 `mviReleaseCheck`。`publish` job 显式
-依赖 `release-check`，并发布同一个 workflow commit。
+`POM_VERSION_NAME=0.3.0`、必要 metadata，并在 JDK 21 上运行 `mviReleaseCheck` 和托管设备测试。
+`publish` job 显式依赖两个 job，并发布同一个 workflow commit。
 
 不要为正式 v0.3.0 手动运行 `publishAndReleaseToMavenCentral`。远程发布只属于受保护的 workflow；
 Gradle publish task 也不会反向依赖 `mviReleaseCheck`。

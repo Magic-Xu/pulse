@@ -19,6 +19,9 @@ import kotlinx.coroutines.cancel
  * Child classes can add their own APIs, but state transition is still constrained
  * to reducer-driven dispatch.
  */
+@Deprecated(
+    message = "Use PulseSplitStoreViewModel or own a DefaultPulseStore explicitly.",
+)
 open class PulseViewModel<S : MviState, I : MviIntent, E : MviEffect>(
     initialState: S,
     reducer: Reducer<S, I, E>,

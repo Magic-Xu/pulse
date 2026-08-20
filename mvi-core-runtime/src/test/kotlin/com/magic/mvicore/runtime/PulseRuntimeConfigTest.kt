@@ -44,6 +44,7 @@ class PulseRuntimeConfigTest {
         }
         val config = PulseRuntimeConfig(
             mailboxCapacity = 3,
+            overflowPolicy = MailboxOverflowPolicy.REJECT,
             effectBufferCapacity = 5,
             storeDispatcher = Dispatchers.Unconfined,
             consumerDispatcher = Dispatchers.IO,
@@ -61,6 +62,7 @@ class PulseRuntimeConfigTest {
         config.reportFailure(failure)
 
         assertEquals(3, config.mailboxCapacity)
+        assertEquals(MailboxOverflowPolicy.REJECT, config.overflowPolicy)
         assertEquals(5, config.effectBufferCapacity)
         assertSame(Dispatchers.Unconfined, config.storeDispatcher)
         assertSame(Dispatchers.IO, config.consumerDispatcher)
@@ -80,6 +82,8 @@ class PulseRuntimeConfigTest {
                 requestId = 7L,
                 sequenceId = 9L,
                 component = secretComponent,
+                inputType = "com.example.Refresh",
+                thread = "pulse-main",
             ),
             cause = IllegalStateException(secretMessage),
         )
@@ -94,6 +98,8 @@ class PulseRuntimeConfigTest {
         val diagnostic = output.toString(Charsets.UTF_8.name())
         assertTrue(diagnostic.contains("[Pulse] store=safe-store"))
         assertTrue(diagnostic.contains("phase=UI_EFFECT_CONSUMER"))
+        assertTrue(diagnostic.contains("inputType=com.example.Refresh"))
+        assertTrue(diagnostic.contains("thread=pulse-main"))
         assertTrue(diagnostic.contains("cause=java.lang.IllegalStateException"))
         assertFalse(diagnostic.contains(secretComponent))
         assertFalse(diagnostic.contains(secretMessage))

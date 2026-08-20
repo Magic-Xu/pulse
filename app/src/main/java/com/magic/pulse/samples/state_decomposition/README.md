@@ -16,6 +16,6 @@ This sample demonstrates a large-state feature split into two state domains:
 
 - domain state isolation makes reducer logic smaller and easier to debug
 - each mutation branch is localized to one domain
-- ViewModel keeps one UI entry (`send(uiIntent)`) while task tokens reject late mutations
+- ViewModel keeps one UI input surface (`send`/`trySend`) while task tokens reject late mutations
 
 Use this sample only when basic/standard style starts to become too large.

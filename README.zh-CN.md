@@ -64,8 +64,9 @@ scope.launch {
 }
 ```
 
-Android 功能优先使用 `PulseSplitStoreViewModel`：UI 侧只能看到 `send(UI)` 与 `trySend(UI)`；
-Mutation 和 Keyed Task 只存在于 `PulseIntentContext` 内。
+Android 功能优先使用 `PulseSplitStoreViewModel`：UI 侧只能看到返回 executor 结果的挂起式
+`send(UI)`，以及只返回 mailbox 接纳结果的非阻塞 `trySend(UI)`；Mutation 和 Keyed Task 只存在于
+`PulseIntentContext` 内。
 
 ## 依赖配置
 

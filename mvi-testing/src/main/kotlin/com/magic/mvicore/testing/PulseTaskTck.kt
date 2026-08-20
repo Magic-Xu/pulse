@@ -79,7 +79,7 @@ class PulseTaskTck(
         val started = mutableListOf<Int>()
         val gates = List(3) { CompletableDeferred<Unit>() }
         val handles = (1..3).map { value ->
-            store.tasks.launch(key, TaskPolicy.Queue) {
+            store.tasks.launch(key, TaskPolicy.Queue(capacity = 4)) {
                 started += value
                 gates[value - 1].await()
             }.acceptedHandle()
@@ -102,13 +102,34 @@ class PulseTaskTck(
         )
     }
 
+    fun queueRejectsBeyondItsPendingCapacity() = runPulseTest {
+        val store = taskStore()
+        val key = TaskKey("bounded-queue")
+        val release = CompletableDeferred<Unit>()
+        val active = store.tasks.launch(key, TaskPolicy.Queue(capacity = 1)) {
+            release.await()
+        }.acceptedHandle()
+        runCurrent()
+        val pending = store.tasks.launch(key, TaskPolicy.Queue(capacity = 1)) { }
+            .acceptedHandle()
+
+        assertEquals(
+            TaskLaunchResult.QueueFull(capacity = 1),
+            store.tasks.launch(key, TaskPolicy.Queue(capacity = 1)) { },
+        )
+        release.complete(Unit)
+        runCurrent()
+        assertEquals(TaskOutcome.Completed, active.awaitOutcome())
+        assertEquals(TaskOutcome.Completed, pending.awaitOutcome())
+    }
+
     fun parallelStartsEveryAdmittedRequestWithAnIndependentToken() = runPulseTest {
         val store = taskStore()
         val key = TaskKey("parallel")
         val release = CompletableDeferred<Unit>()
         val tokens = mutableListOf<TaskToken>()
         val handles = (1..3).map {
-            store.tasks.launch(key, TaskPolicy.Parallel) { token ->
+            store.tasks.launch(key, TaskPolicy.Parallel(maxConcurrency = 4)) { token ->
                 tokens += token
                 release.await()
             }.acceptedHandle()
@@ -126,6 +147,24 @@ class PulseTaskTck(
             listOf(TaskOutcome.Completed, TaskOutcome.Completed, TaskOutcome.Completed),
             handles.map { it.awaitOutcome() },
         )
+    }
+
+    fun parallelRejectsBeyondItsConcurrencyLimit() = runPulseTest {
+        val store = taskStore()
+        val key = TaskKey("bounded-parallel")
+        val release = CompletableDeferred<Unit>()
+        val active = store.tasks.launch(key, TaskPolicy.Parallel(maxConcurrency = 1)) {
+            release.await()
+        }.acceptedHandle()
+        runCurrent()
+
+        assertEquals(
+            TaskLaunchResult.ParallelLimitReached(maxConcurrency = 1),
+            store.tasks.launch(key, TaskPolicy.Parallel(maxConcurrency = 1)) { },
+        )
+        release.complete(Unit)
+        runCurrent()
+        assertEquals(TaskOutcome.Completed, active.awaitOutcome())
     }
 
     fun conflateKeepsTheActiveAndOnlyTheNewestPendingRequest() = runPulseTest {
@@ -189,6 +228,27 @@ class PulseTaskTck(
             TaskLaunchResult.Closed,
             store.tasks.launch(TaskKey("after-close"), TaskPolicy.Latest) { },
         )
+    }
+
+    fun cancelAllInvalidatesEveryKeyWithoutClosingTheRegistry() = runPulseTest {
+        val store = taskStore()
+        val handles = listOf("one", "two").map { value ->
+            store.tasks.launch(TaskKey(value), TaskPolicy.Latest) {
+                awaitCancellation()
+            }.acceptedHandle()
+        }
+        runCurrent()
+
+        assertEquals(2, store.tasks.cancelAll())
+        assertEquals(listOf(TaskOutcome.Cancelled, TaskOutcome.Cancelled), handles.map {
+            it.awaitOutcome()
+        })
+        assertEquals(0, store.tasks.cancelAll())
+
+        val recovered = store.tasks.launch(TaskKey("three"), TaskPolicy.Latest) { }
+            .acceptedHandle()
+        runCurrent()
+        assertEquals(TaskOutcome.Completed, recovered.awaitOutcome())
     }
 
     fun staleTokenValidationReportsOneLateMutationDiagnostic() = runPulseTest {

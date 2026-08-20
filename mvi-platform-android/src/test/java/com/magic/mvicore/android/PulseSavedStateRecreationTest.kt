@@ -220,6 +220,7 @@ class PulseSavedStateRecreationTest {
                     }
                 }
             }
+            PulseIntentExecutionDecision.Completed
         },
         runtimeConfig = runtimeConfig,
         savedState = PulseSavedState(handle, SAVED_STATE_ADAPTER),

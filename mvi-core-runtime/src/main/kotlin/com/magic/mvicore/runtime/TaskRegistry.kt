@@ -73,6 +73,23 @@ internal class TaskRegistry(
                 return TaskLaunchResult.DroppedWhileRunning
             }
 
+            if (
+                state != null &&
+                policy is TaskPolicy.Queue &&
+                state.activeTasks.isNotEmpty() &&
+                state.queued.size >= policy.capacity
+            ) {
+                return TaskLaunchResult.QueueFull(policy.capacity)
+            }
+
+            if (
+                state != null &&
+                policy is TaskPolicy.Parallel &&
+                state.activeTasks.size >= policy.maxConcurrency
+            ) {
+                return TaskLaunchResult.ParallelLimitReached(policy.maxConcurrency)
+            }
+
             admittedRequest = TaskRequest(
                 requestId = ++nextRequestId,
                 block = block,
@@ -96,7 +113,7 @@ internal class TaskRegistry(
                         jobToStart = createActiveTaskLocked(key, state, admittedRequest)
                     }
 
-                    TaskPolicy.Queue -> {
+                    is TaskPolicy.Queue -> {
                         if (state.activeTasks.isEmpty()) {
                             jobToStart = createActiveTaskLocked(key, state, admittedRequest)
                         } else {
@@ -104,7 +121,7 @@ internal class TaskRegistry(
                         }
                     }
 
-                    TaskPolicy.Parallel -> {
+                    is TaskPolicy.Parallel -> {
                         jobToStart = createActiveTaskLocked(key, state, admittedRequest)
                     }
 
@@ -177,6 +194,30 @@ internal class TaskRegistry(
             job.cancel(CancellationException("Keyed task cancelled."))
         }
         return true
+    }
+
+    override fun cancelAll(): Int {
+        val jobsToCancel = mutableListOf<Job>()
+        val terminalUpdates = mutableListOf<TerminalUpdate>()
+        val cancelledKeys = synchronized(lock) {
+            if (closed) return 0
+            val count = states.size
+            states.values.forEach { state ->
+                state.detachAll(
+                    outcome = TaskOutcome.Cancelled,
+                    jobsToCancel = jobsToCancel,
+                    terminalUpdates = terminalUpdates,
+                )
+            }
+            states.clear()
+            count
+        }
+
+        terminalUpdates.completeAll()
+        jobsToCancel.forEach { job ->
+            job.cancel(CancellationException("All keyed tasks cancelled."))
+        }
+        return cancelledKeys
     }
 
     /** Invalidates all tokens, discards pending work, and cancels every active task. */
@@ -286,11 +327,11 @@ internal class TaskRegistry(
 
             if (state.activeTasks.isEmpty()) {
                 val next = when (state.policy) {
-                    TaskPolicy.Queue -> state.queued.pollFirst()
+                    is TaskPolicy.Queue -> state.queued.pollFirst()
                     TaskPolicy.Conflate -> state.conflated.also { state.conflated = null }
                     TaskPolicy.Latest,
                     TaskPolicy.DropWhileRunning,
-                    TaskPolicy.Parallel,
+                    is TaskPolicy.Parallel,
                     -> null
                 }
 

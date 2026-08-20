@@ -64,8 +64,9 @@ scope.launch {
 }
 ```
 
-For Android features, prefer `PulseSplitStoreViewModel`: UI code only receives `send(UI)` and
-`trySend(UI)`. Mutations and keyed tasks are available only inside `PulseIntentContext`.
+For Android features, prefer `PulseSplitStoreViewModel`: UI code only receives suspending
+`send(UI)`, which returns the executor result, and non-blocking `trySend(UI)`, which returns mailbox
+admission. Mutations and keyed tasks are available only inside `PulseIntentContext`.
 
 ## Dependency setup
 

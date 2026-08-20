@@ -7,6 +7,7 @@ import androidx.lifecycle.SavedStateHandle
 import com.magic.mvicore.android.PulseSavedState
 import com.magic.mvicore.android.PulseSavedStateAdapter
 import com.magic.mvicore.android.PulseSplitStoreViewModel
+import com.magic.mvicore.android.PulseIntentExecutionDecision
 import com.magic.mvicore.android.PulseUiIntentExecutor
 import com.magic.mvicore.android.compose.collectSelectedState
 import com.magic.mvicore.contract.MviMutation
@@ -70,6 +71,7 @@ class AsyncLatestViewModel(
                 }
             }
         }
+        PulseIntentExecutionDecision.Completed
     },
     savedState = PulseSavedState(savedStateHandle, AsyncSavedStateAdapter),
 )

@@ -16,6 +16,6 @@
 
 - 分域隔离后 reducer 逻辑更小、更易排查
 - 每类 mutation 只落在对应领域分支，职责边界更清晰
-- ViewModel 仍保持 UI 单入口 `send(uiIntent)`，Task Token 会拒绝迟到 Mutation
+- ViewModel 仍保持 UI 单一输入面（`send`/`trySend`），Task Token 会拒绝迟到 Mutation
 
 建议在 Basic/Standard 已经出现明显复杂度压力时再引入本方案。

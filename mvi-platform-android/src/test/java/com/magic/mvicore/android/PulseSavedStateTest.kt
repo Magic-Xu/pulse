@@ -15,10 +15,13 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.async
 import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import org.junit.Rule
 import org.junit.Test
@@ -27,7 +30,6 @@ import java.util.concurrent.TimeUnit
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
-import kotlin.test.assertIs
 import kotlin.test.assertIs
 import kotlin.test.assertSame
 import kotlin.test.assertTrue
@@ -189,13 +191,16 @@ class PulseSavedStateTest {
                 },
                 uiIntentExecutor = PulseUiIntentExecutor { intent, context ->
                     if (intent is TestUi.Add) context.mutate(TestMutation.Add(intent.amount))
+                    PulseIntentExecutionDecision.Completed
                 },
                 runtimeConfig = config,
                 savedState = PulseSavedState(handle, CountSavedStateAdapter),
             )
 
-            viewModel.send(TestUi.Add(8))
-            advanceUntilIdle()
+            val sendResult = async(start = CoroutineStart.UNDISPATCHED) {
+                viewModel.send(TestUi.Add(8))
+            }
+            runCurrent()
             assertTrue(
                 kotlinx.coroutines.withContext(Dispatchers.IO) {
                     reducerStarted.await(5, TimeUnit.SECONDS)
@@ -206,6 +211,7 @@ class PulseSavedStateTest {
             advanceUntilIdle()
             viewModel.awaitClosed()
 
+            assertEquals(PulseIntentExecutionResult.Cancelled, sendResult.await())
             assertEquals(TestState(8), viewModel.state.value)
             assertEquals(8, handle.get<Int>(COUNT_KEY))
             assertTrue(failures.isEmpty())
@@ -339,6 +345,7 @@ class PulseSavedStateTest {
             mutationReducer = REDUCER,
             uiIntentExecutor = PulseUiIntentExecutor { intent, context ->
                 if (intent is TestUi.Add) context.mutate(TestMutation.Add(intent.amount))
+                PulseIntentExecutionDecision.Completed
             },
             runtimeConfig = config,
             savedState = savedState,

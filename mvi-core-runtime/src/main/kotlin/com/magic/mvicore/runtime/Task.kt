@@ -21,4 +21,7 @@ interface PulseTasks {
     fun validate(token: TaskToken): Boolean
 
     fun cancel(key: TaskKey): Boolean
+
+    /** Cancels every active or pending request and returns the number of keys invalidated. */
+    fun cancelAll(): Int
 }

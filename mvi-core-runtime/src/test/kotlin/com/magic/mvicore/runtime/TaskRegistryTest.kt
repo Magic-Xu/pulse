@@ -112,7 +112,7 @@ class TaskRegistryTest {
         val starts = mutableListOf<Int>()
         val gates = (1..3).associateWith { CompletableDeferred<Unit>() }
         val handles = (1..3).associateWith { item ->
-            fixture.registry.launch(key, TaskPolicy.Queue) {
+            fixture.registry.launch(key, TaskPolicy.Queue(capacity = 4)) {
                 starts += item
                 gates.getValue(item).await()
             }.accepted()
@@ -138,13 +138,33 @@ class TaskRegistryTest {
     }
 
     @Test
+    fun `queue capacity bounds pending requests and rejects overflow explicitly`() = runTest {
+        val fixture = Fixture(this)
+        val key = TaskKey("bounded-upload")
+        val release = CompletableDeferred<Unit>()
+        fixture.registry.launch(key, TaskPolicy.Queue(capacity = 1)) {
+            release.await()
+        }.accepted()
+        runCurrent()
+        fixture.registry.launch(key, TaskPolicy.Queue(capacity = 1)) { }.accepted()
+
+        assertEquals(
+            TaskLaunchResult.QueueFull(capacity = 1),
+            fixture.registry.launch(key, TaskPolicy.Queue(capacity = 1)) { },
+        )
+        release.complete(Unit)
+        runCurrent()
+        fixture.close()
+    }
+
+    @Test
     fun `parallel starts and completes every admitted request independently`() = runTest {
         val fixture = Fixture(this)
         val key = TaskKey("prefetch")
         val tokens = mutableMapOf<Int, TaskToken>()
         val gates = (1..3).associateWith { CompletableDeferred<Unit>() }
         val handles = (1..3).associateWith { item ->
-            fixture.registry.launch(key, TaskPolicy.Parallel) { token ->
+            fixture.registry.launch(key, TaskPolicy.Parallel(maxConcurrency = 4)) { token ->
                 tokens[item] = token
                 gates.getValue(item).await()
             }.accepted()
@@ -164,6 +184,25 @@ class TaskRegistryTest {
         fixture.close()
         assertEquals(TaskOutcome.Closed, handles.getValue(1).awaitOutcome())
         assertEquals(TaskOutcome.Closed, handles.getValue(3).awaitOutcome())
+    }
+
+    @Test
+    fun `parallel limit rejects excess work explicitly`() = runTest {
+        val fixture = Fixture(this)
+        val key = TaskKey("bounded-prefetch")
+        val release = CompletableDeferred<Unit>()
+        fixture.registry.launch(key, TaskPolicy.Parallel(maxConcurrency = 1)) {
+            release.await()
+        }.accepted()
+        runCurrent()
+
+        assertEquals(
+            TaskLaunchResult.ParallelLimitReached(maxConcurrency = 1),
+            fixture.registry.launch(key, TaskPolicy.Parallel(maxConcurrency = 1)) { },
+        )
+        release.complete(Unit)
+        runCurrent()
+        fixture.close()
     }
 
     @Test
@@ -211,17 +250,17 @@ class TaskRegistryTest {
         val oldStarted = CompletableDeferred<Unit>()
         var oldPendingRan = false
 
-        val oldActive = fixture.registry.launch(key, TaskPolicy.Queue) {
+        val oldActive = fixture.registry.launch(key, TaskPolicy.Queue(capacity = 4)) {
             oldStarted.complete(Unit)
             awaitCancellation()
         }.accepted()
         runCurrent()
         oldStarted.await()
-        val oldPending = fixture.registry.launch(key, TaskPolicy.Queue) {
+        val oldPending = fixture.registry.launch(key, TaskPolicy.Queue(capacity = 4)) {
             oldPendingRan = true
         }.accepted()
 
-        val replacement = fixture.registry.launch(key, TaskPolicy.Parallel) {
+        val replacement = fixture.registry.launch(key, TaskPolicy.Parallel(maxConcurrency = 4)) {
             awaitCancellation()
         }.accepted()
         val expected = TaskOutcome.Replaced(TaskReplacementReason.POLICY_CHANGED)
@@ -240,13 +279,13 @@ class TaskRegistryTest {
         val key = TaskKey("load")
         val activeStarted = CompletableDeferred<Unit>()
 
-        val active = fixture.registry.launch(key, TaskPolicy.Queue) {
+        val active = fixture.registry.launch(key, TaskPolicy.Queue(capacity = 4)) {
             activeStarted.complete(Unit)
             awaitCancellation()
         }.accepted()
         runCurrent()
         activeStarted.await()
-        val pending = fixture.registry.launch(key, TaskPolicy.Queue) { }.accepted()
+        val pending = fixture.registry.launch(key, TaskPolicy.Queue(capacity = 4)) { }.accepted()
 
         assertTrue(fixture.registry.cancel(key))
         assertFalse(fixture.registry.cancel(key))
@@ -254,6 +293,28 @@ class TaskRegistryTest {
         assertEquals(TaskOutcome.Cancelled, pending.awaitOutcome())
         runCurrent()
         assertTrue(fixture.failures.isEmpty())
+        fixture.close()
+    }
+
+    @Test
+    fun `cancel all invalidates every key without closing registry`() = runTest {
+        val fixture = Fixture(this)
+        val first = fixture.registry.launch(TaskKey("one"), TaskPolicy.Latest) {
+            awaitCancellation()
+        }.accepted()
+        val second = fixture.registry.launch(TaskKey("two"), TaskPolicy.Latest) {
+            awaitCancellation()
+        }.accepted()
+        runCurrent()
+
+        assertEquals(2, fixture.registry.cancelAll())
+        assertEquals(TaskOutcome.Cancelled, first.awaitOutcome())
+        assertEquals(TaskOutcome.Cancelled, second.awaitOutcome())
+        assertEquals(0, fixture.registry.cancelAll())
+
+        val recovered = fixture.registry.launch(TaskKey("three"), TaskPolicy.Latest) { }.accepted()
+        runCurrent()
+        assertEquals(TaskOutcome.Completed, recovered.awaitOutcome())
         fixture.close()
     }
 
@@ -376,7 +437,7 @@ class TaskRegistryTest {
         val cleanupGate = CompletableDeferred<Unit>()
         var pendingRan = false
 
-        val active = fixture.registry.launch(key, TaskPolicy.Queue) {
+        val active = fixture.registry.launch(key, TaskPolicy.Queue(capacity = 4)) {
             activeStarted.complete(Unit)
             try {
                 awaitCancellation()
@@ -384,7 +445,7 @@ class TaskRegistryTest {
                 withContext(NonCancellable) { cleanupGate.await() }
             }
         }.accepted()
-        val pending = fixture.registry.launch(key, TaskPolicy.Queue) {
+        val pending = fixture.registry.launch(key, TaskPolicy.Queue(capacity = 4)) {
             pendingRan = true
         }.accepted()
         runCurrent()
@@ -396,7 +457,7 @@ class TaskRegistryTest {
         assertEquals(TaskOutcome.Closed, pending.awaitOutcome())
         assertEquals(
             TaskLaunchResult.Closed,
-            fixture.registry.launch(key, TaskPolicy.Parallel) { },
+            fixture.registry.launch(key, TaskPolicy.Parallel(maxConcurrency = 4)) { },
         )
         val closing = async { fixture.registry.awaitClosed() }
         runCurrent()

@@ -75,10 +75,11 @@ class PulseSplitStoreViewModelTest {
                     if (intent is TestUi.Add) {
                         assertTrue(context.mutate(TestMutation.Add(intent.amount)))
                     }
+                    PulseIntentExecutionDecision.Completed
                 },
             )
 
-            viewModel.send(TestUi.Add(2))
+            assertEquals(PulseIntentExecutionResult.Completed, viewModel.send(TestUi.Add(2)))
             advanceUntilIdle()
             assertEquals(TestState(2), viewModel.state.value)
 
@@ -93,6 +94,44 @@ class PulseSplitStoreViewModelTest {
             )
             assertTrue(failures.isEmpty())
 
+            close(viewModel)
+        }
+
+    @Test
+    fun `send returns executor decision with monotonic id and stable start state`() =
+        runTest(mainDispatcherRule.dispatcher) {
+            val failures = mutableListOf<PulseFailure>()
+            val intentIds = mutableListOf<Long>()
+            val startStates = mutableListOf<TestState>()
+            val latestStates = mutableListOf<TestState>()
+            val viewModel = viewModel(
+                failures = failures,
+                executor = PulseUiIntentExecutor { intent, context ->
+                    intentIds += context.intentId
+                    startStates += context.stateAtStart
+                    latestStates += context.currentState
+                    when (intent) {
+                        is TestUi.Add -> {
+                            context.mutate(TestMutation.Add(intent.amount))
+                            PulseIntentExecutionDecision.Completed
+                        }
+
+                        TestUi.Ignore -> PulseIntentExecutionDecision.Ignored("not-applicable")
+                        else -> PulseIntentExecutionDecision.Completed
+                    }
+                },
+            )
+
+            assertEquals(PulseIntentExecutionResult.Completed, viewModel.send(TestUi.Add(2)))
+            assertEquals(
+                PulseIntentExecutionResult.Ignored("not-applicable"),
+                viewModel.send(TestUi.Ignore),
+            )
+
+            assertEquals(listOf(TestState(0), TestState(2)), startStates)
+            assertEquals(listOf(TestState(0), TestState(2)), latestStates)
+            assertTrue(intentIds[1] > intentIds[0])
+            assertTrue(failures.isEmpty())
             close(viewModel)
         }
 
@@ -137,6 +176,7 @@ class PulseSplitStoreViewModelTest {
 
                         else -> Unit
                     }
+                    PulseIntentExecutionDecision.Completed
                 },
                 runtimeConfig = PulseRuntimeConfig(
                     storeDispatcher = mainDispatcherRule.dispatcher,
@@ -190,10 +230,14 @@ class PulseSplitStoreViewModelTest {
                         is TestUi.Add -> context.mutate(TestMutation.Add(intent.amount))
                         else -> Unit
                     }
+                    PulseIntentExecutionDecision.Completed
                 },
             )
 
-            viewModel.send(TestUi.CancelExecutor)
+            assertEquals(
+                PulseIntentExecutionResult.Cancelled,
+                viewModel.send(TestUi.CancelExecutor),
+            )
             advanceUntilIdle()
             viewModel.send(TestUi.Add(2))
             advanceUntilIdle()
@@ -217,10 +261,14 @@ class PulseSplitStoreViewModelTest {
                         is TestUi.Add -> context.mutate(TestMutation.Add(intent.amount))
                         else -> Unit
                     }
+                    PulseIntentExecutionDecision.Completed
                 },
             )
 
-            viewModel.send(TestUi.CrashExecutor)
+            val failed = assertIs<PulseIntentExecutionResult.Failed>(
+                viewModel.send(TestUi.CrashExecutor)
+            )
+            assertSame(expected, failed.cause)
             advanceUntilIdle()
             viewModel.send(TestUi.Add(4))
             advanceUntilIdle()
@@ -264,16 +312,25 @@ class PulseSplitStoreViewModelTest {
                     if (intent == TestUi.CrashExecutor) {
                         throw IllegalStateException("ordinary executor failure")
                     }
+                    PulseIntentExecutionDecision.Completed
                 },
                 runtimeConfig = config,
                 executionOwner = PulseAndroidExecutionOwner.from(ownerScope),
             )
 
-            viewModel.send(TestUi.CrashExecutor)
+            val sendFailure = async {
+                try {
+                    viewModel.send(TestUi.CrashExecutor)
+                    null
+                } catch (failure: Throwable) {
+                    failure
+                }
+            }
             advanceUntilIdle()
 
             val actual = assertIs<LinkageError>(terminalFailure.await())
             assertEquals(expected.message, actual.message)
+            assertEquals(expected.message, assertIs<LinkageError>(sendFailure.await()).message)
             viewModel.awaitClosed()
             assertIs<EnqueueResult.Rejected>(viewModel.trySend(TestUi.Add(1)))
             assertTrue(parentJob.isActive)
@@ -311,6 +368,7 @@ class PulseSplitStoreViewModelTest {
                 },
                 executor = PulseUiIntentExecutor { intent, context ->
                     if (intent is TestUi.Add) context.mutate(TestMutation.Add(intent.amount))
+                    PulseIntentExecutionDecision.Completed
                 },
             )
             val coordinator = backgroundScope.launch(
@@ -382,6 +440,7 @@ class PulseSplitStoreViewModelTest {
                     if (intent is TestUi.Add) {
                         context.mutate(TestMutation.Add(intent.amount))
                     }
+                    PulseIntentExecutionDecision.Completed
                 },
                 runtimeConfig = config,
                 savedState = null,
@@ -421,6 +480,7 @@ class PulseSplitStoreViewModelTest {
                         }
                     }
                 }
+                PulseIntentExecutionDecision.Completed
             }
             val owned = OwnedTestViewModel(
                 reducer = reducer(),
@@ -478,10 +538,13 @@ class PulseSplitStoreViewModelTest {
                             }
                         }
                     }
+                    PulseIntentExecutionDecision.Completed
                 },
             )
 
-            viewModel.send(TestUi.BlockExecutor)
+            val sendResult = async(start = CoroutineStart.UNDISPATCHED) {
+                viewModel.send(TestUi.BlockExecutor)
+            }
             advanceUntilIdle()
             executorStarted.await()
 
@@ -496,6 +559,7 @@ class PulseSplitStoreViewModelTest {
             advanceUntilIdle()
 
             closed.await()
+            assertEquals(PulseIntentExecutionResult.Cancelled, sendResult.await())
             assertTrue(executorCleaned.isCompleted)
             assertTrue(failures.isEmpty())
         }
@@ -523,6 +587,7 @@ class PulseSplitStoreViewModelTest {
                             }
                         }
                     }
+                    PulseIntentExecutionDecision.Completed
                 },
                 runtimeConfig = runtimeConfig(failures),
                 executionOwner = PulseAndroidExecutionOwner.from(
@@ -530,7 +595,9 @@ class PulseSplitStoreViewModelTest {
                 ),
             )
 
-            viewModel.send(TestUi.BlockExecutor)
+            val sendResult = async(start = CoroutineStart.UNDISPATCHED) {
+                viewModel.send(TestUi.BlockExecutor)
+            }
             advanceUntilIdle()
             executorStarted.await()
 
@@ -545,6 +612,7 @@ class PulseSplitStoreViewModelTest {
             advanceUntilIdle()
 
             closed.await()
+            assertEquals(PulseIntentExecutionResult.Cancelled, sendResult.await())
             assertTrue(executorCleaned.isCompleted)
             assertTrue(failures.isEmpty())
         }
@@ -561,6 +629,7 @@ class PulseSplitStoreViewModelTest {
                     if (intent is TestUi.Add) {
                         context.mutate(TestMutation.Add(intent.amount))
                     }
+                    PulseIntentExecutionDecision.Completed
                 },
             )
 
@@ -595,19 +664,25 @@ class PulseSplitStoreViewModelTest {
                 >(
                 initialState = TestState(0),
                 mutationReducer = reducer(),
-                uiIntentExecutor = PulseUiIntentExecutor { intent, _ -> executed += intent },
+                uiIntentExecutor = PulseUiIntentExecutor { intent, _ ->
+                    executed += intent
+                    PulseIntentExecutionDecision.Completed
+                },
                 runtimeConfig = config,
             )
 
             // Unconfined owner execution admits the frame immediately, while the Store processor
             // remains queued on the StandardTestDispatcher until the scheduler advances.
-            viewModel.send(TestUi.Add(5))
+            val sendResult = async(start = CoroutineStart.UNDISPATCHED) {
+                viewModel.send(TestUi.Add(5))
+            }
             assertEquals(0, clockCalls.get())
             viewModel.close()
 
             advanceUntilIdle()
             viewModel.awaitClosed()
 
+            assertEquals(PulseIntentExecutionResult.Cancelled, sendResult.await())
             assertEquals(2, clockCalls.get())
             assertTrue(executed.isEmpty())
             assertTrue(failures.isEmpty())
@@ -701,6 +776,7 @@ class PulseSplitStoreViewModelTest {
         data object CancelExecutor : TestUi
         data object CrashExecutor : TestUi
         data object BlockExecutor : TestUi
+        data object Ignore : TestUi
     }
 
     private sealed interface TestMutation : MviMutation {

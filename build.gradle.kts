@@ -385,6 +385,12 @@ tasks.register("mviFrameworkCheck") {
     )
 }
 
+tasks.register("mviAndroidDeviceCheck") {
+    group = "verification"
+    description = "Runs the app end-to-end instrumentation suite on the managed API 35 device."
+    dependsOn(":app:pulseApi35DebugAndroidTest")
+}
+
 tasks.register("mviReleaseCheck") {
     group = "verification"
     description = "Runs every framework, publication, stress, and performance release gate."

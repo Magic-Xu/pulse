@@ -21,14 +21,15 @@ Android/Compose 生命周期、State Decomposition、测试、兼容与发布证
 
 ### 异步与 Effect
 
-- Keyed Task 支持 Latest、DropWhileRunning、Queue、Parallel、Conflate。
+- Keyed Task 支持 Latest、DropWhileRunning、有界 Queue、有界 Parallel、Conflate，并显式返回
+  过载与最终 outcome。
 - 不透明代际 Token 会拒绝任务替换或取消后的迟到 Mutation。
 - UI Effect replay=0、有界，且只允许一个活跃协调者。
 - 未交付 Effect 与 Consumer 失败均可观测。
 
 ### Android 与 Compose
 
-- Split Intent 对 UI 只公开 `send(UI)` 与 `trySend(UI)`。
+- Split Intent 对 UI 只公开返回执行结果的 `send(UI)` 与返回接纳结果的 `trySend(UI)`。
 - Mutation 能力只存在于 `PulseIntentContext` 和 Task Context。
 - Android 默认在 `Main.immediate` 运行 Reducer 与受控交付。
 - ViewModel 获取必须显式提供 Owner 与稳定 key。

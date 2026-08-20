@@ -145,7 +145,6 @@ class LegacyStoreAdapterTest {
     fun `observe snapshot never regresses while dispatch races registration`() {
         val store = store()
         val observations = mutableListOf<MutableList<Int>>()
-        val subscriptions = mutableListOf<Subscription>()
 
         withExecutor(2) { executor ->
             val start = CountDownLatch(1)
@@ -160,7 +159,8 @@ class LegacyStoreAdapterTest {
                 repeat(SNAPSHOT_OBSERVER_COUNT) {
                     val values = Collections.synchronizedList(mutableListOf<Int>())
                     observations += values
-                    subscriptions += store.observeState { values += it.value }
+                    val subscription = store.observeState { values += it.value }
+                    subscription.cancel()
                 }
             }
             start.countDown()
@@ -168,7 +168,6 @@ class LegacyStoreAdapterTest {
             registrations.await()
         }
 
-        subscriptions.forEach(Subscription::cancel)
         observations.forEach { observation ->
             val values = synchronized(observation) { observation.toList() }
             assertTrue(values.isNotEmpty())
@@ -478,7 +477,7 @@ class LegacyStoreAdapterTest {
     private companion object {
         const val TIMEOUT_MILLIS = 5_000L
         const val CONCURRENT_DISPATCH_COUNT = 64
-        const val SNAPSHOT_DISPATCH_COUNT = 96
-        const val SNAPSHOT_OBSERVER_COUNT = 32
+        const val SNAPSHOT_DISPATCH_COUNT = 10_000
+        const val SNAPSHOT_OBSERVER_COUNT = 10_000
     }
 }

@@ -22,14 +22,15 @@ and publication evidence ship together.
 
 ### Async and effects
 
-- Keyed tasks support Latest, DropWhileRunning, Queue, Parallel, and Conflate.
+- Keyed tasks support Latest, DropWhileRunning, bounded Queue, bounded Parallel, and Conflate, with
+  explicit overload and final outcomes.
 - Opaque generations reject late mutations after replacement or cancellation.
 - UI effects are replay-zero, bounded, and owned by one active coordinator.
 - Undelivered effects and consumer failures are observable diagnostics.
 
 ### Android and Compose
 
-- Split Intent exposes only `send(UI)` and `trySend(UI)` to UI callers.
+- Split Intent exposes only execution-result `send(UI)` and admission-result `trySend(UI)` to UI callers.
 - Mutation capability is confined to `PulseIntentContext` and task contexts.
 - Android defaults run reducer and controlled delivery on `Main.immediate`.
 - ViewModel lookup requires an explicit owner and stable key.

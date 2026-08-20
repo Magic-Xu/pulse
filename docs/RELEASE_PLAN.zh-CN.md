@@ -71,12 +71,21 @@ API、兼容、纯制品消费者、压力和性能验证。
 - `verifyPublicationBundle`：校验六个 binary、source archive、POM、Gradle metadata、版本及内部
   依赖版本；
 - `:mvi-testing:multiSeedStressCheck`：多组确定 seed 的 10,000 输入压力检查；
-- `:mvi-benchmarks:performanceRegressionCheck`：宽松的吞吐、p95 延迟、内存残留和有界 mailbox
-  下限，并报告一个合成 selector 计数。
+- `:mvi-benchmarks:performanceRegressionCheck`：吞吐、frame/collector p95 延迟、内存残留、
+  有界 mailbox 下限，以及真实的平台无关 selector 流水线。
 
 五制品兼容 fixture 会在源码与 archive 层验证 Android、Compose 和 extensions；运行时替换由
-core-runtime 消费者执行。性能 harness 用于发现灾难性回归，不是设备 benchmark，也不是真实
-Compose selector benchmark。
+core-runtime 消费者执行。性能 harness 用于发现灾难性回归，不是设备渲染 benchmark；Compose
+生命周期与重组行为由对应测试覆盖。
+
+真实 Android instrumentation 需要模拟器或连接设备，因此使用独立设备门禁：
+
+```bash
+./gradlew mviAndroidDeviceCheck
+```
+
+PR 由 `.github/workflows/android-device.yml` 执行；稳定版发布 workflow 运行同一个托管设备任务，
+且只有 device job 与 `release-check` 同时通过才允许发布。
 
 远程发布前还必须运行 `verifyMavenCentralConfig`。缺失 task、跳过制品消费者或缺少 API 基线都
 属于发布失败；不接受空任务或尽力而为式门禁。
@@ -89,6 +98,7 @@ Compose selector benchmark。
 ./gradlew clean
 ./gradlew mviFrameworkCheck
 ./gradlew mviReleaseCheck
+./gradlew mviAndroidDeviceCheck
 ```
 
 只有在有意评审公开 API 时才更新基线：
@@ -109,9 +119,9 @@ release AAR 的公开表面。
 1. GitHub 正在处理准确 tag `v0.3.0`。
 2. `POM_VERSION_NAME` 准确等于 `0.3.0`，并与 tag 一致。
 3. 版本不包含 `SNAPSHOT`、`RC` 或其他预发布后缀。
-4. release-check job 已在 JDK 21 上通过。
+4. release-check 与托管设备 instrumentation job 已在 JDK 21 上通过。
 5. `verifyMavenCentralConfig` 已验证必要 metadata。
-6. publish job 依赖 release-check job，并使用同一个 commit。
+6. publish job 同时依赖两个 job，并使用同一个 commit。
 
 publish task 不能反向依赖 `mviReleaseCheck`；远程发布屏障由 job 顺序负责，以避免 Gradle 任务
 依赖环。

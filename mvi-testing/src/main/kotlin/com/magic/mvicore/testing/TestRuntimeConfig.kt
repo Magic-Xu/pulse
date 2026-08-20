@@ -2,6 +2,7 @@ package com.magic.mvicore.testing
 
 import com.magic.mvicore.runtime.PulseClock
 import com.magic.mvicore.runtime.PulseErrorHandler
+import com.magic.mvicore.runtime.MailboxOverflowPolicy
 import com.magic.mvicore.runtime.PulseRuntimeConfig
 import com.magic.mvicore.runtime.TypeOnlyPulseRedactor
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -36,6 +37,7 @@ class TestPulseClock(
 class TestRuntimeConfig(
     val dispatcher: TestDispatcher,
     val mailboxCapacity: Int = 64,
+    val overflowPolicy: MailboxOverflowPolicy = MailboxOverflowPolicy.REJECT_AND_REPORT,
     val effectBufferCapacity: Int = 16,
     val failureProbe: FailureProbe = FailureProbe(),
     val clock: PulseClock = TestPulseClock(dispatcher),
@@ -51,6 +53,7 @@ class TestRuntimeConfig(
     fun toPulseRuntimeConfig(): PulseRuntimeConfig {
         return PulseRuntimeConfig(
             mailboxCapacity = mailboxCapacity,
+            overflowPolicy = overflowPolicy,
             effectBufferCapacity = effectBufferCapacity,
             storeDispatcher = dispatcher,
             consumerDispatcher = dispatcher,

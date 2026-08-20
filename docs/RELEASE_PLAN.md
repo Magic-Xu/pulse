@@ -74,13 +74,23 @@ The release aggregate must include the complete framework gate plus:
 - `verifyPublicationBundle` for all six binaries, source archives, POMs, Gradle metadata, versions,
   and internal dependency versions;
 - `:mvi-testing:multiSeedStressCheck` for deterministic multi-seed 10,000-input stress;
-- `:mvi-benchmarks:performanceRegressionCheck` for broad throughput, p95 latency, retained-memory,
-  and bounded-mailbox floors plus a reported synthetic selector count.
+- `:mvi-benchmarks:performanceRegressionCheck` for throughput, frame and collector p95 latency,
+  retained-memory, bounded-mailbox floors, and the real platform-neutral selector pipeline.
 
 The five-artifact compatibility fixture verifies Android, Compose, and extensions at source and
 archive level; executable runtime replacement is covered by the core-runtime consumer. The
-performance harness is a portable catastrophic-regression check, not a device benchmark or a real
-Compose selector benchmark.
+performance harness is a portable catastrophic-regression check, not a device rendering benchmark;
+Compose lifecycle and recomposition behavior remains covered by its own tests.
+
+Real Android instrumentation is a separate device gate because it requires an emulator or attached
+device:
+
+```bash
+./gradlew mviAndroidDeviceCheck
+```
+
+Pull requests run it in `.github/workflows/android-device.yml`; the stable publish workflow runs the
+same managed-device task and requires both the device job and `release-check` before publication.
 
 `verifyMavenCentralConfig` is also required before remote publication. A missing task, skipped
 artifact consumer, or absent API baseline is a release failure; no empty or best-effort gate is
@@ -94,6 +104,7 @@ Run on JDK 21 from a clean checkout with release credentials absent:
 ./gradlew clean
 ./gradlew mviFrameworkCheck
 ./gradlew mviReleaseCheck
+./gradlew mviAndroidDeviceCheck
 ```
 
 API baselines are updated only during intentional public API review:
@@ -114,9 +125,9 @@ Remote publication is permitted only when all of the following are true:
 1. GitHub is processing the exact tag `v0.3.0`.
 2. `POM_VERSION_NAME` is exactly `0.3.0` and matches the tag.
 3. The version contains no `SNAPSHOT`, `RC`, or other prerelease suffix.
-4. The release-check job has passed on JDK 21.
+4. The release-check and managed-device instrumentation jobs have passed on JDK 21.
 5. `verifyMavenCentralConfig` has validated required metadata.
-6. The publish job depends on the release-check job and uses the same commit.
+6. The publish job depends on both jobs and uses the same commit.
 
 The publish task must not depend back on `mviReleaseCheck`; job ordering owns the remote-publication
 barrier and avoids a Gradle dependency cycle.

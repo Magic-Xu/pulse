@@ -25,7 +25,8 @@ diagnosable UI-effect delivery, lifecycle ownership, and reusable conformance te
 ### Failure and delivery contracts
 
 - `PulseFailure` reports typed reducer, consumer, plugin, executor, overflow, undelivered-effect,
-  late-mutation, and state restore/save failures with redacted context.
+  late-mutation, and state restore/save failures with redacted request, sequence, input-type,
+  thread, and Store correlation.
 - A failing controlled consumer or plugin is isolated from other consumers and the mailbox
   processor.
 - Cancellation and fatal JVM errors are not converted into Pulse failures.
@@ -34,16 +35,17 @@ diagnosable UI-effect delivery, lifecycle ownership, and reusable conformance te
 
 ### Keyed asynchronous work
 
-- Runtime-owned tasks support `Latest`, `DropWhileRunning`, `Queue`, `Parallel`, and `Conflate`
-  policies.
+- Runtime-owned tasks support `Latest`, `DropWhileRunning`, bounded `Queue(capacity)`, bounded
+  `Parallel(maxConcurrency)`, and `Conflate` policies, with explicit overload and final outcomes.
 - Task tokens prevent replaced, cancelled, or closed work from emitting late mutations.
 - Tasks remain process-local. Durable operations still require durable state, an operation ID, and
   persistence or an external scheduler.
 
 ### Android and Compose
 
-- `PulseSplitStoreViewModel` exposes UI input while keeping mutation authority inside its executor
-  and token-bound task contexts.
+- `PulseSplitStoreViewModel` exposes suspending `send(UI)` with an end-to-end executor result and
+  non-blocking `trySend(UI)` with admission only, while keeping mutation authority inside its
+  executor and token-bound task contexts.
 - ViewModel acquisition supports explicit owners, stable keys, `CreationExtras`, and optional
   `SavedStateHandle` adapters.
 - `PulseStateHost` exposes only read-only state and UI-effect surfaces.

@@ -33,6 +33,10 @@ import java.util.concurrent.atomic.AtomicBoolean
  * Callback delivery is serialized separately so a callback can dispatch without entering the
  * reducer stack recursively.
  */
+@Deprecated(
+    message = "Use DefaultPulseStore for ordered suspending input and StateFlow state.",
+    replaceWith = ReplaceWith("DefaultPulseStore(initialState, reducer)"),
+)
 class DefaultStore<S : MviState, I : MviIntent, E : MviEffect>(
     initialState: S,
     private val reducer: Reducer<S, I, E>,

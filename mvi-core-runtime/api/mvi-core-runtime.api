@@ -25,6 +25,14 @@ public final class com/magic/mvicore/runtime/DefaultStore : com/magic/mvicore/co
 	public fun stop ()V
 }
 
+public final class com/magic/mvicore/runtime/MailboxOverflowPolicy : java/lang/Enum {
+	public static final field REJECT Lcom/magic/mvicore/runtime/MailboxOverflowPolicy;
+	public static final field REJECT_AND_REPORT Lcom/magic/mvicore/runtime/MailboxOverflowPolicy;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/magic/mvicore/runtime/MailboxOverflowPolicy;
+	public static fun values ()[Lcom/magic/mvicore/runtime/MailboxOverflowPolicy;
+}
+
 public abstract interface class com/magic/mvicore/runtime/PulseClock {
 	public abstract fun nanoTime ()J
 }
@@ -39,25 +47,27 @@ public abstract interface class com/magic/mvicore/runtime/PulseRedactor {
 
 public final class com/magic/mvicore/runtime/PulseRuntimeConfig {
 	public fun <init> ()V
-	public fun <init> (IILkotlinx/coroutines/CoroutineDispatcher;Lkotlinx/coroutines/CoroutineDispatcher;Lcom/magic/mvicore/runtime/PulseClock;Lcom/magic/mvicore/runtime/PulseErrorHandler;ZLcom/magic/mvicore/runtime/PulseRedactor;Ljava/lang/String;)V
-	public synthetic fun <init> (IILkotlinx/coroutines/CoroutineDispatcher;Lkotlinx/coroutines/CoroutineDispatcher;Lcom/magic/mvicore/runtime/PulseClock;Lcom/magic/mvicore/runtime/PulseErrorHandler;ZLcom/magic/mvicore/runtime/PulseRedactor;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (ILcom/magic/mvicore/runtime/MailboxOverflowPolicy;ILkotlinx/coroutines/CoroutineDispatcher;Lkotlinx/coroutines/CoroutineDispatcher;Lcom/magic/mvicore/runtime/PulseClock;Lcom/magic/mvicore/runtime/PulseErrorHandler;ZLcom/magic/mvicore/runtime/PulseRedactor;Ljava/lang/String;)V
+	public synthetic fun <init> (ILcom/magic/mvicore/runtime/MailboxOverflowPolicy;ILkotlinx/coroutines/CoroutineDispatcher;Lkotlinx/coroutines/CoroutineDispatcher;Lcom/magic/mvicore/runtime/PulseClock;Lcom/magic/mvicore/runtime/PulseErrorHandler;ZLcom/magic/mvicore/runtime/PulseRedactor;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()I
-	public final fun component2 ()I
-	public final fun component3 ()Lkotlinx/coroutines/CoroutineDispatcher;
+	public final fun component10 ()Ljava/lang/String;
+	public final fun component2 ()Lcom/magic/mvicore/runtime/MailboxOverflowPolicy;
+	public final fun component3 ()I
 	public final fun component4 ()Lkotlinx/coroutines/CoroutineDispatcher;
-	public final fun component5 ()Lcom/magic/mvicore/runtime/PulseClock;
-	public final fun component6 ()Lcom/magic/mvicore/runtime/PulseErrorHandler;
-	public final fun component7 ()Z
-	public final fun component8 ()Lcom/magic/mvicore/runtime/PulseRedactor;
-	public final fun component9 ()Ljava/lang/String;
-	public final fun copy (IILkotlinx/coroutines/CoroutineDispatcher;Lkotlinx/coroutines/CoroutineDispatcher;Lcom/magic/mvicore/runtime/PulseClock;Lcom/magic/mvicore/runtime/PulseErrorHandler;ZLcom/magic/mvicore/runtime/PulseRedactor;Ljava/lang/String;)Lcom/magic/mvicore/runtime/PulseRuntimeConfig;
-	public static synthetic fun copy$default (Lcom/magic/mvicore/runtime/PulseRuntimeConfig;IILkotlinx/coroutines/CoroutineDispatcher;Lkotlinx/coroutines/CoroutineDispatcher;Lcom/magic/mvicore/runtime/PulseClock;Lcom/magic/mvicore/runtime/PulseErrorHandler;ZLcom/magic/mvicore/runtime/PulseRedactor;Ljava/lang/String;ILjava/lang/Object;)Lcom/magic/mvicore/runtime/PulseRuntimeConfig;
+	public final fun component5 ()Lkotlinx/coroutines/CoroutineDispatcher;
+	public final fun component6 ()Lcom/magic/mvicore/runtime/PulseClock;
+	public final fun component7 ()Lcom/magic/mvicore/runtime/PulseErrorHandler;
+	public final fun component8 ()Z
+	public final fun component9 ()Lcom/magic/mvicore/runtime/PulseRedactor;
+	public final fun copy (ILcom/magic/mvicore/runtime/MailboxOverflowPolicy;ILkotlinx/coroutines/CoroutineDispatcher;Lkotlinx/coroutines/CoroutineDispatcher;Lcom/magic/mvicore/runtime/PulseClock;Lcom/magic/mvicore/runtime/PulseErrorHandler;ZLcom/magic/mvicore/runtime/PulseRedactor;Ljava/lang/String;)Lcom/magic/mvicore/runtime/PulseRuntimeConfig;
+	public static synthetic fun copy$default (Lcom/magic/mvicore/runtime/PulseRuntimeConfig;ILcom/magic/mvicore/runtime/MailboxOverflowPolicy;ILkotlinx/coroutines/CoroutineDispatcher;Lkotlinx/coroutines/CoroutineDispatcher;Lcom/magic/mvicore/runtime/PulseClock;Lcom/magic/mvicore/runtime/PulseErrorHandler;ZLcom/magic/mvicore/runtime/PulseRedactor;Ljava/lang/String;ILjava/lang/Object;)Lcom/magic/mvicore/runtime/PulseRuntimeConfig;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getClock ()Lcom/magic/mvicore/runtime/PulseClock;
 	public final fun getConsumerDispatcher ()Lkotlinx/coroutines/CoroutineDispatcher;
 	public final fun getEffectBufferCapacity ()I
 	public final fun getErrorHandler ()Lcom/magic/mvicore/runtime/PulseErrorHandler;
 	public final fun getMailboxCapacity ()I
+	public final fun getOverflowPolicy ()Lcom/magic/mvicore/runtime/MailboxOverflowPolicy;
 	public final fun getRedactor ()Lcom/magic/mvicore/runtime/PulseRedactor;
 	public final fun getStoreDispatcher ()Lkotlinx/coroutines/CoroutineDispatcher;
 	public final fun getStoreId ()Ljava/lang/String;
@@ -91,6 +101,7 @@ public final class com/magic/mvicore/runtime/PulseStorePlugin$DefaultImpls {
 
 public abstract interface class com/magic/mvicore/runtime/PulseTasks {
 	public abstract fun cancel-3UZBuMY (Ljava/lang/String;)Z
+	public abstract fun cancelAll ()I
 	public abstract fun isClosed ()Z
 	public abstract fun isCurrent (Lcom/magic/mvicore/contract/TaskToken;)Z
 	public abstract fun launch-X6WvQZY (Ljava/lang/String;Lcom/magic/mvicore/contract/TaskPolicy;Lkotlin/jvm/functions/Function2;)Lcom/magic/mvicore/contract/TaskLaunchResult;

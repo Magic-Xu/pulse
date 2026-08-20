@@ -122,8 +122,10 @@ context.launchTask(TaskKey("refresh"), TaskPolicy.Latest) {
 }
 ```
 
-根据业务并发规则选择 `Latest`、`DropWhileRunning`、`Queue`、`Parallel` 或 `Conflate`。已接纳
-任务会提供 `TaskHandle`；只有协调者需要观察进程内最终结果时才等待它。任务不会跨进程死亡
+根据业务并发规则选择 `Latest`、`DropWhileRunning`、`Queue(capacity)`、
+`Parallel(maxConcurrency)` 或 `Conflate`。超过有界策略容量时会返回 `QueueFull` 或
+`ParallelLimitReached`。已接纳任务会提供 `TaskHandle`；只有协调者需要观察进程内最终结果时才等待它。
+取消任务使用 `cancelTask`/`cancelAllTasks`，不要保存 Job。任务不会跨进程死亡
 持久化。必须跨重建存活的工作，需要持久状态、操作 ID，以及持久化或外部调度器。
 
 ## 5. 迁移 Android Split Intent
@@ -145,11 +147,14 @@ class CounterViewModel(
     },
     uiIntentExecutor = PulseUiIntentExecutor { intent, context ->
         when (intent) {
-            CounterUiIntent.Refresh -> context.launchTask(
-                key = TaskKey("refresh"),
-                policy = TaskPolicy.Latest,
-            ) {
-                mutate(CounterMutation.Loaded(repository.load()))
+            CounterUiIntent.Refresh -> {
+                context.launchTask(
+                    key = TaskKey("refresh"),
+                    policy = TaskPolicy.Latest,
+                ) {
+                    mutate(CounterMutation.Loaded(repository.load()))
+                }
+                PulseIntentExecutionDecision.Completed
             }
         }
     },
@@ -158,6 +163,11 @@ class CounterViewModel(
 
 UI 代码只能获得 `send(UI)` 和 `trySend(UI)`。mutation 权限只存在于 `PulseIntentContext` 和
 绑定 token 的任务上下文中；不要从 ViewModel 暴露 mutation dispatcher 或底层 Store。
+
+与 Core Store 的 `send` 不同，挂起式 ViewModel `send(UI)` 还会等待串行 executor 的决策，并返回
+`Completed`、`Ignored`、`Failed`、`Cancelled` 或 `Rejected`；`trySend(UI)` 仍只表示接纳。
+Executor 可用 `intentId` 关联请求、对比稳定的 `stateAtStart` 与最新 `currentState`，并通过
+`reportFailure` 上报已经显式处理的失败。
 
 如果提交后的状态需要在 Android 进程重建后恢复，可提供 `PulseSavedStateAdapter`。只恢复状态值；
 任务、UI effect、订阅和 mailbox 待处理项都不会恢复。

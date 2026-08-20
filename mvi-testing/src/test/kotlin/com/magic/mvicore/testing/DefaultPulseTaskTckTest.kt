@@ -18,8 +18,16 @@ class DefaultPulseTaskTckTest {
         tck.queueRunsEveryAdmittedRequestInFifoOrder()
 
     @Test
+    fun queueRejectsBeyondItsPendingCapacity() =
+        tck.queueRejectsBeyondItsPendingCapacity()
+
+    @Test
     fun parallelStartsEveryAdmittedRequestWithAnIndependentToken() =
         tck.parallelStartsEveryAdmittedRequestWithAnIndependentToken()
+
+    @Test
+    fun parallelRejectsBeyondItsConcurrencyLimit() =
+        tck.parallelRejectsBeyondItsConcurrencyLimit()
 
     @Test
     fun conflateKeepsTheActiveAndOnlyTheNewestPendingRequest() =
@@ -28,6 +36,10 @@ class DefaultPulseTaskTckTest {
     @Test
     fun cancellationAndCloseInvalidateTokensBeforeCompletingHandles() =
         tck.cancellationAndCloseInvalidateTokensBeforeCompletingHandles()
+
+    @Test
+    fun cancelAllInvalidatesEveryKeyWithoutClosingTheRegistry() =
+        tck.cancelAllInvalidatesEveryKeyWithoutClosingTheRegistry()
 
     @Test
     fun staleTokenValidationReportsOneLateMutationDiagnostic() =

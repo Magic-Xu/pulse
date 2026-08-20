@@ -1,6 +1,7 @@
 package com.magic.pulse.samples.state_decomposition.mvi
 
 import com.magic.mvicore.android.PulseSplitStoreViewModel
+import com.magic.mvicore.android.PulseIntentExecutionDecision
 import com.magic.mvicore.android.PulseUiIntentExecutor
 import com.magic.mvicore.contract.TaskKey
 import com.magic.mvicore.contract.TaskPolicy
@@ -84,6 +85,7 @@ fun createStateDecompositionViewModel(
                     }
                 }
             }
+            PulseIntentExecutionDecision.Completed
         },
     )
 }

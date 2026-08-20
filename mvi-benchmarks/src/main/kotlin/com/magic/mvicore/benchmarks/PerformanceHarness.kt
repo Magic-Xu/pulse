@@ -11,6 +11,11 @@ import com.magic.mvicore.contract.UiEffect
 import com.magic.mvicore.runtime.DefaultPulseStore
 import com.magic.mvicore.runtime.DefaultStore
 import com.magic.mvicore.runtime.PulseRuntimeConfig
+import com.magic.mvicore.extensions.selectDistinct
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.take
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import java.io.File
 import java.util.concurrent.CountDownLatch
@@ -28,6 +33,7 @@ fun main() {
     val v03 = measureV03(ITERATIONS)
     val mailboxHighWater = measureMailboxHighWater()
     val selectorHits = measureSelectorHits()
+    val collectorDeliveryP95Nanos = measureCollectorDeliveryP95()
     val subscriptionMemoryBytes = measureCancelledSubscriptionMemory()
 
     val throughputRatio = v03.throughputPerSecond / v02.throughputPerSecond
@@ -42,6 +48,9 @@ fun main() {
     }
     check(subscriptionMemoryBytes <= 64L * 1024L * 1024L) {
         "Cancelled subscription workload retained more than 64MiB: $subscriptionMemoryBytes"
+    }
+    check(collectorDeliveryP95Nanos <= 20_000_000L) {
+        "Transition collector delivery p95 exceeded 20ms: ${collectorDeliveryP95Nanos}ns"
     }
 
     val report = File(
@@ -60,7 +69,11 @@ fun main() {
           "mailboxCapacity": $MAILBOX_CAPACITY,
           "mailboxHighWater": $mailboxHighWater,
           "cancelledSubscriptionMemoryBytes": $subscriptionMemoryBytes,
-          "selectorHits": $selectorHits
+          "selectorHits": $selectorHits,
+          "expectedSelectorHits": ${ITERATIONS / 10 + 1},
+          "collectorDeliveryP95Nanos": $collectorDeliveryP95Nanos,
+          "comparisonNote": "v0.2 is a synchronous lock-only reference; v0.3 includes mailbox, frame, task, plugin and effect boundaries",
+          "optimizationConclusion": "Keep the ordered single-processor design; profile allocation and coroutine handoff before considering any fast path"
         }
         """.trimIndent() + "\n"
     )
@@ -131,17 +144,51 @@ private fun measureMailboxHighWater(): Int {
     return queued
 }
 
-private fun measureSelectorHits(): Int {
-    var previous = -1
+private fun measureSelectorHits(): Int = runBlocking {
+    val store = DefaultPulseStore(
+        initialState = BenchmarkState(0),
+        reducer = PulseReducer<BenchmarkState, BenchmarkIntent, BenchmarkEffect> { state, _ ->
+            ReduceOutcome.Changed(state.copy(value = state.value + 1))
+        },
+    )
     var hits = 0
-    repeat(ITERATIONS) { revision ->
-        val selected = revision / 10
-        if (selected != previous) {
-            hits += 1
-            previous = selected
+    val expectedHits = ITERATIONS / 10 + 1
+    val collector = launch(start = CoroutineStart.UNDISPATCHED) {
+        store.state
+            .selectDistinct(selector = { state -> state.value / 10 })
+            .take(expectedHits)
+            .collect { hits += 1 }
+    }
+    repeat(ITERATIONS) { store.send(BenchmarkIntent.Increment) }
+    collector.join()
+    store.close()
+    store.awaitClosed()
+    check(hits == expectedHits) {
+        "Selector pipeline emitted $hits values; expected $expectedHits."
+    }
+    hits
+}
+
+private fun measureCollectorDeliveryP95(): Long = runBlocking {
+    val store = DefaultPulseStore(
+        initialState = BenchmarkState(0),
+        reducer = PulseReducer<BenchmarkState, BenchmarkIntent, BenchmarkEffect> { state, _ ->
+            ReduceOutcome.Changed(state.copy(value = state.value + 1))
+        },
+    )
+    val samples = LongArray(ITERATIONS)
+    var index = 0
+    val collector = launch(start = CoroutineStart.UNDISPATCHED) {
+        store.transitions.take(ITERATIONS).collect { frame ->
+            samples[index++] = max(0L, System.nanoTime() - frame.completedAtNanos)
         }
     }
-    return hits
+    repeat(ITERATIONS) { store.send(BenchmarkIntent.Increment) }
+    collector.join()
+    store.close()
+    store.awaitClosed()
+    samples.sort()
+    samples[((ITERATIONS - 1) * 95) / 100]
 }
 
 private fun measureCancelledSubscriptionMemory(): Long {
