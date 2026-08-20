@@ -3,7 +3,7 @@ plugins {
     id("java-library")
 }
 
-description = "Pulse optional plugins: logging and state transition observers."
+description = "Pulse state-decomposition tools and optional logging and transition plugins."
 
 kotlin {
     jvmToolchain(11)
@@ -11,6 +11,9 @@ kotlin {
 
 dependencies {
     api(project(":mvi-core-runtime"))
+
+    testImplementation(libs.kotlin.test.junit)
+    testImplementation(libs.junit)
 }
 
 val testSourceSet = sourceSets.named("test")
@@ -26,6 +29,6 @@ tasks.named("check") {
     dependsOn("extensionsSelfCheck")
 }
 
-tasks.named<Test>("test") {
-    failOnNoDiscoveredTests = false
+tasks.withType<Test>().configureEach {
+    useJUnit()
 }

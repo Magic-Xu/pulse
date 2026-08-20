@@ -19,17 +19,25 @@ import com.magic.pulse.samples.home.SampleDestination
 import com.magic.pulse.samples.home.SamplesHomeScreen
 import com.magic.pulse.samples.network.mvi.NetworkModelsViewModel
 import com.magic.pulse.samples.network.ui.NetworkModelsScreen
+import com.magic.pulse.samples.state_decomposition.mvi.StateDecompositionViewModel
+import com.magic.pulse.samples.state_decomposition.ui.StateDecompositionScreen
+import com.magic.pulse.samples.split_intent_basic.mvi.SplitIntentBasicViewModel
+import com.magic.pulse.samples.split_intent_basic.ui.SplitIntentBasicScreen
 import com.magic.pulse.ui.theme.PulseTheme
 
 @Composable
 fun MainActivityContent(
     counterViewModel: CounterViewModel,
+    splitIntentBasicViewModel: SplitIntentBasicViewModel,
     networkModelsViewModel: NetworkModelsViewModel,
+    stateDecompositionViewModel: StateDecompositionViewModel,
 ) {
     PulseTheme {
         PulseSamplesApp(
             counterViewModel = counterViewModel,
+            splitIntentBasicViewModel = splitIntentBasicViewModel,
             networkModelsViewModel = networkModelsViewModel,
+            stateDecompositionViewModel = stateDecompositionViewModel,
         )
     }
 }
@@ -37,7 +45,9 @@ fun MainActivityContent(
 @Composable
 private fun PulseSamplesApp(
     counterViewModel: CounterViewModel,
+    splitIntentBasicViewModel: SplitIntentBasicViewModel,
     networkModelsViewModel: NetworkModelsViewModel,
+    stateDecompositionViewModel: StateDecompositionViewModel,
 ) {
     var destination by rememberSaveable { mutableStateOf(SampleDestination.HOME.name) }
     val currentDestination = SampleDestination.valueOf(destination)
@@ -51,7 +61,13 @@ private fun PulseSamplesApp(
         SampleDestination.HOME -> {
             SamplesHomeScreen(
                 onOpenCounter = { destination = SampleDestination.COUNTER.name },
+                onOpenSplitIntentBasic = {
+                    destination = SampleDestination.SPLIT_INTENT_BASIC.name
+                },
                 onOpenNetwork = { destination = SampleDestination.NETWORK.name },
+                onOpenStateDecomposition = {
+                    destination = SampleDestination.STATE_DECOMPOSITION.name
+                },
             )
         }
 
@@ -76,6 +92,32 @@ private fun PulseSamplesApp(
             ) { innerPadding ->
                 NetworkModelsScreen(
                     viewModel = networkModelsViewModel,
+                    modifier = Modifier.padding(innerPadding),
+                )
+            }
+        }
+
+        SampleDestination.SPLIT_INTENT_BASIC -> {
+            SampleDetailScaffold(
+                title = SampleDestination.SPLIT_INTENT_BASIC.title,
+                subtitle = SampleDestination.SPLIT_INTENT_BASIC.subtitle,
+                onBack = { destination = SampleDestination.HOME.name },
+            ) { innerPadding ->
+                SplitIntentBasicScreen(
+                    viewModel = splitIntentBasicViewModel,
+                    modifier = Modifier.padding(innerPadding),
+                )
+            }
+        }
+
+        SampleDestination.STATE_DECOMPOSITION -> {
+            SampleDetailScaffold(
+                title = SampleDestination.STATE_DECOMPOSITION.title,
+                subtitle = SampleDestination.STATE_DECOMPOSITION.subtitle,
+                onBack = { destination = SampleDestination.HOME.name },
+            ) { innerPadding ->
+                StateDecompositionScreen(
+                    viewModel = stateDecompositionViewModel,
                     modifier = Modifier.padding(innerPadding),
                 )
             }
@@ -109,7 +151,9 @@ private fun HomePreview() {
     PulseTheme {
         SamplesHomeScreen(
             onOpenCounter = {},
+            onOpenSplitIntentBasic = {},
             onOpenNetwork = {},
+            onOpenStateDecomposition = {},
         )
     }
 }

@@ -13,8 +13,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import com.magic.mvicore.android.compose.collectStateAsState
-import com.magic.mvicore.android.compose.observeEffects
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import com.magic.mvicore.android.compose.ObserveUiEffects
+import com.magic.mvicore.android.compose.collectStateAsStateWithLifecycle
 import com.magic.pulse.samples.network.mvi.NetworkModelsEffect
 import com.magic.pulse.samples.network.mvi.NetworkModelsUiIntent
 import com.magic.pulse.samples.network.mvi.NetworkModelsViewModel
@@ -24,10 +25,11 @@ fun NetworkModelsScreen(
     viewModel: NetworkModelsViewModel,
     modifier: Modifier = Modifier,
 ) {
-    val state by viewModel.collectStateAsState()
+    val lifecycleOwner = LocalLifecycleOwner.current
+    val state by viewModel.collectStateAsStateWithLifecycle(lifecycleOwner)
     val context = LocalContext.current
 
-    viewModel.observeEffects { effect ->
+    viewModel.ObserveUiEffects(lifecycleOwner) { effect ->
         when (effect) {
             is NetworkModelsEffect.ShowMessage -> {
                 Toast.makeText(context, effect.text, Toast.LENGTH_SHORT).show()

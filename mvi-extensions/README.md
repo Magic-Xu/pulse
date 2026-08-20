@@ -1,58 +1,58 @@
 # mvi-extensions
 
-`mvi-extensions` 是第 4 步：在不改核心 API 的前提下，把常见能力做成可插拔插件。
+Pulse 的可选扩展模块。状态拆分 API 只位于本模块，不属于 `mvi-core-contract`。
 
-## 目标
+> 当前版本为 `0.3.0-SNAPSHOT`，仍在开发中，尚未发布到 Maven Central。
 
-- 验证 `StorePlugin` 扩展机制可以承载通用能力
-- 提供可直接复用的极简插件实现
-- 保持跨平台，不引入 Android 依赖
-
-## 目录结构
-
-- `LoggingPlugin.kt`
-  - `LoggingPlugin`：记录生命周期、intent、state、effect、错误
-  - `LogSink`：日志输出抽象（可接控制台、文件、埋点系统）
-- `StateTransitionPlugin.kt`
-  - `StateTransitionPlugin`：统一输出 `previous + intent + next` 三元组
-  - `StateTransition`：状态变化记录模型
-- `ExtensionsSelfCheck.kt`
-  - 自检入口：验证两个插件的关键行为
-
-## 实验原理（为什么这么实现）
-
-1. 核心保持最小闭环
-   - `DefaultStore` 只做调度和分发，不内建日志/追踪逻辑。
-
-2. 扩展能力插件化
-   - `LoggingPlugin` 通过 `LogSink` 抽象输出端，做到“同一插件，多种落地”。
-   - `StateTransitionPlugin` 在 `onIntent/onState` 两个阶段拼出完整状态迁移数据，便于调试与分析。
-
-3. 对使用方依赖最小化
-   - 本模块依赖 `mvi-core-runtime`，并通过 `api` 透出，使用方只需按需引入本模块即可。
-
-## 用法示例
+## 依赖
 
 ```kotlin
-val store = DefaultStore(
-    initialState = state,
-    reducer = reducer,
-    plugins = listOf(
-        LoggingPlugin(),
-        StateTransitionPlugin { transition ->
-            // transition.previous / transition.intent / transition.next
-        }
-    )
-)
+dependencies {
+    implementation(project(":mvi-extensions"))
+}
 ```
 
-## 当前可运行验证
+## State Decomposition
+
+- `StateLens<ROOT, SUB>`、`stateLens`、`updateSubState`：读取和回写局部状态；`SUB` 无需实现 `MviState`。
+- `pulseMutationReducer`：构建 v0.3 `PulseMutationReducer`。
+- `on`：处理根状态 mutation。
+- `onSub`：通过 lens 把局部 reducer 结果提升为根状态结果。
+- `ignore(reason)`：显式忽略某一 mutation 类型。
+- `SubStateNext`、`subStateJust`、`subStateWithEffect`、`subStateWithEffects`：描述 marker-free 子状态结果。
+
+未注册 mutation 会 fail-fast。重复路由以及父子类型重叠路由会在 reducer 构建时抛错，不会按注册顺序静默覆盖。
+
+```kotlin
+val feedLens = stateLens<RootState, FeedState>(
+    get = RootState::feed,
+    set = { root, feed -> root.copy(feed = feed) },
+)
+
+val reducer = pulseMutationReducer<RootState, RootMutation, RootEffect> {
+    onSub<FeedState, RootMutation.FeedLoaded>(feedLens) { feed, mutation ->
+        subStateJust(feed.copy(items = mutation.items))
+    }
+    ignore<RootMutation.AnalyticsOnly>("handled outside state reduction")
+}
+```
+
+### Lens 必须满足的规律
+
+对任意有效的 `root`、`a`、`b`：
+
+1. Get-Put：`lens.set(root, lens.get(root)) == root`
+2. Put-Get：`lens.get(lens.set(root, a)) == a`
+3. Put-Put：`lens.set(lens.set(root, a), b) == lens.set(root, b)`
+
+不满足这些规律会让局部更新丢失或产生不可预测的根状态。
+
+## v0.2 兼容扩展
+
+`LoggingPlugin` 和 `StateTransitionPlugin` 继续服务 v0.2 `DefaultStore` / `StorePlugin` API。v0.3 Store 插件接口是 `PulseStorePlugin`，不要把两类插件混用。
+
+## 验证
 
 ```bash
 ./gradlew :mvi-extensions:check
 ```
-
-验证点：
-
-- 日志插件回调顺序与实际调度事件一致
-- 状态变化插件能输出完整三元组
