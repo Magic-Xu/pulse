@@ -1,6 +1,7 @@
 package com.magic.mvicore.android
 
 import com.magic.mvicore.contract.DispatchResult
+import com.magic.mvicore.contract.FailureContext
 import com.magic.mvicore.contract.MviEffect
 import com.magic.mvicore.contract.MviMutation
 import com.magic.mvicore.contract.MviState
@@ -8,6 +9,8 @@ import com.magic.mvicore.contract.MviUiIntent
 import com.magic.mvicore.contract.MutationReducer
 import com.magic.mvicore.contract.SplitIntent
 import com.magic.mvicore.contract.SplitIntentReducer
+import com.magic.mvicore.contract.PulseFailure
+import com.magic.mvicore.runtime.PulseRuntimeConfig
 import com.magic.mvicore.runtime.StorePlugin
 import kotlinx.coroutines.Job
 
@@ -28,6 +31,7 @@ open class PulseSplitViewModel<S : MviState, UI : MviUiIntent, M : MviMutation, 
     plugins = plugins,
     autoStart = autoStart,
 ) {
+    private val legacyRuntimeConfig = PulseRuntimeConfig()
 
     fun send(intent: UI): DispatchResult = dispatch(SplitIntent.Ui(intent))
 
@@ -40,8 +44,17 @@ open class PulseSplitViewModel<S : MviState, UI : MviUiIntent, M : MviMutation, 
         when (intent) {
             is SplitIntent.Ui -> {
                 val executionScope = UiIntentExecutionScope(scope)
-                runCatching {
+                try {
                     uiIntentExecutor.execute(intent.value, executionScope)
+                } catch (cancelled: kotlinx.coroutines.CancellationException) {
+                    throw cancelled
+                } catch (failure: Exception) {
+                    legacyRuntimeConfig.reportFailure(
+                        PulseFailure.ExecutorFailure(
+                            context = FailureContext(component = "legacy-ui-intent-executor"),
+                            cause = failure,
+                        )
+                    )
                 }
             }
 

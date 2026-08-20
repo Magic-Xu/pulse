@@ -1,0 +1,121 @@
+public final class com/magic/mvicore/android/IntentExecutionScope {
+	public final fun dispatch (Lcom/magic/mvicore/contract/MviIntent;)Lcom/magic/mvicore/contract/DispatchResult;
+	public final fun getCurrentState ()Lcom/magic/mvicore/contract/MviState;
+	public final fun launch (Lkotlin/jvm/functions/Function2;)Lkotlinx/coroutines/Job;
+}
+
+public abstract interface class com/magic/mvicore/android/IntentExecutor {
+	public static final field Companion Lcom/magic/mvicore/android/IntentExecutor$Companion;
+	public abstract fun execute (Lcom/magic/mvicore/contract/MviIntent;Lcom/magic/mvicore/android/IntentExecutionScope;)V
+}
+
+public final class com/magic/mvicore/android/IntentExecutor$Companion {
+	public final fun noop ()Lcom/magic/mvicore/android/IntentExecutor;
+}
+
+public final class com/magic/mvicore/android/PulseAndroidExecutionOwner {
+	public static fun from (Lkotlinx/coroutines/CoroutineScope;)Lcom/magic/mvicore/android/PulseAndroidExecutionOwner;
+}
+
+public final class com/magic/mvicore/android/PulseIntentContext {
+	public final fun cancelTask-3UZBuMY (Ljava/lang/String;)Z
+	public final fun getCurrentState ()Lcom/magic/mvicore/contract/MviState;
+	public final fun launchTask-X6WvQZY (Ljava/lang/String;Lcom/magic/mvicore/contract/TaskPolicy;Lkotlin/jvm/functions/Function2;)Lcom/magic/mvicore/contract/TaskLaunchResult;
+	public final fun mutate (Lcom/magic/mvicore/contract/MviMutation;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class com/magic/mvicore/android/PulseSavedState {
+	public fun <init> (Landroidx/lifecycle/SavedStateHandle;Lcom/magic/mvicore/android/PulseSavedStateAdapter;)V
+}
+
+public abstract interface class com/magic/mvicore/android/PulseSavedStateAdapter {
+	public abstract fun restore (Landroidx/lifecycle/SavedStateHandle;)Lcom/magic/mvicore/contract/MviState;
+	public abstract fun save (Lcom/magic/mvicore/contract/MviState;Landroidx/lifecycle/SavedStateHandle;)V
+}
+
+public class com/magic/mvicore/android/PulseSplitStoreViewModel : androidx/lifecycle/ViewModel, com/magic/mvicore/android/PulseStateHost, java/lang/AutoCloseable {
+	public fun <init> (Lcom/magic/mvicore/contract/MviState;Lcom/magic/mvicore/contract/PulseMutationReducer;Lcom/magic/mvicore/android/PulseUiIntentExecutor;Lcom/magic/mvicore/runtime/PulseRuntimeConfig;Lcom/magic/mvicore/android/PulseSavedState;Lcom/magic/mvicore/android/PulseAndroidExecutionOwner;)V
+	public synthetic fun <init> (Lcom/magic/mvicore/contract/MviState;Lcom/magic/mvicore/contract/PulseMutationReducer;Lcom/magic/mvicore/android/PulseUiIntentExecutor;Lcom/magic/mvicore/runtime/PulseRuntimeConfig;Lcom/magic/mvicore/android/PulseSavedState;Lcom/magic/mvicore/android/PulseAndroidExecutionOwner;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun awaitClosed (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun close ()V
+	public final fun getState ()Lkotlinx/coroutines/flow/StateFlow;
+	public final fun getUiEffects ()Lcom/magic/mvicore/runtime/UiEffectStream;
+	protected final fun onCleared ()V
+	public final fun send (Lcom/magic/mvicore/contract/MviUiIntent;)V
+	public final fun trySend (Lcom/magic/mvicore/contract/MviUiIntent;)Lcom/magic/mvicore/contract/EnqueueResult;
+}
+
+public final class com/magic/mvicore/android/PulseSplitStoreViewModelKt {
+	public static final fun androidPulseRuntimeConfig ()Lcom/magic/mvicore/runtime/PulseRuntimeConfig;
+}
+
+public class com/magic/mvicore/android/PulseSplitViewModel : com/magic/mvicore/android/PulseViewModel {
+	public fun <init> (Lcom/magic/mvicore/contract/MviState;Lcom/magic/mvicore/contract/MutationReducer;Lcom/magic/mvicore/android/UiIntentExecutor;Ljava/util/List;Z)V
+	public synthetic fun <init> (Lcom/magic/mvicore/contract/MviState;Lcom/magic/mvicore/contract/MutationReducer;Lcom/magic/mvicore/android/UiIntentExecutor;Ljava/util/List;ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	protected final fun mutate (Lcom/magic/mvicore/contract/MviMutation;)Lcom/magic/mvicore/contract/DispatchResult;
+	public synthetic fun onIntentAccepted (Lcom/magic/mvicore/contract/MviIntent;Lcom/magic/mvicore/android/IntentExecutionScope;)V
+	protected final fun onIntentAccepted (Lcom/magic/mvicore/contract/SplitIntent;Lcom/magic/mvicore/android/IntentExecutionScope;)V
+	public final fun send (Lcom/magic/mvicore/contract/MviUiIntent;)Lcom/magic/mvicore/contract/DispatchResult;
+}
+
+public abstract interface class com/magic/mvicore/android/PulseStateHost {
+	public abstract fun getState ()Lkotlinx/coroutines/flow/StateFlow;
+	public abstract fun getUiEffects ()Lcom/magic/mvicore/runtime/UiEffectStream;
+}
+
+public final class com/magic/mvicore/android/PulseTaskContext {
+	public final fun getCurrentState ()Lcom/magic/mvicore/contract/MviState;
+	public final fun getToken ()Lcom/magic/mvicore/contract/TaskToken;
+	public final fun mutate (Lcom/magic/mvicore/contract/MviMutation;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public abstract interface class com/magic/mvicore/android/PulseUiIntentExecutor {
+	public static final field Companion Lcom/magic/mvicore/android/PulseUiIntentExecutor$Companion;
+	public abstract fun execute (Lcom/magic/mvicore/contract/MviUiIntent;Lcom/magic/mvicore/android/PulseIntentContext;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class com/magic/mvicore/android/PulseUiIntentExecutor$Companion {
+	public final fun noop ()Lcom/magic/mvicore/android/PulseUiIntentExecutor;
+}
+
+public class com/magic/mvicore/android/PulseViewModel : androidx/lifecycle/ViewModel, com/magic/mvicore/contract/Store {
+	public fun <init> (Lcom/magic/mvicore/contract/MviState;Lcom/magic/mvicore/contract/Reducer;Ljava/util/List;Z)V
+	public synthetic fun <init> (Lcom/magic/mvicore/contract/MviState;Lcom/magic/mvicore/contract/Reducer;Ljava/util/List;ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun close ()V
+	public final fun dispatch (Lcom/magic/mvicore/contract/MviIntent;)Lcom/magic/mvicore/contract/DispatchResult;
+	public fun getCurrentState ()Lcom/magic/mvicore/contract/MviState;
+	protected final fun getIntentExecutionScope ()Lcom/magic/mvicore/android/IntentExecutionScope;
+	public fun isClosed ()Z
+	public fun isStarted ()Z
+	public fun observeEffect (Lkotlin/jvm/functions/Function1;)Lcom/magic/mvicore/contract/Subscription;
+	public fun observeState (Lkotlin/jvm/functions/Function1;)Lcom/magic/mvicore/contract/Subscription;
+	protected fun onCleared ()V
+	protected fun onIntentAccepted (Lcom/magic/mvicore/contract/MviIntent;Lcom/magic/mvicore/android/IntentExecutionScope;)V
+	public fun start ()V
+	public fun stop ()V
+}
+
+public abstract interface class com/magic/mvicore/android/PulseViewModelCreator {
+	public abstract fun create (Landroidx/lifecycle/viewmodel/CreationExtras;)Landroidx/lifecycle/ViewModel;
+}
+
+public final class com/magic/mvicore/android/PulseViewModelProviderKt {
+	public static final fun pulseSavedStateViewModelFactory (Ljava/lang/Class;Lkotlin/jvm/functions/Function1;)Landroidx/lifecycle/ViewModelProvider$Factory;
+	public static final fun pulseViewModel (Landroidx/lifecycle/ViewModelStoreOwner;Ljava/lang/String;Ljava/lang/Class;Lcom/magic/mvicore/android/PulseViewModelCreator;)Landroidx/lifecycle/ViewModel;
+	public static final fun pulseViewModelFactory (Ljava/lang/Class;Lcom/magic/mvicore/android/PulseViewModelCreator;)Landroidx/lifecycle/ViewModelProvider$Factory;
+}
+
+public final class com/magic/mvicore/android/UiIntentExecutionScope {
+	public final fun dispatchMutation (Lcom/magic/mvicore/contract/MviMutation;)Lcom/magic/mvicore/contract/DispatchResult;
+	public final fun getCurrentState ()Lcom/magic/mvicore/contract/MviState;
+	public final fun launch (Lkotlin/jvm/functions/Function2;)Lkotlinx/coroutines/Job;
+}
+
+public abstract interface class com/magic/mvicore/android/UiIntentExecutor {
+	public static final field Companion Lcom/magic/mvicore/android/UiIntentExecutor$Companion;
+	public abstract fun execute (Lcom/magic/mvicore/contract/MviUiIntent;Lcom/magic/mvicore/android/UiIntentExecutionScope;)V
+}
+
+public final class com/magic/mvicore/android/UiIntentExecutor$Companion {
+	public final fun noop ()Lcom/magic/mvicore/android/UiIntentExecutor;
+}

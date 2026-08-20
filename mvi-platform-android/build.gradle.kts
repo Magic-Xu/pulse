@@ -1,8 +1,9 @@
 plugins {
     id("com.android.library")
+    alias(libs.plugins.dokka)
 }
 
-description = "Pulse Android adapter: ViewModel-based Store ownership."
+description = "Pulse Android ViewModel, Split Intent, explicit owner, and saved-state adapters."
 
 android {
     namespace = "com.magic.mvicore.android"
@@ -26,5 +27,21 @@ android {
 dependencies {
     api(project(":mvi-core-runtime"))
     api(libs.androidx.lifecycle.viewmodel)
+    api(libs.androidx.lifecycle.viewmodel.ktx)
+    api(libs.androidx.lifecycle.viewmodel.savedstate)
+    api(libs.androidx.savedstate.ktx)
     api(libs.kotlinx.coroutines.android)
+
+    testImplementation(libs.kotlin.test.junit)
+    testImplementation(libs.junit)
+    testImplementation(libs.kotlinx.coroutines.test)
+    testImplementation(libs.androidx.lifecycle.runtime.testing)
+    testImplementation(libs.robolectric)
+}
+
+tasks.withType<Test>().configureEach {
+    systemProperty(
+        "robolectric.dependency.repo.url",
+        "https://repo.maven.apache.org/maven2",
+    )
 }
