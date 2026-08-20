@@ -8,6 +8,11 @@ kotlin {
     jvmToolchain(11)
 }
 
+dependencies {
+    testImplementation(libs.kotlin.test.junit)
+    testImplementation(libs.junit)
+}
+
 val testSourceSet = sourceSets.named("test")
 
 tasks.register<JavaExec>("contractSelfCheck") {
@@ -21,6 +26,6 @@ tasks.named("check") {
     dependsOn("contractSelfCheck")
 }
 
-tasks.named<Test>("test") {
-    failOnNoDiscoveredTests = false
+tasks.withType<Test>().configureEach {
+    useJUnit()
 }

@@ -10,25 +10,19 @@ private fun reducerShouldProducePredictableStateEvolution() {
     var current = CounterState(0)
     val emittedEffects = mutableListOf<CounterEffect>()
 
-    val intents = listOf(
+    listOf(
         CounterIntent.Increment,
         CounterIntent.Increment,
         CounterIntent.Decrement,
         CounterIntent.Reset,
-    )
-
-    intents.forEach { intent ->
+    ).forEach { intent ->
         val next = reducer.reduce(current, intent)
         current = next.state
         emittedEffects += next.effects
     }
 
-    check(current == CounterState(0)) {
-        "Expected final state CounterState(0), actual: $current"
-    }
-    check(emittedEffects == listOf(CounterEffect.WasReset)) {
-        "Expected effect [WasReset], actual: $emittedEffects"
-    }
+    check(current == CounterState(0))
+    check(emittedEffects == listOf(CounterEffect.WasReset))
 }
 
 private fun nextWithEffectsShouldCopyInputIterable() {
@@ -36,9 +30,7 @@ private fun nextWithEffectsShouldCopyInputIterable() {
     val next = Next.withEffects(CounterState(0), source)
     source.clear()
 
-    check(next.effects == listOf(CounterEffect.WasReset)) {
-        "Next.effects should be an immutable snapshot copy."
-    }
+    check(next.effects == listOf(CounterEffect.WasReset))
 }
 
 private data class CounterState(val count: Int) : MviState
@@ -54,7 +46,10 @@ private sealed interface CounterEffect : MviEffect {
 }
 
 private class CounterReducer : Reducer<CounterState, CounterIntent, CounterEffect> {
-    override fun reduce(previous: CounterState, intent: CounterIntent): Next<CounterState, CounterEffect> {
+    override fun reduce(
+        previous: CounterState,
+        intent: CounterIntent,
+    ): Next<CounterState, CounterEffect> {
         return when (intent) {
             CounterIntent.Increment -> Next.just(previous.copy(count = previous.count + 1))
             CounterIntent.Decrement -> Next.just(previous.copy(count = previous.count - 1))
