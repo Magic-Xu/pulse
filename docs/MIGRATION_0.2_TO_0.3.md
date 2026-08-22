@@ -2,8 +2,7 @@
 
 Chinese version: [MIGRATION_0.2_TO_0.3.zh-CN.md](./MIGRATION_0.2_TO_0.3.zh-CN.md)
 
-> Stable `0.3.0` is qualified but has not yet been published. Use the version available from your
-> configured staging repository until public artifact verification succeeds.
+> Stable `0.3.0` is available from Maven Central.
 
 Pulse 0.3 keeps the 0.2 public API and artifact coordinates as a compatibility surface. Existing
 applications can upgrade first and migrate feature by feature; adopting the new API does not require

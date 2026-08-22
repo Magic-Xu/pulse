@@ -2,8 +2,7 @@
 
 [English](CONSUMER_GUIDE.md)
 
-本文面向接入 0.3 API 的应用开发者。仓库当前构建稳定版 `0.3.0` 候选；公共制品验证成功前请使用
-本地 staging 仓库。
+本文面向接入 Maven Central 稳定版 `0.3.0` API 的应用开发者。
 
 ## 选择最小能力面
 

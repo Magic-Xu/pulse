@@ -4,8 +4,8 @@
 
 ## 当前版本线
 
-源码当前目标为稳定版 `0.3.0` 候选。0.3 是一次整体发布：运行时有序性、Split Intent Task、
-Android/Compose 生命周期、State Decomposition、测试、兼容与公共制品证据必须一起交付。
+当前稳定版为 `0.3.0`。运行时有序性、Split Intent Task、Android/Compose 生命周期、State
+Decomposition、测试、兼容与公共制品证据已作为一个整体发布。
 
 ## 0.3 范围
 
@@ -46,8 +46,8 @@ Android/Compose 生命周期、State Decomposition、测试、兼容与公共制
 ### 发布证据
 
 - 六个公开制品都有受控 API/ABI dump，包含两个 Android AAR。
-- v0.2 Consumer 源码编译与二进制链接均对候选制品执行。
-- 候选发布物在隔离 Maven 仓库中校验。
+- v0.2 Consumer 源码编译与二进制链接均对 0.3.0 制品执行。
+- 发布物会先在隔离 Maven 仓库中校验，再执行公共消费验证。
 - 两个独立示例只通过 Maven 坐标消费制品，不依赖 Project。
 - 固定种子 PR 测试、多种子压力与性能回归分层执行。
 

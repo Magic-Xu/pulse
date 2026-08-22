@@ -2,8 +2,7 @@
 
 Chinese version: [COMPATIBILITY.zh-CN.md](./COMPATIBILITY.zh-CN.md)
 
-> `0.3.0` is the qualified stable candidate and has not yet been published. `0.2.0` remains the
-> current stable line until public artifact verification succeeds.
+> `0.3.0` is the current stable release on Maven Central. `0.2.0` remains the compatibility baseline.
 
 This document distinguishes API compatibility from runtime behavior. A program can remain source
 and binary compatible while receiving stronger ordering and failure semantics.
@@ -12,8 +11,8 @@ and binary compatible while receiving stronger ordering and failure semantics.
 
 | Line | Status | Intended use |
 |---|---|---|
-| `0.2.0` | Current stable | Existing applications and the compatibility reference |
-| `0.3.0` | Qualified stable candidate | Ordered runtime, new API, and retained 0.2 compatibility surface |
+| `0.2.0` | Previous stable | Existing applications and the compatibility reference |
+| `0.3.0` | Current stable | Ordered runtime, new API, and retained 0.2 compatibility surface |
 
 Pulse uses `0.x.y` versions. Before 1.0, a minor release may add or revise public APIs. Patch releases
 must not intentionally remove public APIs or change documented behavior incompatibly.
@@ -23,17 +22,17 @@ must not intentionally remove public APIs or change documented behavior incompat
 | Dimension | 0.3 target |
 |---|---|
 | Artifact coordinates | Keep the five 0.2 coordinates; add `mvi-testing` |
-| Source compatibility | Existing 0.2 public calls compile against the candidate |
-| Binary compatibility | A consumer compiled against 0.2 links and runs with candidate artifacts |
+| Source compatibility | Existing 0.2 public calls compile against 0.3.0 |
+| Binary compatibility | A consumer compiled against 0.2 links and runs with 0.3.0 artifacts |
 | New API | Additive; migration may be performed one feature at a time |
 | Behavioral compatibility | Preserve functional intent, with documented ordering and lifecycle changes |
 | Persistence compatibility | Application-owned schemas remain the application's responsibility |
 
-The release gate compiles one frozen 0.2 Kotlin surface against both the baseline and candidate forms
+The release gate compiles one frozen 0.2 Kotlin surface against both the baseline and 0.3.0 forms
 of all five existing artifacts, and performs archive-level binary and Java-source compatibility
 comparison for each coordinate. A binary-linked core-runtime consumer also executes against the
-staged candidate. Controlled public API baselines cover all six published modules. These are release
-requirements, not evidence that the unpublished snapshot is already released.
+staged 0.3.0 artifacts before release. Controlled public API baselines cover all six published
+modules. The v0.3.0 release passed these checks before publication.
 
 ## Published artifacts
 
@@ -70,8 +69,8 @@ delivery. Tasks and UI effects are process-local.
 
 ## Platform baseline
 
-The 0.3 candidate is built with Java 11 bytecode targets. Android artifacts use `minSdk 23`; the
-release project compiles against Android API 36.1. Release and CI gates run on JDK 21. The candidate
+Pulse 0.3.0 is built with Java 11 bytecode targets. Android artifacts use `minSdk 23`; the release
+project compiles against Android API 36.1. Release and CI gates run on JDK 21. The published
 dependency set is defined by its published Gradle metadata and POM; consumer dependency resolution
 must be checked against the application's own platform and constraints.
 

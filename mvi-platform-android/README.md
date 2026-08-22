@@ -2,7 +2,7 @@
 
 Pulse 的 Android ViewModel 适配层，不依赖 Compose。
 
-> 当前源码版本为稳定版 `0.3.0` 候选；公共制品验证成功前仍未发布到 Maven Central。最低 Android API 为 23。
+> 当前稳定版为 `0.3.0`，已发布到 Maven Central。最低 Android API 为 23。
 
 ## 依赖
 

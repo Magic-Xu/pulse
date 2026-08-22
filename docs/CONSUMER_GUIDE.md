@@ -2,8 +2,7 @@
 
 [简体中文](CONSUMER_GUIDE.zh-CN.md)
 
-This guide targets application developers adopting the 0.3 API. The repository currently builds the
-stable `0.3.0` candidate; use the staged repository until public artifact verification succeeds.
+This guide targets application developers adopting the stable `0.3.0` API published on Maven Central.
 
 ## Choose the smallest surface
 

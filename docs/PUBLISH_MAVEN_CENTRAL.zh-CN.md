@@ -2,8 +2,8 @@
 
 英文版：[PUBLISH_MAVEN_CENTRAL.md](./PUBLISH_MAVEN_CENTRAL.md)
 
-> 稳定版 `0.3.0` 已完成候选验证但尚未发布。本文面向准备准确 `v0.3.0` 的发布维护者。分支、
-> snapshot、RC 和手动 workflow 都不能发布。
+> 稳定版 `0.3.0` 已通过准确的 `v0.3.0` tag 发布。本文记录受保护发布流程；分支、snapshot、
+> RC 和手动 workflow 都不能发布。
 
 ## 一次性准备
 

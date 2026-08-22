@@ -2,9 +2,8 @@
 
 Chinese version: [PUBLISH_MAVEN_CENTRAL.zh-CN.md](./PUBLISH_MAVEN_CENTRAL.zh-CN.md)
 
-> Stable `0.3.0` is qualified but not yet published. This guide is for the release maintainer
-> preparing the exact `v0.3.0` publication. Branches, snapshots, RCs, and manual workflow runs
-> cannot publish.
+> Stable `0.3.0` was published through the exact `v0.3.0` tag. This guide records the guarded release
+> process. Branches, snapshots, RCs, and manual workflow runs cannot publish.
 
 ## One-time setup
 

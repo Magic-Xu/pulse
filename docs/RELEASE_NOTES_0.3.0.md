@@ -2,8 +2,7 @@
 
 Chinese version: [RELEASE_NOTES_0.3.0.zh-CN.md](./RELEASE_NOTES_0.3.0.zh-CN.md)
 
-> Status: **qualified release candidate**. Stable `0.3.0` artifacts are not available until the
-> guarded release workflow and public artifact verification succeed.
+> Status: **released on 2026-08-23**. Stable `0.3.0` artifacts are available from Maven Central.
 
 Pulse 0.3 introduces one ordered runtime for both the new coroutine API and the retained 0.2
 compatibility API. The release focuses on deterministic input ordering, explicit reducer outcomes,
@@ -101,7 +100,7 @@ Resolved transitive versions are recorded in each artifact's Gradle metadata and
 
 ## Release qualification
 
-Stable `0.3.0` is published only after the candidate passes:
+Stable `0.3.0` passed:
 
 - six-module public API checks and a five-artifact 0.2 source/binary compatibility fixture;
 - core, Android, Compose, and sample application tests, lint, and builds;

@@ -1,12 +1,10 @@
 # Changelog
 
-Notable changes to Pulse are recorded here. A release-candidate section becomes a published version
-only after its guarded Maven Central workflow succeeds.
+Notable changes to Pulse are recorded here.
 
-## Release candidate — 0.3.0
+## 0.3.0 — 2026-08-23
 
-`0.3.0` is qualified for the guarded release workflow but has not yet been published to Maven
-Central. The latest stable release remains `0.2.0` until public artifact verification succeeds.
+Pulse 0.3.0 is published to Maven Central.
 
 ### Added
 
@@ -37,9 +35,9 @@ Central. The latest stable release remains `0.2.0` until public artifact verific
 ### Compatibility and verification scope
 
 - The five 0.2 artifact coordinates remain release targets; `mvi-testing` is the sixth 0.3 artifact.
-- Controlled API baselines cover all six candidate artifacts. The current executable 0.2
-  source/binary consumer fixture exercises the core-runtime dependency path; Android, Compose, and
-  extensions compatibility still depends on their API baselines and module tests.
+- Controlled API baselines cover all six published artifacts. The frozen 0.2 source surface and
+  archive-level compatibility checks cover all five existing coordinates; core-runtime binary
+  linkage is also executed against 0.3.0.
 - The performance harness enforces broad throughput, latency, and retained-memory floors and checks
   bounded mailbox admission. Its selector count is a synthetic metric, not a device or Compose
   performance benchmark.

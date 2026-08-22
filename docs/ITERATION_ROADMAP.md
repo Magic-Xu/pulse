@@ -4,9 +4,8 @@
 
 ## Current line
 
-The source tree targets the stable `0.3.0` candidate. Version 0.3 is one coordinated release: runtime
-ordering, Split Intent tasks, Android/Compose lifecycle support, State Decomposition, testing,
-compatibility, and public-artifact evidence ship together.
+The current stable line is `0.3.0`. Runtime ordering, Split Intent tasks, Android/Compose lifecycle
+support, State Decomposition, testing, compatibility, and public-artifact evidence shipped together.
 
 ## 0.3 scope
 
@@ -47,8 +46,8 @@ compatibility, and public-artifact evidence ship together.
 ### Release evidence
 
 - Six public artifacts have controlled API/ABI dumps, including both Android AARs.
-- v0.2 consumer source compilation and binary linkage run against the candidate.
-- Candidate publications are verified from an isolated Maven repository.
+- v0.2 consumer source compilation and binary linkage run against 0.3.0.
+- Release publications are verified from an isolated Maven repository before public consumption.
 - Two independent samples consume Maven artifacts without project dependencies.
 - Fixed-seed PR tests, multi-seed stress, and performance regression gates are separate.
 

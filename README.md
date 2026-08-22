@@ -6,8 +6,7 @@ Pulse is an ordered, coroutine-first MVI runtime for Kotlin and Android. A store
 input mailbox and one processor, publishes state through `StateFlow`, records every processed input
 as a correlated transition frame, and delivers replay-zero UI effects through one coordinator.
 
-The repository is currently qualifying the stable **0.3.0** candidate. The latest Maven Central
-release remains 0.2.0 until the guarded release workflow passes.
+The latest stable release is **0.3.0**, available from Maven Central.
 
 ## Modules
 
@@ -70,11 +69,10 @@ admission. Mutations and keyed tasks are available only inside `PulseIntentConte
 
 ## Dependency setup
 
-The 0.3 artifacts are not public until release. For a locally staged candidate:
+Pulse 0.3.0 is available from Maven Central:
 
 ```kotlin
 repositories {
-    maven { url = uri("<checkout>/build/staging-repo") }
     google()
     mavenCentral()
 }
@@ -105,12 +103,12 @@ contract layers transitively.
 # Deterministic pull-request gate
 ./gradlew mviFrameworkCheck
 
-# Full release candidate gate
+# Full release gate
 ./gradlew clean mviReleaseCheck
 ```
 
 The release gate includes standard tests, Store TCK, six-module API/ABI dumps, a five-artifact v0.2
-source/binary compatibility fixture, Android/Compose checks, candidate publication verification,
+source/binary compatibility fixture, Android/Compose checks, publication-bundle verification,
 artifact-only samples, multi-seed stress, and a portable performance-floor harness.
 
 See [Consumer Guide](docs/CONSUMER_GUIDE.md),
