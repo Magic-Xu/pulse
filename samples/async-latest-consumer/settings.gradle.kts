@@ -23,7 +23,7 @@ dependencyResolutionManagement {
         exclusiveContent {
             forRepository {
                 maven {
-                    name = "PulseCandidateStaging"
+                    name = "PulseArtifactSource"
                     url = uri(providers.gradleProperty("pulseRepository").get())
                 }
             }

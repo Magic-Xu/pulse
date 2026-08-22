@@ -142,5 +142,9 @@ After Maven Central reports the deployment as released:
 3. Confirm POM and Gradle metadata expose only `0.3.0` internal dependencies.
 4. Publish the release notes and migration links only after resolution succeeds.
 
+The guarded release workflow waits for the public POM, Gradle metadata, sources, and binary of all
+six modules and runs `publicArtifactSamplesCheck` with `--refresh-dependencies`. That step is part of
+the definition of done and cannot be replaced by a local staging result.
+
 A failed or partial candidate is not retagged or overwritten. Fix the cause, choose a new version,
 and run the complete qualification sequence again.

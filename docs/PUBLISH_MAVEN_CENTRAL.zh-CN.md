@@ -58,7 +58,10 @@ Maven Central 对坐标、签名、source archive 和 POM metadata 的要求参�
 
 workflow 只由准确 tag `v0.3.0` 触发。`release-check` job 会验证 GitHub ref、
 `POM_VERSION_NAME=0.3.0`、必要 metadata，并在 JDK 21 上运行 `mviReleaseCheck` 和托管设备测试。
-`publish` job 显式依赖两个 job，并发布同一个 workflow commit。
+`publish` job 显式依赖两个 job，并发布同一个 workflow commit。发布完成后，它会等待六个模块
+的 POM、Gradle metadata、sources 和 binary 全部出现在 Maven Central，再用
+`--refresh-dependencies` 运行 `publicArtifactSamplesCheck`；任一公共制品或纯制品消费者失败
+都会让 workflow 失败。
 
 不要为正式 v0.3.0 手动运行 `publishAndReleaseToMavenCentral`。远程发布只属于受保护的 workflow；
 Gradle publish task 也不会反向依赖 `mviReleaseCheck`。
@@ -79,8 +82,15 @@ module metadata、版本和内部 Pulse 依赖版本。
 
 ## 发布后
 
-等待 Central Portal 显示部署已 release，然后只从 Maven Central 解析全部六个坐标，不使用 local
-或 staging repository。正式宣布可用前，再针对公开坐标运行两个纯制品消费者。
+workflow 会等待 Central Portal 的完整公共制品传播，并只从 Maven Central 解析全部六个坐标，
+不使用 local 或 staging repository。需要本地复现发布后门禁时运行：
+
+```bash
+./gradlew publicArtifactSamplesCheck --refresh-dependencies \
+  -PpulsePublicVersion=0.3.0
+```
+
+正式宣布可用前，必须看到该 workflow step 和两个纯制品消费者都通过。
 
 如果 `release-check` 失败，publish job 不会运行。应修复根因，不能削弱或绕过门禁。如果 tag 或
 deployment 已对外可见，不要移动、复用或覆盖；选择新版本，并明确更新受保护的发布目标。

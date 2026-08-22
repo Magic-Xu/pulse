@@ -94,7 +94,7 @@ jobs:
       - device-check
     if: github.ref_type == 'tag' && github.ref_name == 'v0.3.0'
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 60
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -115,3 +115,61 @@ jobs:
           ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
           ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.SIGNING_IN_MEMORY_KEY }}
           ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.SIGNING_IN_MEMORY_KEY_PASSWORD }}
+
+      - name: Wait for the public Maven Central release
+        shell: bash
+        run: |
+          set -euo pipefail
+          modules=(
+            mvi-core-contract:jar
+            mvi-core-runtime:jar
+            mvi-platform-android:aar
+            mvi-platform-android-compose:aar
+            mvi-extensions:jar
+            mvi-testing:jar
+          )
+          base="https://repo.maven.apache.org/maven2/io/github/magic-xu"
+          for attempt in $(seq 1 60); do
+            missing=()
+            for entry in "${modules[@]}"; do
+              module="${entry%%:*}"
+              binary_extension="${entry##*:}"
+              module_base="${base}/${module}/0.3.0/${module}-0.3.0"
+              files=(
+                "${module_base}.pom"
+                "${module_base}.module"
+                "${module_base}-sources.jar"
+                "${module_base}.${binary_extension}"
+              )
+              for file in "${files[@]}"; do
+                if ! curl --fail --silent --head --output /dev/null "${file}"; then
+                  missing+=("${file##*/}")
+                fi
+              done
+            done
+            if [[ ${#missing[@]} -eq 0 ]]; then
+              echo "All Pulse 0.3.0 artifacts are public on Maven Central."
+              exit 0
+            fi
+            if [[ ${attempt} -eq 60 ]]; then
+              echo "Maven Central propagation timed out; missing: ${missing[*]}" >&2
+              exit 1
+            fi
+            echo "Waiting for Maven Central propagation (${attempt}/60): ${missing[*]}"
+            sleep 20
+          done
+
+      - name: Consume the public release from isolated samples
+        run: >-
+          ./gradlew publicArtifactSamplesCheck --refresh-dependencies --stacktrace
+          -PpulsePublicVersion=0.3.0
+
+      - name: Upload public consumer results
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: pulse-public-consumer-results
+          if-no-files-found: ignore
+          path: |
+            samples/async-latest-consumer/consumer/build/reports/tests/
+            samples/async-latest-consumer/consumer/build/test-results/

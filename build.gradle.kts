@@ -33,6 +33,9 @@ val nativeBcvModules = publishableModules - androidPublishedModules
 val pulseGroup = providers.gradleProperty("POM_GROUP_ID").orElse("io.github.magic-xu")
 val pulseVersion = providers.gradleProperty("POM_VERSION_NAME").orElse("0.3.0-SNAPSHOT")
 val pulseStagingRepository = layout.buildDirectory.dir("staging-repo")
+val publicPulseRepository = providers.gradleProperty("pulsePublicRepository")
+    .orElse("https://repo.maven.apache.org/maven2")
+val publicPulseVersion = providers.gradleProperty("pulsePublicVersion").orElse(pulseVersion)
 
 apiValidation {
     ignoredProjects.addAll(
@@ -323,6 +326,50 @@ tasks.register("artifactSamplesCheck") {
     group = "verification"
     description = "Verifies both artifact-only consumer builds."
     dependsOn(simpleSyncArtifactSampleCheck, asyncLatestArtifactSampleCheck)
+}
+
+fun GradleBuild.configurePublicConsumer(
+    buildDirectoryPath: String,
+    requestedTasks: List<String>,
+) {
+    dir = file(buildDirectoryPath)
+    tasks = requestedTasks
+    startParameter.projectProperties = startParameter.projectProperties + mapOf(
+        "pulseRepository" to publicPulseRepository.get(),
+        "pulseVersion" to publicPulseVersion.get(),
+    )
+    doFirst {
+        val version = publicPulseVersion.get()
+        require(!version.endsWith("-SNAPSHOT")) {
+            "publicArtifactSamplesCheck requires a stable -PpulsePublicVersion."
+        }
+    }
+}
+
+val publicSimpleSyncArtifactSampleCheck =
+    tasks.register<GradleBuild>("publicSimpleSyncArtifactSampleCheck") {
+        group = "verification"
+        description = "Builds the synchronous consumer from the public Pulse repository only."
+        configurePublicConsumer(
+            buildDirectoryPath = "samples/simple-sync-consumer",
+            requestedTasks = listOf(":consumer:assembleDebug"),
+        )
+    }
+
+val publicAsyncLatestArtifactSampleCheck =
+    tasks.register<GradleBuild>("publicAsyncLatestArtifactSampleCheck") {
+        group = "verification"
+        description = "Builds and tests the async consumer from the public Pulse repository only."
+        configurePublicConsumer(
+            buildDirectoryPath = "samples/async-latest-consumer",
+            requestedTasks = listOf(":consumer:assembleDebug", ":consumer:testDebugUnitTest"),
+        )
+    }
+
+tasks.register("publicArtifactSamplesCheck") {
+    group = "verification"
+    description = "Verifies both consumers against a stable public Pulse release."
+    dependsOn(publicSimpleSyncArtifactSampleCheck, publicAsyncLatestArtifactSampleCheck)
 }
 
 tasks.register<GradleBuild>("compatibilityCheck") {

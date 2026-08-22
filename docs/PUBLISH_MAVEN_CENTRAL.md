@@ -61,7 +61,10 @@ The official release path is `.github/workflows/publish-maven-central.yml`:
 The workflow is triggered only by the exact tag `v0.3.0`. Its `release-check` job verifies that the
 GitHub ref is that tag, `POM_VERSION_NAME` is exactly `0.3.0`, required metadata is present, and
 `mviReleaseCheck` and the managed-device instrumentation job pass on JDK 21. The `publish` job has
-explicit dependencies on both jobs and publishes the same workflow commit.
+explicit dependencies on both jobs and publishes the same workflow commit. After publication, it
+waits for the POM, Gradle metadata, sources, and binary of all six modules to appear on Maven Central
+and runs `publicArtifactSamplesCheck` with `--refresh-dependencies`; a missing public artifact or
+failed artifact-only consumer fails the workflow.
 
 Do not run `publishAndReleaseToMavenCentral` manually for the official v0.3.0 release. Remote
 publication belongs to the guarded workflow; Gradle publish tasks deliberately do not depend back on
@@ -83,9 +86,16 @@ version, and internal Pulse dependency version before remote publication.
 
 ## After publication
 
-Wait until Central Portal reports the deployment as released, then resolve all six coordinates from
-Maven Central without a local or staging repository. Re-run the two artifact-only consumers against
-the public coordinates before announcing availability.
+The workflow waits for complete public-artifact propagation and resolves all six coordinates from
+Maven Central without a local or staging repository. To reproduce the post-publication gate locally,
+run:
+
+```bash
+./gradlew publicArtifactSamplesCheck --refresh-dependencies \
+  -PpulsePublicVersion=0.3.0
+```
+
+Do not announce availability until that workflow step and both artifact-only consumers pass.
 
 If `release-check` fails, no publish job runs. Fix the root cause and do not weaken or bypass a gate.
 If a tag or deployment has already become externally visible, do not move, reuse, or overwrite it;

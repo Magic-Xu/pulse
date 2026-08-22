@@ -136,5 +136,8 @@ Maven Central 显示部署已发布后：
 3. 确认 POM 和 Gradle metadata 中的内部依赖全部为 `0.3.0`。
 4. 只有解析成功后，才发布 release notes 和 migration 链接。
 
+受保护的发布 workflow 会等待六个模块的 POM、Gradle metadata、sources 和 binary 公开，并使用 `--refresh-dependencies` 执行
+`publicArtifactSamplesCheck`。该 step 是完成定义的一部分，不能用本地 staging 结果替代。
+
 失败或不完整的候选版本不能重新打同一个 tag，也不能覆盖。修复根因、选择新版本，并重新运行完整
 准入流程。
