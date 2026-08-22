@@ -2,7 +2,7 @@
 
 Pulse 的平台无关契约模块，不包含协程、Android 或 Compose 实现。
 
-> 当前版本为 `0.3.0-SNAPSHOT`，仍在开发中，尚未发布到 Maven Central。
+> 当前源码版本为稳定版 `0.3.0` 候选；公共制品验证成功前仍未发布到 Maven Central。
 
 ## 依赖
 

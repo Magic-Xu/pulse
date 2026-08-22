@@ -2,8 +2,8 @@
 
 [简体中文](CONSUMER_GUIDE.zh-CN.md)
 
-This guide targets application developers adopting the 0.3 API. The repository currently builds
-`0.3.0-SNAPSHOT`; use the staged repository until a stable 0.3 artifact is released.
+This guide targets application developers adopting the 0.3 API. The repository currently builds the
+stable `0.3.0` candidate; use the staged repository until public artifact verification succeeds.
 
 ## Choose the smallest surface
 

@@ -2,7 +2,7 @@
 
 Pulse 的平台无关协程运行时，提供有序 Store、UI effect 协调、任务策略和类型化失败报告。
 
-> 当前版本为 `0.3.0-SNAPSHOT`，仍在开发中，尚未发布到 Maven Central。
+> 当前源码版本为稳定版 `0.3.0` 候选；公共制品验证成功前仍未发布到 Maven Central。
 
 ## 依赖
 

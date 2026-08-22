@@ -4,9 +4,9 @@
 
 ## Current line
 
-The source tree targets `0.3.0-SNAPSHOT`. Version 0.3 is one coordinated release: runtime ordering,
-Split Intent tasks, Android/Compose lifecycle support, State Decomposition, testing, compatibility,
-and publication evidence ship together.
+The source tree targets the stable `0.3.0` candidate. Version 0.3 is one coordinated release: runtime
+ordering, Split Intent tasks, Android/Compose lifecycle support, State Decomposition, testing,
+compatibility, and public-artifact evidence ship together.
 
 ## 0.3 scope
 

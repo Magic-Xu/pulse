@@ -2,7 +2,7 @@
 
 Pulse 的可选扩展模块。状态拆分 API 只位于本模块，不属于 `mvi-core-contract`。
 
-> 当前版本为 `0.3.0-SNAPSHOT`，仍在开发中，尚未发布到 Maven Central。
+> 当前源码版本为稳定版 `0.3.0` 候选；公共制品验证成功前仍未发布到 Maven Central。
 
 ## 依赖
 

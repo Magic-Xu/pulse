@@ -2,8 +2,8 @@
 
 Chinese version: [RELEASE_PLAN.zh-CN.md](./RELEASE_PLAN.zh-CN.md)
 
-> Candidate status: `0.3.0-SNAPSHOT`, **not published**. The only public release target in this plan
-> is stable `0.3.0`; branches, snapshots, release candidates, and prerelease tags cannot publish.
+> Candidate status: stable `0.3.0`, **publication pending**. Only the exact `v0.3.0` tag may publish;
+> branches, snapshots, release candidates, and prerelease tags cannot publish.
 
 ## Release objective
 

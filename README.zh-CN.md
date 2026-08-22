@@ -6,8 +6,8 @@ Pulse 是一个面向 Kotlin 与 Android 的有序、协程优先 MVI 运行时�
 输入邮箱和一个处理器，通过 `StateFlow` 发布唯一状态，把每次输入记录成可关联的 Transition
 Frame，并由单一协调者交付 replay=0 的 UI Effect。
 
-仓库当前处于 **0.3.0-SNAPSHOT** 开发阶段；在 0.3 发布门禁通过前，Maven Central 最新稳定版
-仍是 0.2.0。
+仓库当前正在验证稳定版 **0.3.0** 候选；在受保护发布 workflow 通过前，Maven Central 最新
+稳定版仍是 0.2.0。
 
 ## 模块
 
@@ -79,7 +79,7 @@ repositories {
     mavenCentral()
 }
 
-val pulseVersion = "0.3.0-SNAPSHOT"
+val pulseVersion = "0.3.0"
 dependencies {
     implementation("io.github.magic-xu:mvi-core-runtime:$pulseVersion")
     implementation("io.github.magic-xu:mvi-platform-android-compose:$pulseVersion")

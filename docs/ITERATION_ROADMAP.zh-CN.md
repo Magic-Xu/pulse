@@ -4,8 +4,8 @@
 
 ## 当前版本线
 
-源码当前目标为 `0.3.0-SNAPSHOT`。0.3 是一次整体发布：运行时有序性、Split Intent Task、
-Android/Compose 生命周期、State Decomposition、测试、兼容与发布证据必须一起交付。
+源码当前目标为稳定版 `0.3.0` 候选。0.3 是一次整体发布：运行时有序性、Split Intent Task、
+Android/Compose 生命周期、State Decomposition、测试、兼容与公共制品证据必须一起交付。
 
 ## 0.3 范围
 

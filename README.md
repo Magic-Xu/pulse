@@ -6,8 +6,8 @@ Pulse is an ordered, coroutine-first MVI runtime for Kotlin and Android. A store
 input mailbox and one processor, publishes state through `StateFlow`, records every processed input
 as a correlated transition frame, and delivers replay-zero UI effects through one coordinator.
 
-The repository is currently preparing **0.3.0-SNAPSHOT**. The latest Maven Central release remains
-0.2.0 until the 0.3 release gate passes.
+The repository is currently qualifying the stable **0.3.0** candidate. The latest Maven Central
+release remains 0.2.0 until the guarded release workflow passes.
 
 ## Modules
 
@@ -79,7 +79,7 @@ repositories {
     mavenCentral()
 }
 
-val pulseVersion = "0.3.0-SNAPSHOT"
+val pulseVersion = "0.3.0"
 dependencies {
     implementation("io.github.magic-xu:mvi-core-runtime:$pulseVersion")
     implementation("io.github.magic-xu:mvi-platform-android-compose:$pulseVersion")

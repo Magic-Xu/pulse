@@ -2,8 +2,8 @@
 
 Chinese version: [RELEASE_NOTES_0.3.0.zh-CN.md](./RELEASE_NOTES_0.3.0.zh-CN.md)
 
-> Status: **unreleased**. The repository currently identifies the candidate as
-> `0.3.0-SNAPSHOT`. Stable `0.3.0` artifacts are not available until the release is announced.
+> Status: **qualified release candidate**. Stable `0.3.0` artifacts are not available until the
+> guarded release workflow and public artifact verification succeed.
 
 Pulse 0.3 introduces one ordered runtime for both the new coroutine API and the retained 0.2
 compatibility API. The release focuses on deterministic input ordering, explicit reducer outcomes,

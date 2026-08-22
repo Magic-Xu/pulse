@@ -2,8 +2,8 @@
 
 Chinese version: [COMPATIBILITY.zh-CN.md](./COMPATIBILITY.zh-CN.md)
 
-> `0.3.0-SNAPSHOT` is a development candidate and has not been published. `0.2.0` remains the
-> current stable line until the `0.3.0` release is announced.
+> `0.3.0` is the qualified stable candidate and has not yet been published. `0.2.0` remains the
+> current stable line until public artifact verification succeeds.
 
 This document distinguishes API compatibility from runtime behavior. A program can remain source
 and binary compatible while receiving stronger ordering and failure semantics.
@@ -13,8 +13,7 @@ and binary compatible while receiving stronger ordering and failure semantics.
 | Line | Status | Intended use |
 |---|---|---|
 | `0.2.0` | Current stable | Existing applications and the compatibility reference |
-| `0.3.0-SNAPSHOT` | Unpublished development candidate | Repository development and release verification only |
-| `0.3.0` | Planned stable | Ordered runtime, new API, and retained 0.2 compatibility surface |
+| `0.3.0` | Qualified stable candidate | Ordered runtime, new API, and retained 0.2 compatibility surface |
 
 Pulse uses `0.x.y` versions. Before 1.0, a minor release may add or revise public APIs. Patch releases
 must not intentionally remove public APIs or change documented behavior incompatibly.

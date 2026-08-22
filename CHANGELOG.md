@@ -1,12 +1,12 @@
 # Changelog
 
-Notable changes to Pulse are recorded here. Versions describe published artifacts; repository-only
-snapshot work remains under **Unreleased**.
+Notable changes to Pulse are recorded here. A release-candidate section becomes a published version
+only after its guarded Maven Central workflow succeeds.
 
-## Unreleased — 0.3.0-SNAPSHOT
+## Release candidate — 0.3.0
 
-`0.3.0-SNAPSHOT` is under development and has not been published to Maven Central. The latest stable
-release remains `0.2.0`.
+`0.3.0` is qualified for the guarded release workflow but has not yet been published to Maven
+Central. The latest stable release remains `0.2.0` until public artifact verification succeeds.
 
 ### Added
 
