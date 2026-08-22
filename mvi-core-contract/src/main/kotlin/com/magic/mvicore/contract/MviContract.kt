@@ -14,6 +14,10 @@ interface MviEffect
  * 1) the next state
  * 2) optional one-off effects
  */
+@Deprecated(
+    message = "Use ReduceOutcome with PulseReducer.",
+    replaceWith = ReplaceWith("ReduceOutcome"),
+)
 data class Next<S : MviState, E : MviEffect>(
     val state: S,
     val effects: List<E> = emptyList(),

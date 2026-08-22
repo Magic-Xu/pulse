@@ -1,62 +1,62 @@
 # mvi-core-contract
 
-`mvi-core-contract` 是框架的第 1 步：只定义 MVI 的核心契约，不做运行时实现。
+Pulse 的平台无关契约模块，不包含协程、Android 或 Compose 实现。
 
-## 目标
+> 当前版本为 `0.3.0-SNAPSHOT`，仍在开发中，尚未发布到 Maven Central。
 
-- 只保留 MVI 的本质抽象：`Intent -> Reducer -> State (+ Effect)`
-- 不依赖 Android
-- 为后续 runtime / Android 适配层预留扩展边界
+## 依赖
 
-## 目录结构
+仓库内源码工程使用：
 
-- `src/main/kotlin/com/magic/mvicore/contract/MviContract.kt`
-  - `MviIntent` / `MviState` / `MviEffect`
-  - `Next<S, E>`：一次 reduce 的产物（新状态 + 一次性事件）
-- `src/main/kotlin/com/magic/mvicore/contract/SplitIntent.kt`
-  - `MviUiIntent` / `MviMutation`：Intent 双通道标记
-  - `SplitIntent<Ui, Mutation>`：内部统一消息封装
-  - `MutationReducer` / `SplitIntentReducer`：只对 mutation 做纯状态变更
-- `src/main/kotlin/com/magic/mvicore/contract/Reducer.kt`
-  - `Reducer<S, I, E>`：纯状态转移接口
-- `src/main/kotlin/com/magic/mvicore/contract/Store.kt`
-  - `Store<S, I, E>`：平台无关 Store 边界
-  - `StoreLifecycle`：生命周期（start/stop/close）
-  - `DispatchResult` / `StoreError`：最小错误模型
-  - `Subscription`：观察者取消句柄
+```kotlin
+dependencies {
+    implementation(project(":mvi-core-contract"))
+}
+```
 
-## 设计原理（为什么这么做）
+通常无需直接依赖本模块；`mvi-core-runtime` 会公开传递这些契约。
 
-1. 先立协议，再写实现
-   - 先固定接口能避免 runtime 先入为主，把框架锁死在某个平台或某套并发模型上。
+## v0.3 契约
 
-2. `Reducer` 强制纯转换语义
-   - 输入是 `previous + intent`，输出是 `Next(state, effects)`，这样状态演进可预测、可测试。
+- `MviIntent`、`MviState`、`UiEffect`：输入、持久状态和一次性 UI 指令的标记接口。
+- `PulseReducer`：纯函数 `previous + input -> ReduceOutcome`。
+- `ReduceOutcome.Changed`、`Unchanged`、`Ignored`：显式描述一次规约结果；忽略输入必须给出原因。
+- `TransitionFrame`、`TransitionOutcome`、`EffectEnvelope`：一次已完成处理的有序记录及其关联 effect。
+- `TransitionResult`、`EnqueueResult`、`RejectionReason`：挂起提交与非挂起入队的结果。
+- `PulseFailure`：reducer、消费者、插件、执行器、溢出、未投递 effect、过期 mutation，以及状态恢复/保存失败的类型化诊断。
+- `MviUiIntent`、`MviMutation`、`PulseMutationReducer`、`TaskLaunchResult`、`TaskHandle` 与 `TaskOutcome`：Split Intent 所需契约。
 
-3. `Effect` 与 `State` 分离
-   - `State` 代表可重放的数据快照；`Effect` 代表一次性事件（如导航、Toast）。
-   - 这能避免“事件塞进状态导致重复消费”。
+普通异常会进入类型化失败边界；协程取消和致命 JVM 错误不属于 `PulseFailure`。
 
-4. Store 只定义边界，不定义实现细节
-   - 合同层不绑定 Flow/Rx/Android Lifecycle，后续 runtime 可自由选型（如协程 + Flow）。
+## Reducer 示例
 
-5. 双通道意图模型
-   - `UiIntent` 表达“外部输入”，`Mutation` 表达“可 reducer 的状态变化”。
-   - reducer 只消费 mutation，副作用触发从状态变更中拆离，避免业务逻辑和纯状态变换混杂。
+```kotlin
+data class CounterState(val count: Int) : MviState
 
-## 扩展接口预留点
+sealed interface CounterIntent : MviIntent {
+    data object Increment : CounterIntent
+    data object Save : CounterIntent
+}
 
-- `StoreLifecycle`：后续可在 runtime 中扩展自动启动、懒启动、热插拔策略
-- `StoreError`：后续可增加插件错误、并发冲突错误等
-- `Subscription`：后续可适配到 Flow / Compose / Swift 等观察模型
+sealed interface CounterEffect : UiEffect {
+    data object Saved : CounterEffect
+}
 
-## 当前可运行验证
+val counterReducer = PulseReducer<CounterState, CounterIntent, CounterEffect> { state, input ->
+    when (input) {
+        CounterIntent.Increment -> ReduceOutcome.Changed(state.copy(count = state.count + 1))
+        CounterIntent.Save -> ReduceOutcome.Unchanged(listOf(CounterEffect.Saved))
+    }
+}
+```
 
-- 自检入口：`ContractSelfCheck`
-  - 验证状态演进的确定性
-  - 验证 `Next.withEffects` 会拷贝输入，避免外部可变集合污染
+## v0.2 兼容契约
 
-运行命令：
+`MviEffect`、`Next`、`Reducer`、`Store`、`SplitIntent` 和 `MutationReducer` 继续保留，供现有源码迁移。新代码优先使用 v0.3 的 `UiEffect`、`PulseReducer` 和显式结果类型。
+
+状态拆分不属于契约层。`StateLens`、`stateLens`、`pulseMutationReducer`、`onSub` 和显式 `ignore` 位于 `mvi-extensions`。
+
+## 验证
 
 ```bash
 ./gradlew :mvi-core-contract:check

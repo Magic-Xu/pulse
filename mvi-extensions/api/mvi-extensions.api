@@ -1,0 +1,97 @@
+public final class com/magic/mvicore/extensions/ConsoleLogSink : com/magic/mvicore/extensions/LogSink {
+	public static final field INSTANCE Lcom/magic/mvicore/extensions/ConsoleLogSink;
+	public fun log (Ljava/lang/String;)V
+}
+
+public abstract interface class com/magic/mvicore/extensions/LogSink {
+	public abstract fun log (Ljava/lang/String;)V
+}
+
+public final class com/magic/mvicore/extensions/LoggingPlugin : com/magic/mvicore/runtime/StorePlugin {
+	public fun <init> ()V
+	public fun <init> (Ljava/lang/String;Lcom/magic/mvicore/extensions/LogSink;)V
+	public synthetic fun <init> (Ljava/lang/String;Lcom/magic/mvicore/extensions/LogSink;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun onClose (Lcom/magic/mvicore/contract/MviState;)V
+	public fun onEffect (Lcom/magic/mvicore/contract/MviEffect;)V
+	public fun onError (Lcom/magic/mvicore/contract/StoreError$ReducerFailure;)V
+	public fun onIntent (Lcom/magic/mvicore/contract/MviIntent;Lcom/magic/mvicore/contract/MviState;)V
+	public fun onRejected (Lcom/magic/mvicore/contract/DispatchResult$Rejected;)V
+	public fun onStart (Lcom/magic/mvicore/contract/MviState;)V
+	public fun onState (Lcom/magic/mvicore/contract/MviState;)V
+	public fun onStop (Lcom/magic/mvicore/contract/MviState;)V
+}
+
+public final class com/magic/mvicore/extensions/MutationRouteTable {
+	public fun <init> ()V
+	public final fun reduce (Lcom/magic/mvicore/contract/MviState;Lcom/magic/mvicore/contract/MviMutation;)Ljava/lang/Object;
+	public final fun register (Lkotlin/reflect/KClass;Lkotlin/jvm/functions/Function2;)V
+}
+
+public final class com/magic/mvicore/extensions/PulseMutationReducerBuilder {
+	public fun <init> ()V
+	public final fun build ()Lcom/magic/mvicore/contract/PulseMutationReducer;
+	public final fun getRoutes ()Lcom/magic/mvicore/extensions/MutationRouteTable;
+}
+
+public final class com/magic/mvicore/extensions/StateDecompositionKt {
+	public static final fun pulseMutationReducer (Lkotlin/jvm/functions/Function1;)Lcom/magic/mvicore/contract/PulseMutationReducer;
+	public static final fun stateLens (Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;)Lcom/magic/mvicore/extensions/StateLens;
+	public static final fun subStateJust (Ljava/lang/Object;)Lcom/magic/mvicore/extensions/SubStateNext;
+	public static final fun subStateWithEffect (Ljava/lang/Object;Lcom/magic/mvicore/contract/UiEffect;)Lcom/magic/mvicore/extensions/SubStateNext;
+	public static final fun subStateWithEffects (Ljava/lang/Object;Ljava/lang/Iterable;)Lcom/magic/mvicore/extensions/SubStateNext;
+	public static final fun updateSubState (Ljava/lang/Object;Lcom/magic/mvicore/extensions/StateLens;Lkotlin/jvm/functions/Function1;)Ljava/lang/Object;
+}
+
+public final class com/magic/mvicore/extensions/StateLens {
+	public fun <init> (Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;)V
+	public final fun component1 ()Lkotlin/jvm/functions/Function1;
+	public final fun component2 ()Lkotlin/jvm/functions/Function2;
+	public final fun copy (Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;)Lcom/magic/mvicore/extensions/StateLens;
+	public static synthetic fun copy$default (Lcom/magic/mvicore/extensions/StateLens;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)Lcom/magic/mvicore/extensions/StateLens;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getGet ()Lkotlin/jvm/functions/Function1;
+	public final fun getSet ()Lkotlin/jvm/functions/Function2;
+	public fun hashCode ()I
+	public final fun modify (Ljava/lang/Object;Lkotlin/jvm/functions/Function1;)Ljava/lang/Object;
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/magic/mvicore/extensions/StateSelectionKt {
+	public static final fun selectDistinct (Lkotlinx/coroutines/flow/StateFlow;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;)Lkotlinx/coroutines/flow/Flow;
+	public static synthetic fun selectDistinct$default (Lkotlinx/coroutines/flow/StateFlow;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)Lkotlinx/coroutines/flow/Flow;
+}
+
+public final class com/magic/mvicore/extensions/StateTransition {
+	public fun <init> (Lcom/magic/mvicore/contract/MviState;Lcom/magic/mvicore/contract/MviIntent;Lcom/magic/mvicore/contract/MviState;)V
+	public final fun component1 ()Lcom/magic/mvicore/contract/MviState;
+	public final fun component2 ()Lcom/magic/mvicore/contract/MviIntent;
+	public final fun component3 ()Lcom/magic/mvicore/contract/MviState;
+	public final fun copy (Lcom/magic/mvicore/contract/MviState;Lcom/magic/mvicore/contract/MviIntent;Lcom/magic/mvicore/contract/MviState;)Lcom/magic/mvicore/extensions/StateTransition;
+	public static synthetic fun copy$default (Lcom/magic/mvicore/extensions/StateTransition;Lcom/magic/mvicore/contract/MviState;Lcom/magic/mvicore/contract/MviIntent;Lcom/magic/mvicore/contract/MviState;ILjava/lang/Object;)Lcom/magic/mvicore/extensions/StateTransition;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getIntent ()Lcom/magic/mvicore/contract/MviIntent;
+	public final fun getNext ()Lcom/magic/mvicore/contract/MviState;
+	public final fun getPrevious ()Lcom/magic/mvicore/contract/MviState;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/magic/mvicore/extensions/StateTransitionPlugin : com/magic/mvicore/runtime/StorePlugin {
+	public fun <init> (Lkotlin/jvm/functions/Function1;)V
+	public fun onClose (Lcom/magic/mvicore/contract/MviState;)V
+	public fun onEffect (Lcom/magic/mvicore/contract/MviEffect;)V
+	public fun onError (Lcom/magic/mvicore/contract/StoreError$ReducerFailure;)V
+	public fun onIntent (Lcom/magic/mvicore/contract/MviIntent;Lcom/magic/mvicore/contract/MviState;)V
+	public fun onRejected (Lcom/magic/mvicore/contract/DispatchResult$Rejected;)V
+	public fun onStart (Lcom/magic/mvicore/contract/MviState;)V
+	public fun onState (Lcom/magic/mvicore/contract/MviState;)V
+	public fun onStop (Lcom/magic/mvicore/contract/MviState;)V
+}
+
+public final class com/magic/mvicore/extensions/SubStateNext {
+	public fun <init> (Ljava/lang/Object;Ljava/lang/Iterable;)V
+	public synthetic fun <init> (Ljava/lang/Object;Ljava/lang/Iterable;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getEffects ()Ljava/util/List;
+	public final fun getState ()Ljava/lang/Object;
+}
+

@@ -17,7 +17,9 @@ import com.magic.pulse.samples.common.ui.PulseSampleTopBar
 @Composable
 fun SamplesHomeScreen(
     onOpenCounter: () -> Unit,
+    onOpenSplitIntentBasic: () -> Unit,
     onOpenNetwork: () -> Unit,
+    onOpenStateDecomposition: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Scaffold(
@@ -32,7 +34,9 @@ fun SamplesHomeScreen(
         SamplesHomeContent(
             paddingValues = innerPadding,
             onOpenCounter = onOpenCounter,
+            onOpenSplitIntentBasic = onOpenSplitIntentBasic,
             onOpenNetwork = onOpenNetwork,
+            onOpenStateDecomposition = onOpenStateDecomposition,
         )
     }
 }
@@ -41,7 +45,9 @@ fun SamplesHomeScreen(
 private fun SamplesHomeContent(
     paddingValues: PaddingValues,
     onOpenCounter: () -> Unit,
+    onOpenSplitIntentBasic: () -> Unit,
     onOpenNetwork: () -> Unit,
+    onOpenStateDecomposition: () -> Unit,
 ) {
     Column(
         modifier = Modifier
@@ -57,11 +63,26 @@ private fun SamplesHomeContent(
         ) {
             Text("Counter")
         }
+        Text("Recommended Start")
+        Button(
+            onClick = onOpenSplitIntentBasic,
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Text("Basic - Split Intent")
+        }
+        Text("Next Step")
         Button(
             onClick = onOpenNetwork,
             modifier = Modifier.fillMaxWidth(),
         ) {
-            Text("Network Request")
+            Text("Standard - Network")
+        }
+        Text("Advanced")
+        Button(
+            onClick = onOpenStateDecomposition,
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Text("Advanced - State Decomposition")
         }
     }
 }

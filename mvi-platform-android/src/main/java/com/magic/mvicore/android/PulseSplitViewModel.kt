@@ -1,6 +1,7 @@
 package com.magic.mvicore.android
 
 import com.magic.mvicore.contract.DispatchResult
+import com.magic.mvicore.contract.FailureContext
 import com.magic.mvicore.contract.MviEffect
 import com.magic.mvicore.contract.MviMutation
 import com.magic.mvicore.contract.MviState
@@ -8,6 +9,8 @@ import com.magic.mvicore.contract.MviUiIntent
 import com.magic.mvicore.contract.MutationReducer
 import com.magic.mvicore.contract.SplitIntent
 import com.magic.mvicore.contract.SplitIntentReducer
+import com.magic.mvicore.contract.PulseFailure
+import com.magic.mvicore.runtime.PulseRuntimeConfig
 import com.magic.mvicore.runtime.StorePlugin
 import kotlinx.coroutines.Job
 
@@ -16,6 +19,10 @@ import kotlinx.coroutines.Job
  * - UI lane: send(uiIntent)
  * - reducer lane: dispatchMutation(mutation)
  */
+@Deprecated(
+    message = "Use PulseSplitStoreViewModel; it hides mutation input and owns keyed tasks.",
+    replaceWith = ReplaceWith("PulseSplitStoreViewModel<S, UI, M, E>"),
+)
 open class PulseSplitViewModel<S : MviState, UI : MviUiIntent, M : MviMutation, E : MviEffect>(
     initialState: S,
     mutationReducer: MutationReducer<S, M, E>,
@@ -28,6 +35,7 @@ open class PulseSplitViewModel<S : MviState, UI : MviUiIntent, M : MviMutation, 
     plugins = plugins,
     autoStart = autoStart,
 ) {
+    private val legacyRuntimeConfig = PulseRuntimeConfig()
 
     fun send(intent: UI): DispatchResult = dispatch(SplitIntent.Ui(intent))
 
@@ -40,8 +48,17 @@ open class PulseSplitViewModel<S : MviState, UI : MviUiIntent, M : MviMutation, 
         when (intent) {
             is SplitIntent.Ui -> {
                 val executionScope = UiIntentExecutionScope(scope)
-                runCatching {
+                try {
                     uiIntentExecutor.execute(intent.value, executionScope)
+                } catch (cancelled: kotlinx.coroutines.CancellationException) {
+                    throw cancelled
+                } catch (failure: Exception) {
+                    legacyRuntimeConfig.reportFailure(
+                        PulseFailure.ExecutorFailure(
+                            context = FailureContext(component = "legacy-ui-intent-executor"),
+                            cause = failure,
+                        )
+                    )
                 }
             }
 
@@ -50,6 +67,9 @@ open class PulseSplitViewModel<S : MviState, UI : MviUiIntent, M : MviMutation, 
     }
 }
 
+@Deprecated(
+    message = "Use PulseUiIntentExecutor with PulseSplitStoreViewModel.",
+)
 fun interface UiIntentExecutor<S : MviState, UI : MviUiIntent, M : MviMutation, E : MviEffect> {
     fun execute(intent: UI, scope: UiIntentExecutionScope<S, UI, M, E>)
 
@@ -59,6 +79,9 @@ fun interface UiIntentExecutor<S : MviState, UI : MviUiIntent, M : MviMutation, 
     }
 }
 
+@Deprecated(
+    message = "Use PulseIntentContext; it adds task tokens and stable intent correlation.",
+)
 class UiIntentExecutionScope<S : MviState, UI : MviUiIntent, M : MviMutation, E : MviEffect>
 internal constructor(
     private val delegate: IntentExecutionScope<S, SplitIntent<UI, M>, E>,

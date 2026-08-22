@@ -10,6 +10,10 @@ import com.magic.mvicore.contract.StoreError
  * Runtime extension point.
  * Keep core dispatch/reduce logic stable, move non-essential concerns here.
  */
+@Deprecated(
+    message = "Use PulseStorePlugin with ordered TransitionFrame delivery.",
+    replaceWith = ReplaceWith("PulseStorePlugin<S, I, E>"),
+)
 interface StorePlugin<S : MviState, I : MviIntent, E : MviEffect> {
     fun onStart(initialState: S) {}
 

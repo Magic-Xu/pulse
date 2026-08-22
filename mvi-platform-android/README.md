@@ -1,40 +1,10 @@
 # mvi-platform-android
 
-`mvi-platform-android` 是 Pulse 的 Android 基础层：只包含 ViewModel 适配，不包含 Compose 依赖。
+Pulse 的 Android ViewModel 适配层，不依赖 Compose。
 
-## 目标
+> 当前版本为 `0.3.0-SNAPSHOT`，仍在开发中，尚未发布到 Maven Central。最低 Android API 为 23。
 
-- 提供可继承、可落地的 Android `ViewModel` 基类
-- 保持 `mvi-core-contract` 与 `mvi-core-runtime` 纯平台无关
-- 让 Android 使用方最小依赖接入（通过 `api` 透传 core 所需类型）
-
-## 目录结构
-
-- `PulseViewModel.kt`
-  - `PulseViewModel`：开放继承的主基类，`dispatch(intent)` 为 `final`，保证状态只能经 reducer 变更
-- `PulseSplitViewModel.kt`
-  - `PulseSplitViewModel`：双通道版，`send(uiIntent)` 输入 UI 意图，内部只分发 `mutation`
-  - `UiIntentExecutor` / `UiIntentExecutionScope`：处理 UI 意图副作用，并回写 mutation
-- `IntentExecutor.kt`
-  - `IntentExecutor` / `IntentExecutionScope`：副作用执行接口与运行作用域
-
-## 实现原理（为什么这样做）
-
-1. 平台能力后置
-   - core 不依赖 Android；Android 生命周期与并发能力都在此模块注入。
-
-2. 继承友好 + 不变量约束并存
-   - `PulseViewModel` 允许业务继承，适配大型工程的复杂 VM 继承链。
-   - 同时 `dispatch` 设为 `final`，防止子类绕开 reducer 破坏单向数据流。
-
-3. 双通道意图模型
-   - 复杂业务可用 `PulseSplitViewModel`：UI 输入与 reducer mutation 分离。
-   - reducer 只处理 mutation，副作用在 `UiIntentExecutor` 中组织。
-
-4. Compose 绑定独立拆分
-   - Compose 相关能力放在 `mvi-platform-android-compose`，避免非 Compose 项目被动引入。
-
-## 推荐使用方式
+## 依赖
 
 ```kotlin
 dependencies {
@@ -42,4 +12,88 @@ dependencies {
 }
 ```
 
-Compose 项目请依赖 `:mvi-platform-android-compose`。
+若使用状态拆分 DSL，还需显式依赖 `:mvi-extensions`。
+
+## v0.3 Android API
+
+`PulseSplitStoreViewModel<S, UI, M, E>` 是推荐的 Split Intent owner：
+
+- UI 只能通过挂起式 `send(UI)` 或非阻塞 `trySend(UI)` 输入，不能直接获得 mutation 能力；
+  `send` 返回执行层的 `Completed`、`Ignored`、`Failed`、`Cancelled` 或 `Rejected`。
+- `PulseUiIntentExecutor` 在对应 UI input frame 完成后执行副作用，并返回
+  `PulseIntentExecutionDecision`。
+- `PulseIntentContext` 暴露关联 `intentId`、稳定的 `stateAtStart`、最新 `currentState`、
+  `reportFailure` 和 mutation 能力。
+- `launchTask` 支持 keyed `Latest`、`DropWhileRunning`、`Queue(capacity)`、
+  `Parallel(maxConcurrency)`、`Conflate` 策略；已接纳请求的 `TaskHandle` 可观察最终执行结果，
+  `cancelTask`/`cancelAllTasks` 显式取消任务。
+- task token 失效后的 mutation 会被拒绝并报告 `PulseFailure.LateMutation`。
+- `PulseStateHost` 只公开 `StateFlow` 状态和 replay-zero `UiEffectStream`。
+- `PulseSavedStateAdapter` 由 feature 决定保存格式，不要求整个状态实现 `Parcelable`；恢复失败可选
+  上报后回退初始 State，或上报后终止 ViewModel 创建。
+
+```kotlin
+fun createScreenViewModel(repository: ScreenRepository) =
+    PulseSplitStoreViewModel<ScreenState, ScreenIntent, ScreenMutation, ScreenEffect>(
+        initialState = ScreenState(),
+        mutationReducer = PulseMutationReducer { state, mutation ->
+            when (mutation) {
+                is ScreenMutation.Loaded -> ReduceOutcome.Changed(
+                    state.copy(items = mutation.items),
+                )
+            }
+        },
+        uiIntentExecutor = PulseUiIntentExecutor { intent, context ->
+            when (intent) {
+                ScreenIntent.Refresh -> {
+                    context.launchTask(
+                        key = TaskKey("refresh"),
+                        policy = TaskPolicy.Latest,
+                    ) {
+                        mutate(ScreenMutation.Loaded(repository.load()))
+                    }
+                    PulseIntentExecutionDecision.Completed
+                }
+            }
+        },
+    )
+```
+
+默认 `androidPulseRuntimeConfig()` 在 `Dispatchers.Main.immediate` 上执行 Store 与消费者工作。需要测试或自定义调度时，可显式传入 `PulseRuntimeConfig`。
+
+默认生命周期绑定到 `viewModelScope`。测试或自定义 owner 可通过
+`PulseAndroidExecutionOwner.from(scope)` 注入父级生命周期；Pulse 只创建并取消自己的子 Job，
+不会取消调用方的 scope，实际执行线程仍由 `PulseRuntimeConfig` 决定。
+
+`PulseSplitStoreViewModel.onCleared` 是 final。子类需要释放自己的非 Pulse 资源时覆写
+`onPulseCleared`，不要建立第二套关闭路径。
+
+## 显式 ViewModel owner
+
+`pulseViewModel` 要求显式 `ViewModelStoreOwner` 和稳定 key，不会从 Activity、Fragment 或导航栈做隐式 fallback。`PulseViewModelCreator` 能收到 owner 的真实 `CreationExtras`；SavedState 场景可使用 `pulseSavedStateViewModelFactory`。
+
+```kotlin
+val vm = pulseViewModel(
+    owner = owner,
+    key = "screen",
+    modelClass = ScreenViewModel::class.java,
+    creator = PulseViewModelCreator { extras -> ScreenViewModel(extras) },
+)
+```
+
+`owner` 可以是 Activity/Fragment、本目的地的 `NavBackStackEntry`，或嵌套功能自己持有的
+`ViewModelStoreOwner`。选择哪个 owner，就选择了 ViewModel、任务与 SavedState 的实际生命周期；
+不要把目的地功能隐式提升为 Activity 级。
+
+## v0.2 兼容
+
+`PulseViewModel` 和 `PulseSplitViewModel` 继续保留作为 v0.2 兼容入口。新功能应使用
+`PulseSplitStoreViewModel` 与 keyed task，不再另外发布一套基于 legacy Split API 的请求 DSL。
+
+Compose 项目使用 `mvi-platform-android-compose`。
+
+## 验证
+
+```bash
+./gradlew :mvi-platform-android:testDebugUnitTest
+```

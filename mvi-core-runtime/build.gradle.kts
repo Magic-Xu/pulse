@@ -3,7 +3,7 @@ plugins {
     id("java-library")
 }
 
-description = "Pulse runtime: minimal DefaultStore implementation."
+description = "Pulse ordered Store runtime, keyed tasks, UI-effect coordination, and legacy adapters."
 
 kotlin {
     jvmToolchain(11)
@@ -11,6 +11,11 @@ kotlin {
 
 dependencies {
     api(project(":mvi-core-contract"))
+    api(libs.kotlinx.coroutines.core)
+
+    testImplementation(libs.kotlin.test.junit)
+    testImplementation(libs.junit)
+    testImplementation(libs.kotlinx.coroutines.test)
 }
 
 val testSourceSet = sourceSets.named("test")
@@ -26,6 +31,6 @@ tasks.named("check") {
     dependsOn("runtimeSelfCheck")
 }
 
-tasks.named<Test>("test") {
-    failOnNoDiscoveredTests = false
+tasks.withType<Test>().configureEach {
+    useJUnit()
 }

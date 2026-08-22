@@ -1,64 +1,62 @@
 # mvi-core-runtime
 
-`mvi-core-runtime` 是第 2 步：在 `mvi-core-contract` 之上提供一个可直接使用的极简 Store 实现。
+Pulse 的平台无关协程运行时，提供有序 Store、UI effect 协调、任务策略和类型化失败报告。
 
-## 目标
+> 当前版本为 `0.3.0-SNAPSHOT`，仍在开发中，尚未发布到 Maven Central。
 
-- 提供一个真正可运行的 `Store`：`dispatch(intent)` 后能推进状态并分发 effect
-- 保持平台无关（无 Android 依赖）
-- 在不增加复杂度的前提下，预留扩展点（插件机制）
-- 对上层通过 `api` 透出 `mvi-core-contract`，简化使用方依赖
+## 依赖
 
-## 目录结构
+```kotlin
+dependencies {
+    implementation(project(":mvi-core-runtime"))
+}
+```
 
-- `src/main/kotlin/com/magic/mvicore/runtime/DefaultStore.kt`
-  - `DefaultStore`：最小 runtime 实现
-- `src/main/kotlin/com/magic/mvicore/runtime/StorePlugin.kt`
-  - `StorePlugin`：扩展接口（日志、埋点、调试都可通过插件实现）
-- `src/test/kotlin/com/magic/mvicore/runtime/RuntimeSelfCheck.kt`
-  - 自检入口：验证生命周期、状态/effect 分发、插件回调
+本模块通过 `api` 公开传递 `mvi-core-contract` 和协程核心类型。
 
-## 实验原理（为什么这样实现）
+## v0.3 Store
 
-1. 串行 dispatch，保证状态演进可预测
-   - `DefaultStore` 用互斥锁串行化 `dispatch`，不会出现并发 intent 打乱状态顺序的问题。
+`DefaultPulseStore<S, I, E>` 实现 `PulseStore<S, I, E>`，主要语义如下：
 
-2. 状态与事件的分发语义分离
-   - `State`：`observeState` 订阅后会先收到当前快照，再收到后续变更。
-   - `Effect`：`observeEffect` 只接收后续一次性事件，不回放历史事件。
+- 所有已接纳输入按单一全序规约：`requestId` 标识请求，`sequenceId` 逐 frame 递增，`stateRevision` 只在状态实际变化时递增。
+- 每个 frame 记录离开 mailbox 时的排队深度和截至该 frame 的历史高水位，可直接用于容量诊断。
+- `state` 是包含原子初始快照的 `StateFlow`；相等的新状态会归一化为 `Unchanged`。
+- `transitions` 发布完成后的 `TransitionFrame`。
+- `effects` 是 replay-zero 的 `UiEffectStream`，同一时刻只允许一个活跃协调者；没有协调者时不会缓存等待重放。
+- `send` 等待规约、提交、frame 和 effect 发布完成，但不等待外部 Flow 消费者完成。
+- `trySend` 不挂起；邮箱满时返回 `EnqueueResult.Full`。`MailboxOverflowPolicy.REJECT_AND_REPORT`
+  额外发布合并后的类型化诊断，`REJECT` 仅依赖调用方可见结果。
+- `close()` 建立新的输入截止线，`awaitClosed()` 等待截止线前已接纳输入处理完毕。
+- `tasks` 提供 `Latest`、`DropWhileRunning`、`Queue(capacity)`、
+  `Parallel(maxConcurrency)` 和 `Conflate` 五种 keyed task 策略，以及 `cancel`/`cancelAll`。
 
-3. 生命周期最小闭环
-   - `start/stop/close` 三态控制 dispatch：
-   - `stop` 后拒绝 intent（`StoreNotStarted`）
-   - `close` 后彻底拒绝并清理订阅（`StoreClosed`）
+```kotlin
+val store = DefaultPulseStore(
+    initialState = CounterState(0),
+    reducer = counterReducer,
+    config = PulseRuntimeConfig(storeId = "counter"),
+)
 
-4. 扩展能力外置到插件
-   - runtime 核心只负责调度与分发。
-   - 日志、监控、调试、trace 通过 `StorePlugin` 接入，避免核心逻辑膨胀。
+val result = store.send(CounterIntent.Increment)
+store.close()
+store.awaitClosed()
+```
 
-## 当前可扩展接口
+## 失败与诊断
 
-- `StorePlugin` 提供关键钩子：
-  - `onIntent`、`onState`、`onEffect`
-  - `onStart`、`onStop`、`onClose`
-  - `onRejected`、`onError`
+`PulseRuntimeConfig` 控制邮箱容量、溢出策略、effect 缓冲、dispatcher、时钟、脱敏器和
+`PulseErrorHandler`。受控边界内的普通异常会上报为 `PulseFailure`，并携带请求、序列、阶段、
+输入类型、线程和 `FailureContext.storeId`；它不会阻断后续输入或其他消费者。
+`CancellationException` 保持取消语义。
 
-后续你可以在不改 `Store` 核心接口的前提下扩展：
+`PulseStorePlugin` 通过 `onTransition` 和 `onFailure` 观察完成 frame 与失败。插件自身的普通异常会被隔离并上报。
 
-- 日志插件
-- 性能/埋点插件
-- DevTools 时间旅行记录插件（先记录 intent+state，不必改调度器）
+## v0.2 兼容
 
-## 当前可运行验证
+`DefaultStore`、callback observer 和 `StorePlugin` 继续保留。它们是同一 v0.3 `PulseEngine` 上的兼容外观，不维护第二套 reducer 顺序或生命周期实现。与新 StateFlow 语义一致，相等 State 不会重复触发 legacy state callback 或 plugin state hook。
 
-运行命令：
+## 验证
 
 ```bash
 ./gradlew :mvi-core-runtime:check
 ```
-
-`RuntimeSelfCheck` 验证点：
-
-- 生命周期对 dispatch 的约束（start/stop/close）
-- 状态流转和 effect 单次分发行为
-- 插件回调顺序与核心事件一致

@@ -1,11 +1,11 @@
 package com.magic.pulse.samples.network.mvi
 
-import com.magic.mvicore.contract.MviEffect
 import com.magic.mvicore.contract.MviMutation
 import com.magic.mvicore.contract.MviState
 import com.magic.mvicore.contract.MviUiIntent
-import com.magic.mvicore.contract.MutationReducer
-import com.magic.mvicore.contract.Next
+import com.magic.mvicore.contract.PulseMutationReducer
+import com.magic.mvicore.contract.ReduceOutcome
+import com.magic.mvicore.contract.UiEffect
 import com.magic.pulse.samples.network.data.model.ImageModel
 import com.magic.pulse.samples.network.data.model.VideoModel
 
@@ -35,20 +35,20 @@ sealed interface NetworkModelsMutation : MviMutation {
     data class LoadFailed(val message: String) : NetworkModelsMutation
 }
 
-sealed interface NetworkModelsEffect : MviEffect {
+sealed interface NetworkModelsEffect : UiEffect {
     data class ShowMessage(val text: String) : NetworkModelsEffect
 }
 
 object NetworkModelsReducer :
-    MutationReducer<NetworkModelsState, NetworkModelsMutation, NetworkModelsEffect> {
+    PulseMutationReducer<NetworkModelsState, NetworkModelsMutation, NetworkModelsEffect> {
 
     override fun reduce(
         previous: NetworkModelsState,
         mutation: NetworkModelsMutation,
-    ): Next<NetworkModelsState, NetworkModelsEffect> {
+    ): ReduceOutcome<NetworkModelsState, NetworkModelsEffect> {
         return when (mutation) {
             is NetworkModelsMutation.LoadingStarted -> {
-                Next.just(
+                ReduceOutcome.Changed(
                     previous.copy(
                         isLoading = true,
                         loadingTarget = mutation.target,
@@ -57,7 +57,7 @@ object NetworkModelsReducer :
             }
 
             is NetworkModelsMutation.ImageModelsLoaded -> {
-                Next.just(
+                ReduceOutcome.Changed(
                     previous.copy(
                         imageModels = mutation.models,
                         lastUpdatedLabel = "Image models updated",
@@ -66,7 +66,7 @@ object NetworkModelsReducer :
             }
 
             is NetworkModelsMutation.VideoModelsLoaded -> {
-                Next.just(
+                ReduceOutcome.Changed(
                     previous.copy(
                         videoModels = mutation.models,
                         lastUpdatedLabel = "Video models updated",
@@ -75,7 +75,7 @@ object NetworkModelsReducer :
             }
 
             NetworkModelsMutation.LoadingCompleted -> {
-                Next.just(
+                ReduceOutcome.Changed(
                     previous.copy(
                         isLoading = false,
                         loadingTarget = null,
@@ -84,12 +84,12 @@ object NetworkModelsReducer :
             }
 
             is NetworkModelsMutation.LoadFailed -> {
-                Next.withEffect(
-                    previous.copy(
+                ReduceOutcome.Changed(
+                    state = previous.copy(
                         isLoading = false,
                         loadingTarget = null,
                     ),
-                    NetworkModelsEffect.ShowMessage(mutation.message),
+                    uiEffects = listOf(NetworkModelsEffect.ShowMessage(mutation.message)),
                 )
             }
         }

@@ -1,6 +1,7 @@
 package com.magic.mvicore.android
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.magic.mvicore.contract.DispatchResult
 import com.magic.mvicore.contract.MviEffect
 import com.magic.mvicore.contract.MviIntent
@@ -18,6 +19,9 @@ import kotlinx.coroutines.cancel
  * Child classes can add their own APIs, but state transition is still constrained
  * to reducer-driven dispatch.
  */
+@Deprecated(
+    message = "Use PulseSplitStoreViewModel or own a DefaultPulseStore explicitly.",
+)
 open class PulseViewModel<S : MviState, I : MviIntent, E : MviEffect>(
     initialState: S,
     reducer: Reducer<S, I, E>,
@@ -25,7 +29,7 @@ open class PulseViewModel<S : MviState, I : MviIntent, E : MviEffect>(
     autoStart: Boolean = true,
 ) : ViewModel(), Store<S, I, E> {
 
-    private val pulseScope = createPulseCoroutineScope()
+    private val pulseScope = createPulseCoroutineScope(viewModelScope)
 
     private val store = DefaultStore(
         initialState = initialState,
@@ -52,7 +56,10 @@ open class PulseViewModel<S : MviState, I : MviIntent, E : MviEffect>(
 
     override fun stop() = store.stop()
 
-    override fun close() = store.close()
+    override fun close() {
+        pulseScope.cancel()
+        store.close()
+    }
 
     final override fun dispatch(intent: I): DispatchResult {
         val result = store.dispatch(intent)
@@ -75,7 +82,6 @@ open class PulseViewModel<S : MviState, I : MviIntent, E : MviEffect>(
     ) = Unit
 
     override fun onCleared() {
-        pulseScope.cancel()
-        store.close()
+        close()
     }
 }

@@ -1,0 +1,14 @@
+public final class com/magic/mvicore/android/compose/PulseComposeKt {
+	public static final fun ObserveUiEffects (Lcom/magic/mvicore/android/PulseStateHost;Landroidx/lifecycle/LifecycleOwner;Landroidx/lifecycle/Lifecycle$State;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V
+	public static final fun collectSelectedState (Lcom/magic/mvicore/android/PulseStateHost;Landroidx/lifecycle/LifecycleOwner;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;Landroidx/lifecycle/Lifecycle$State;Landroidx/compose/runtime/Composer;II)Landroidx/compose/runtime/State;
+	public static final fun collectStateAsStateWithLifecycle (Lcom/magic/mvicore/android/PulseStateHost;Landroidx/lifecycle/LifecycleOwner;Landroidx/lifecycle/Lifecycle$State;Landroidx/compose/runtime/Composer;II)Landroidx/compose/runtime/State;
+	public static final fun pulseViewModel (Landroidx/lifecycle/ViewModelStoreOwner;Ljava/lang/String;Ljava/lang/Class;Lcom/magic/mvicore/android/PulseViewModelCreator;Landroidx/compose/runtime/Composer;I)Landroidx/lifecycle/ViewModel;
+}
+
+public final class com/magic/mvicore/android/compose/StoreComposeKt {
+	public static final fun collectStateAsState (Lcom/magic/mvicore/contract/Store;Landroidx/compose/runtime/Composer;I)Landroidx/compose/runtime/State;
+	public static final fun collectStateAsState (Lcom/magic/mvicore/contract/Store;Landroidx/lifecycle/LifecycleOwner;Landroidx/lifecycle/Lifecycle$State;Landroidx/compose/runtime/Composer;II)Landroidx/compose/runtime/State;
+	public static final fun observeEffects (Lcom/magic/mvicore/contract/Store;Landroidx/lifecycle/LifecycleOwner;Landroidx/lifecycle/Lifecycle$State;Lkotlin/jvm/functions/Function1;Landroidx/compose/runtime/Composer;II)V
+	public static final fun observeEffects (Lcom/magic/mvicore/contract/Store;Lkotlin/jvm/functions/Function1;Landroidx/compose/runtime/Composer;I)V
+}
+
