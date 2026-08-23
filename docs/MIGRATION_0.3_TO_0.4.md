@@ -2,14 +2,13 @@
 
 Chinese version: [MIGRATION_0.3_TO_0.4.zh-CN.md](./MIGRATION_0.3_TO_0.4.zh-CN.md)
 
-> Status: **release candidate — not public yet**. The `0.4.0` coordinates below become usable only
-> after publication is verified and this status is updated.
+> Status: **released**. Pulse `0.4.0` is available from Maven Central.
 
 Pulse 0.4 is additive over 0.3. Existing features can upgrade without changing their reducer or
 ViewModel architecture, then adopt the new diagnostics, callback adapter, and Android test host
 where they solve a concrete integration problem.
 
-## 1. Align dependencies after publication
+## 1. Align dependencies
 
 Upgrade the highest-level Pulse entry that the application already uses, then add only optional
 capabilities it needs:

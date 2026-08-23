@@ -2,19 +2,19 @@
 
 Pulse 的 Android ViewModel 适配层，不依赖 Compose。
 
-> 当前稳定版为 `0.3.0`，已发布到 Maven Central。最低 Android API 为 23。
+> 当前稳定版为 `0.4.0`，已发布到 Maven Central。最低 Android API 为 23。
 
 ## 依赖
 
 ```kotlin
 dependencies {
-    implementation(project(":mvi-platform-android"))
+    implementation("io.github.magic-xu:mvi-platform-android:0.4.0")
 }
 ```
 
-若使用状态拆分 DSL，还需显式依赖 `:mvi-extensions`。
+若使用状态拆分 DSL，还需显式依赖 `io.github.magic-xu:mvi-extensions:0.4.0`。
 
-## v0.3 Android API
+## v0.4 Android API
 
 `PulseSplitStoreViewModel<S, UI, M, E>` 是推荐的 Split Intent owner：
 

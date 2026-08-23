@@ -100,5 +100,5 @@ Pulse 0.3 为新的协程 API 和保留的 0.2 兼容 API 提供同一套有序�
 - 可移植的吞吐、延迟、内存和有界 mailbox 性能下限；
 - 发布包、metadata、版本、tag 和 Maven Central 配置检查。
 
-准确门禁参见[发布规划](./RELEASE_PLAN.zh-CN.md)。在这些门禁通过并发布稳定 tag 前，本文描述的是
-计划发布内容，不代表制品已经可用。
+这些门禁已在 2026-08-23 发布到 Maven Central 前完成。本文保留 0.3 的历史发布记录；当前稳定版
+请参见[接入指南](./CONSUMER_GUIDE.zh-CN.md)。

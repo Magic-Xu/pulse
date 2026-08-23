@@ -2,8 +2,8 @@
 
 Chinese version: [RELEASE_NOTES_0.4.0.zh-CN.md](./RELEASE_NOTES_0.4.0.zh-CN.md)
 
-> Status: **release candidate — not public yet**. Do not reference `0.4.0` from Maven Central until
-> this status is changed after publication verification.
+> Status: **released on 2026-08-24** from the exact annotated tag `v0.4.0`.
+> All seven signed Maven Central bundles are public, and both isolated artifact consumers passed.
 
 Pulse 0.4 hardens the 0.3 runtime for real Android integrations. It keeps one ordered,
 process-local state runtime and focuses on end-to-end Split admission, actionable diagnostics,
@@ -89,9 +89,9 @@ exhaustive handling of `PulseFailure` or `FailurePhase` for `TaskFailure`, `TASK
 
 See [Migrating from Pulse 0.3 to 0.4](./MIGRATION_0.3_TO_0.4.md).
 
-## Candidate artifact set
+## Published artifact set
 
-The release candidate contains seven artifacts under `io.github.magic-xu`:
+The release publishes seven artifacts under `io.github.magic-xu`:
 
 - `mvi-core-contract`
 - `mvi-core-runtime`
@@ -101,7 +101,7 @@ The release candidate contains seven artifacts under `io.github.magic-xu`:
 - `mvi-extensions`
 - `mvi-testing`
 
-Keep all Pulse modules in one project on the same version after 0.4.0 becomes public.
+Keep all Pulse modules in one project on version `0.4.0`.
 
 ## Explicit boundaries
 

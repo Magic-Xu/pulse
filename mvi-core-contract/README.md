@@ -2,21 +2,19 @@
 
 Pulse 的平台无关契约模块，不包含协程、Android 或 Compose 实现。
 
-> 当前稳定版为 `0.3.0`，已发布到 Maven Central。
+> 当前稳定版为 `0.4.0`，已发布到 Maven Central。
 
 ## 依赖
 
-仓库内源码工程使用：
-
 ```kotlin
 dependencies {
-    implementation(project(":mvi-core-contract"))
+    implementation("io.github.magic-xu:mvi-core-contract:0.4.0")
 }
 ```
 
 通常无需直接依赖本模块；`mvi-core-runtime` 会公开传递这些契约。
 
-## v0.3 契约
+## v0.4 契约
 
 - `MviIntent`、`MviState`、`UiEffect`：输入、持久状态和一次性 UI 指令的标记接口。
 - `PulseReducer`：纯函数 `previous + input -> ReduceOutcome`。
@@ -52,7 +50,7 @@ val counterReducer = PulseReducer<CounterState, CounterIntent, CounterEffect> { 
 
 ## v0.2 兼容契约
 
-`MviEffect`、`Next`、`Reducer`、`Store`、`SplitIntent` 和 `MutationReducer` 继续保留，供现有源码迁移。新代码优先使用 v0.3 的 `UiEffect`、`PulseReducer` 和显式结果类型。
+`MviEffect`、`Next`、`Reducer`、`Store`、`SplitIntent` 和 `MutationReducer` 继续保留，供现有源码迁移。新代码优先使用 `UiEffect`、`PulseReducer` 和显式结果类型。
 
 状态拆分不属于契约层。`StateLens`、`stateLens`、`pulseMutationReducer`、`onSub` 和显式 `ignore` 位于 `mvi-extensions`。
 

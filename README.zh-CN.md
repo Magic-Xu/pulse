@@ -6,7 +6,7 @@ Pulse 是一个面向 Kotlin 与 Android 的有序、协程优先 MVI 运行时�
 输入邮箱和一个处理器，通过 `StateFlow` 发布唯一状态，把每次输入记录成可关联的 Transition
 Frame，并由单一协调者交付 replay=0 的 UI Effect。
 
-最新稳定版为 **0.3.0**，已发布到 Maven Central。
+最新稳定版为 **0.4.0**，已发布到 Maven Central。
 
 ## 模块
 
@@ -16,6 +16,7 @@ Frame，并由单一协调者交付 replay=0 的 UI Effect。
 | `mvi-core-runtime` | 有序 Store 引擎、Effect、Plugin、Keyed Task 与 v0.2 适配器 |
 | `mvi-platform-android` | Split Intent ViewModel、显式 Owner、SavedState 与 Android 默认运行环境 |
 | `mvi-platform-android-compose` | 生命周期感知的 State、Selector、Effect 与 ViewModel 绑定 |
+| `mvi-platform-android-testing` | 可选的真实 Split ViewModel 虚拟时间宿主与 Probe |
 | `mvi-extensions` | 可选日志、Transition 辅助与 State Decomposition DSL |
 | `mvi-testing` | 虚拟时间、Probe、`TestPulseStore` 与可复用 Store TCK |
 
@@ -64,12 +65,12 @@ scope.launch {
 ```
 
 Android 功能优先使用 `PulseSplitStoreViewModel`：UI 侧只能看到返回 executor 结果的挂起式
-`send(UI)`，以及只返回 mailbox 接纳结果的非阻塞 `trySend(UI)`；Mutation 和 Keyed Task 只存在于
-`PulseIntentContext` 内。
+`send(UI)`，以及返回有界 UI-to-executor 路径接纳结果的非阻塞 `trySend(UI)`；Mutation 和 Keyed
+Task 只存在于 `PulseIntentContext` 内。
 
 ## 依赖配置
 
-Pulse 0.3.0 已发布到 Maven Central：
+Pulse 0.4.0 已发布到 Maven Central：
 
 > [!TIP]
 > **绝大多数 Android Compose 应用只需要一条生产依赖：**
@@ -82,7 +83,7 @@ repositories {
 }
 
 dependencies {
-    implementation("io.github.magic-xu:mvi-platform-android-compose:0.3.0")
+    implementation("io.github.magic-xu:mvi-platform-android-compose:0.4.0")
 }
 ```
 
@@ -99,10 +100,13 @@ dependencies {
 ```kotlin
 dependencies {
     // 可选：State Lens、Reducer 拆分、日志和 Transition 辅助能力
-    implementation("io.github.magic-xu:mvi-extensions:0.3.0")
+    implementation("io.github.magic-xu:mvi-extensions:0.4.0")
 
-    // 可选：虚拟时间、Probe、TestPulseStore 和 TCK
-    testImplementation("io.github.magic-xu:mvi-testing:0.3.0")
+    // 可选：测试真实 Split ViewModel；会传递引入 mvi-testing
+    testImplementation("io.github.magic-xu:mvi-platform-android-testing:0.4.0")
+
+    // 或者，只测试平台无关 Store 或运行 TCK：
+    // testImplementation("io.github.magic-xu:mvi-testing:0.4.0")
 }
 ```
 
@@ -132,6 +136,7 @@ dependencies {
 可移植性能下限 harness。
 
 继续阅读：[接入指南](docs/CONSUMER_GUIDE.zh-CN.md)、
+[0.3 到 0.4 迁移](docs/MIGRATION_0.3_TO_0.4.zh-CN.md)、
 [0.2 到 0.3 迁移](docs/MIGRATION_0.2_TO_0.3.zh-CN.md) 与
 [架构决策](docs/decisions/)。
 

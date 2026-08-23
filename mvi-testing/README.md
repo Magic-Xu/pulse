@@ -1,14 +1,14 @@
 # mvi-testing
 
-Pulse v0.3 Store 的虚拟时间测试工具、探针和可复用行为契约。
+Pulse v0.4 Store 的虚拟时间测试工具、探针和可复用行为契约。
 
-> 当前稳定版为 `0.3.0`，已发布到 Maven Central。
+> 当前稳定版为 `0.4.0`，已发布到 Maven Central。本模块是可选的测试依赖。
 
 ## 依赖
 
 ```kotlin
 dependencies {
-    testImplementation(project(":mvi-testing"))
+    testImplementation("io.github.magic-xu:mvi-testing:0.4.0")
 }
 ```
 

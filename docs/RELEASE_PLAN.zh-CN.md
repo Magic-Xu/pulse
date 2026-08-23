@@ -2,18 +2,19 @@
 
 英文版：[RELEASE_PLAN.md](./RELEASE_PLAN.md)
 
-> 发布状态：**候选版本，尚未公开**。当前公开稳定版仍是 `0.3.0`。在准确的 `v0.4.0`
-> Workflow 完成 Maven Central 与公共纯制品消费者验证前，不得宣布或消费 `0.4.0`。
+> 发布状态：**稳定版，已于 2026-08-24 发布**，来源为准确的 Annotated Tag `v0.4.0`。
+> [Workflow Run 32659106344](https://github.com/Magic-Xu/pulse/actions/runs/32659106344) 已通过；
+> 七个签名 Maven Central 发布包均已公开，两个隔离纯制品消费者均已通过。
 
-## 发布目标
+## 发布结果
 
-发布一个内部一致的 v0.4，在 0.3 有序运行时基础上解决真实 Android 集成问题。候选必须修复
-端到端 Split 接纳，完善 Task 与 Transition 诊断，为真实 Split ViewModel 提供确定性测试，并
-修正框架自有示例；同时不吸收应用的领域、持久任务或多 Store 编排策略。
+Pulse 0.4 已发布为一条内部一致的版本线，在 0.3 有序运行时基础上解决真实 Android 集成问题。
+它修复了端到端 Split 接纳，完善了 Task 与 Transition 诊断，为真实 Split ViewModel 提供
+确定性测试，并修正框架自有示例；同时不吸收应用的领域、持久任务或多 Store 编排策略。
 
-## 候选阶段
+## 已完成准入
 
-| 阶段 | 必须达到的结果 |
+| 阶段 | 已完成结果 |
 |---|---|
 | 0. 基线 | 修改公开行为前，识别已发布的 0.3 API 表面与保留的 0.2 兼容 Fixture |
 | 1. 接纳 | 一个有界预算覆盖 Split UI 接纳到串行 Executor 决策；挂起与非挂起契约明确 |
@@ -21,7 +22,7 @@
 | 3. 测试与扩展 | Android Split Test Host 与默认脱敏的现代日志只建立在有序运行时之上 |
 | 4. 示例与指南 | 官方示例处理接纳和 Task Launch Result；集成指南保持框架与应用职责边界 |
 | 5. API 与兼容 | 七份 API 基线、可执行的 0.3 六制品检查，以及保留的 0.2 五制品检查通过 |
-| 6. 候选制品 | 七个暂存发布物和两个纯制品消费者全部通过 |
+| 6. 发布制品 | 七个暂存发布物和两个纯制品消费者全部通过 |
 | 7. 发布准入 | Framework、Publication、Stress、Performance、托管设备与稳定身份门禁在同一提交通过 |
 
 后续阶段不能为了通过自身检查而削弱更早阶段的契约。准入后如再修改公开 API 或制品，必须重新执行
@@ -64,8 +65,8 @@ API 评审、Framework、Compatibility、暂存消费者、Stress、Performance 
 - 两个隔离的暂存纯制品消费者；
 - 候选版本一致性。
 
-两个兼容聚合都消费暂存候选制品。对于 0.3 已发布的六个制品，接受 0.4 基线前，还必须基于已检入
-的 0.3 表面评审 `apiDump` 差异。第七份基线只属于新增 Android Testing 制品。
+两个兼容聚合都消费暂存候选制品。有意修改 API 时，还必须对照当前已检入表面评审差异后才能更新
+基线；新制品的首份基线也需要同样的显式评审。
 
 ### 发布聚合门禁
 
@@ -97,7 +98,7 @@ API 评审、Framework、Compatibility、暂存消费者、Stress、Performance 
 缺失 Task、缺少 API 基线、跳过纯制品消费者或发布包不完整都属于发布失败；不接受空门禁或
 尽力而为式门禁。
 
-## 候选验证命令
+## 准入命令
 
 在 JDK 21 的干净 Checkout 中、不提供发布凭据，运行最小完整本地准入：
 
@@ -120,12 +121,12 @@ git diff -- */api/*.api
 `apiDump` 差异不能自动批准自己。接受前必须评审删除项、签名变化、泛型边界、可见性、穷举式
 Sealed 表面，以及三个 Release AAR 的公开 API。
 
-## 稳定版发布规则
+## 后续稳定版发布规则
 
-只有同时满足以下条件，才允许远程发布：
+后续稳定版本 `X.Y.Z` 只有同时满足以下条件，才允许远程发布：
 
-1. GitHub 正在处理准确的 Annotated Tag `v0.4.0`。
-2. `POM_VERSION_NAME` 准确等于 `0.4.0`，并与 Tag 一致。
+1. 受保护 Workflow 的目标与 GitHub Ref 都是准确的 Annotated Tag `vX.Y.Z`。
+2. `POM_VERSION_NAME` 准确等于 `X.Y.Z`，并与 Tag 一致。
 3. 版本不包含 `SNAPSHOT`、`RC` 或其他预发布后缀。
 4. `release-check` 与 `device-check` 在 JDK 21 上针对同一提交通过。
 5. `verifyMavenCentralConfig` 已验证必要 Metadata。
@@ -134,16 +135,16 @@ Sealed 表面，以及三个 Release AAR 的公开 API。
 Publish Task 不能反向依赖 `mviReleaseCheck`；远程发布屏障由 Workflow Job 顺序负责，以避免
 Gradle 依赖环。
 
-## 发布后验证
+## 后续发布验证
 
 Maven Central 显示部署已发布后：
 
-1. 只从 Maven Central 解析全部七个 `io.github.magic-xu:*:0.4.0` 坐标，不使用 Local 或
-   Staging Repository。
+1. 只从 Maven Central 解析全部预期的 `io.github.magic-xu:*:X.Y.Z` 坐标，不使用 Local
+   或 Staging Repository。
 2. 验证每个 POM、Gradle Module Metadata、Source Archive、Javadoc Archive、Binary 及其签名。
 3. 使用 `--refresh-dependencies` 构建并测试两个纯制品消费者。
-4. 确认每个内部 Pulse 依赖都准确等于 `0.4.0`。
-5. 只有此后才能修改候选状态并宣布可用。
+4. 确认每个内部 Pulse 依赖都准确等于 `X.Y.Z`。
+5. 只有此后才能标记为公开发布并宣布可用。
 
 受保护 Workflow 会执行公共制品轮询并运行 `publicArtifactSamplesCheck`；本地 Staging 结果
 不能替代该证据。

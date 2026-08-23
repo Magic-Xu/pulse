@@ -4,9 +4,9 @@
 
 ## Current line
 
-`0.3.0` is the current public stable release. `0.4.0` is a release candidate and is **not public
-yet**. Applications must continue to resolve `0.3.0` until the guarded `v0.4.0` publication and
-public-consumer verification finish.
+`0.4.0` is the current public stable release. It was published on 2026-08-24 from the exact
+annotated tag `v0.4.0`; all seven signed bundles and both isolated artifact consumers passed
+public verification. `0.3.0` is the preceding stable line.
 
 ## 0.3 foundation
 
@@ -20,7 +20,7 @@ Pulse 0.3 established the product boundary that 0.4 retains:
 - State Decomposition, reusable Store tests, controlled API baselines, and retained 0.2
   compatibility are separate modules or verification evidence rather than a second runtime.
 
-## 0.4 candidate scope
+## 0.4 delivered scope
 
 ### End-to-end Split admission
 
@@ -53,36 +53,42 @@ Pulse 0.3 established the product boundary that 0.4 retains:
 Pulse remains a process-local ordered state runtime. Domain models, durable operation recovery,
 WorkManager or Service policy, multi-Store orchestration, and source sampling or retry policy remain
 application responsibilities. A SourceRegistry, generic scheduler, Service base class, global bus,
-writer DSL/KSP layer, lint suite, and developer panel are outside the 0.4 candidate.
+writer DSL/KSP layer, lint suite, and developer panel are not part of 0.4.
 
-## Candidate evidence
+## 0.4 release evidence
 
-- Seven public artifacts must have controlled API/ABI baselines, including three Android AARs.
-- `compatibility03Check` compiles and links the frozen six-artifact 0.3 surface against staged 0.4
-  artifacts, including executable JVM replacement and archive comparisons.
-- `apiCheck` controls all seven candidate baselines, including the reviewed first baseline of the
-  new Android testing artifact.
-- The retained 0.2 fixture compiles the frozen five-artifact Kotlin surface, compares those
-  archives, and executes the core-runtime linkage consumer against staged 0.4 artifacts.
-- Both isolated samples build from staged Maven artifacts; after publication they build again from
-  Maven Central only.
+- Seven public artifacts have controlled API/ABI baselines, including three Android AARs.
+- `compatibility03Check` compiled and linked the frozen six-artifact 0.3 surface against staged
+  0.4 artifacts, including executable JVM replacement and archive comparisons.
+- `apiCheck` passed for all seven baselines, including the reviewed first baseline of the new
+  Android testing artifact.
+- The retained 0.2 fixture compiled the frozen five-artifact Kotlin surface, compared those
+  archives, and executed the core-runtime linkage consumer against staged 0.4 artifacts.
+- Both isolated samples passed against staged artifacts and then against Maven Central only.
 - Fixed-seed PR checks, multi-seed stress, performance floors, and managed-device instrumentation
-  remain distinct evidence.
+  all passed.
 
-## Release boundary
+## 0.4 release result
 
-The candidate is releasable only after these commands pass from a clean checkout on JDK 21:
+The guarded workflow ran the complete JDK 21 release and managed-device gates:
 
 ```bash
-./gradlew clean mviReleaseCheck --stacktrace
-./gradlew mviAndroidDeviceCheck --stacktrace
+./gradlew verifyMavenCentralConfig mviReleaseCheck --stacktrace
+./gradlew mviAndroidDeviceCheck --stacktrace \
+  -Pandroid.testoptions.manageddevices.emulator.gpu=swiftshader_indirect
 ```
 
-Remote publication additionally requires `POM_VERSION_NAME=0.4.0`, the exact annotated tag
-`v0.4.0`, and the guarded `.github/workflows/publish-maven-central.yml` jobs. The publish job waits
-for both `release-check` and `device-check`, publishes that same commit, verifies all seven public
-artifacts, and runs the public artifact-only consumers. A branch, snapshot, RC, or different tag
-cannot publish `0.4.0`.
+`POM_VERSION_NAME=0.4.0` matched the exact annotated tag `v0.4.0`.
+[Workflow run 32659106344](https://github.com/Magic-Xu/pulse/actions/runs/32659106344) completed
+`release-check`, `device-check`, publication, seven-bundle public verification, and both public
+artifact-only consumers.
+
+## Future release boundary
+
+Each future stable release must pass the same clean qualification and managed-device gates. Its
+configured stable version, exact annotated tag, and guarded workflow target must match; the publish
+job must depend on both qualification jobs, verify every public bundle, and run the public
+artifact-only consumers before availability is announced.
 
 ## After 0.4
 

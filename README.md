@@ -6,7 +6,7 @@ Pulse is an ordered, coroutine-first MVI runtime for Kotlin and Android. A store
 input mailbox and one processor, publishes state through `StateFlow`, records every processed input
 as a correlated transition frame, and delivers replay-zero UI effects through one coordinator.
 
-The latest stable release is **0.3.0**, available from Maven Central.
+The latest stable release is **0.4.0**, available from Maven Central.
 
 ## Modules
 
@@ -16,6 +16,7 @@ The latest stable release is **0.3.0**, available from Maven Central.
 | `mvi-core-runtime` | Ordered store engine, effects, plugins, keyed tasks, and v0.2 adapter |
 | `mvi-platform-android` | Split Intent ViewModel, explicit owner, SavedState, and Android runtime defaults |
 | `mvi-platform-android-compose` | Lifecycle-aware state, selector, effect, and ViewModel bindings |
+| `mvi-platform-android-testing` | Optional virtual-time host and probes for real Split ViewModel tests |
 | `mvi-extensions` | Optional logging, transition helpers, and State Decomposition DSL |
 | `mvi-testing` | Virtual-time helpers, probes, `TestPulseStore`, and reusable Store TCK |
 
@@ -64,12 +65,13 @@ scope.launch {
 ```
 
 For Android features, prefer `PulseSplitStoreViewModel`: UI code only receives suspending
-`send(UI)`, which returns the executor result, and non-blocking `trySend(UI)`, which returns mailbox
-admission. Mutations and keyed tasks are available only inside `PulseIntentContext`.
+`send(UI)`, which returns the executor result, and non-blocking `trySend(UI)`, which reports
+admission to the bounded UI-to-executor path. Mutations and keyed tasks are available only inside
+`PulseIntentContext`.
 
 ## Dependency setup
 
-Pulse 0.3.0 is available from Maven Central:
+Pulse 0.4.0 is available from Maven Central:
 
 > [!TIP]
 > **Most Android Compose apps need one production dependency:**
@@ -83,7 +85,7 @@ repositories {
 }
 
 dependencies {
-    implementation("io.github.magic-xu:mvi-platform-android-compose:0.3.0")
+    implementation("io.github.magic-xu:mvi-platform-android-compose:0.4.0")
 }
 ```
 
@@ -100,10 +102,13 @@ Add optional modules only when the feature needs them:
 ```kotlin
 dependencies {
     // Optional: State Lens, reducer decomposition, logging, and transition helpers
-    implementation("io.github.magic-xu:mvi-extensions:0.3.0")
+    implementation("io.github.magic-xu:mvi-extensions:0.4.0")
 
-    // Optional: virtual time, probes, TestPulseStore, and TCK
-    testImplementation("io.github.magic-xu:mvi-testing:0.3.0")
+    // Optional: real Split ViewModel tests; includes mvi-testing transitively
+    testImplementation("io.github.magic-xu:mvi-platform-android-testing:0.4.0")
+
+    // Or, for platform-neutral Store tests and TCK only:
+    // testImplementation("io.github.magic-xu:mvi-testing:0.4.0")
 }
 ```
 
@@ -135,6 +140,7 @@ publication-bundle verification, artifact-only samples, multi-seed stress, and a
 performance-floor harness.
 
 See [Consumer Guide](docs/CONSUMER_GUIDE.md),
+[0.3 to 0.4 Migration](docs/MIGRATION_0.3_TO_0.4.md),
 [0.2 to 0.3 Migration](docs/MIGRATION_0.2_TO_0.3.md), and
 [release decisions](docs/decisions/).
 

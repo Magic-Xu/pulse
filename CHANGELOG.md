@@ -2,10 +2,10 @@
 
 Notable changes to Pulse are recorded here.
 
-## 0.4.0 — release candidate
+## 0.4.0 — 2026-08-24
 
-Pulse 0.4.0 is not public yet. Pulse 0.3.0 remains the stable Maven Central release until the
-0.4.0 publication and isolated-consumer checks pass.
+Pulse 0.4.0 is published to Maven Central from the exact annotated tag `v0.4.0`. All seven signed
+bundles are public, and both isolated artifact consumers passed.
 
 ### Added
 

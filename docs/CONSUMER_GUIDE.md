@@ -1,14 +1,14 @@
-# Pulse 0.3 Consumer Guide
+# Pulse 0.4 Consumer Guide
 
 [简体中文](CONSUMER_GUIDE.zh-CN.md)
 
-This guide targets application developers adopting the stable `0.3.0` API published on Maven Central.
+This guide targets application developers adopting the stable `0.4.0` API published on Maven Central.
 
 ## Start with one main dependency
 
 > [!TIP]
 > Most Android Compose apps need only
-> `implementation("io.github.magic-xu:mvi-platform-android-compose:0.3.0")`.
+> `implementation("io.github.magic-xu:mvi-platform-android-compose:0.4.0")`.
 > It already brings Android, runtime, and contract transitively.
 
 | Project type | Add this main dependency |
@@ -18,8 +18,10 @@ This guide targets application developers adopting the stable `0.3.0` API publis
 | Pure Kotlin / JVM | `mvi-core-runtime` |
 
 Pick one main entry; do not add all three. Add `mvi-extensions` only for State Lens, reducer
-decomposition, logging, or transition helpers. Add `mvi-testing` only to the test configuration.
-When multiple Pulse modules are used, keep them on the same version.
+decomposition, logging, or transition helpers. For tests, use `mvi-testing` for platform-neutral
+Stores or `mvi-platform-android-testing` for a real Split ViewModel host; both belong only in the
+test configuration. The Android testing artifact exposes `mvi-testing` transitively. When multiple
+Pulse modules are used, keep them on the same version.
 
 At the API level:
 
@@ -139,7 +141,8 @@ task can be superseded before it starts. The handle describes process-local exec
 durable business completion in state or a durable operation model.
 
 Suspending `viewModel.send(intent)` returns the end-to-end executor result: `Completed`,
-`Ignored(reason)`, `Failed`, `Cancelled`, or `Rejected`. `trySend` returns mailbox admission only.
+`Ignored(reason)`, `Failed`, `Cancelled`, or `Rejected`. `trySend` returns admission to the bounded
+UI-to-executor path; `Enqueued` does not mean that the executor or a keyed task has completed.
 Inside the executor, use `stateAtStart` for a stable decision snapshot, `currentState` for the latest
 commit, `intentId` for correlation, and `reportFailure` for an explicitly handled feature failure.
 Use `cancelTask` or `cancelAllTasks` instead of retaining coroutine jobs.
@@ -205,7 +208,25 @@ Every lens must satisfy Get-Put, Put-Get, and Put-Put.
 
 ## Testing
 
-Add `mvi-testing` to test dependencies and use virtual time:
+Choose the narrowest optional test artifact:
+
+```kotlin
+dependencies {
+    // Platform-neutral Store tests and TCK.
+    testImplementation("io.github.magic-xu:mvi-testing:0.4.0")
+}
+```
+
+For real `PulseSplitStoreViewModel` tests, use the Android artifact instead; it includes
+`mvi-testing` transitively:
+
+```kotlin
+dependencies {
+    testImplementation("io.github.magic-xu:mvi-platform-android-testing:0.4.0")
+}
+```
+
+Use `mvi-testing` virtual time for platform-neutral Store tests:
 
 ```kotlin
 @Test
@@ -221,11 +242,15 @@ Use the transition, effect, and failure probes for ordered assertions. Runtime i
 the reusable `PulseStoreTck` against another `PulseStore` factory. Probe assertion messages include
 the latest transition sequence and pass state/effect values through the configured redactor. Use a
 custom test redactor only for values that are safe to print. Test task cancellation through
-`TaskHandle.awaitOutcome`, close through `awaitClosed`, and Android lifecycle/SavedState behavior in
-the platform test modules rather than relying on delays.
+`TaskHandle.awaitOutcome` and close through `awaitClosed`. Use `runPulseSplitTest` from
+`mvi-platform-android-testing` for Split admission, executor, mutation, effect, and `PulseSavedState`
+behavior. Keep Activity, Compose, and `LifecycleOwner` integration in instrumentation tests rather
+than relying on delays.
 
 ## Migration
 
-The v0.2 `Store`, `DefaultStore`, `Reducer`, `Next`, and callback subscriptions remain available
-through the same 0.3 engine. New features should use the coroutine-first API. See
-[0.2 to 0.3 Migration](MIGRATION_0.2_TO_0.3.md) for behavior changes and staged migration steps.
+Applications on 0.3 can upgrade without replacing their reducer or ViewModel architecture; see
+[0.3 to 0.4 Migration](MIGRATION_0.3_TO_0.4.md) for the new admission, diagnostics, and Android
+testing surfaces. The v0.2 `Store`, `DefaultStore`, `Reducer`, `Next`, and callback subscriptions
+remain available through the compatibility facade. New features should use the coroutine-first API;
+see [0.2 to 0.3 Migration](MIGRATION_0.2_TO_0.3.md) when starting from v0.2.
