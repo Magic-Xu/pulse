@@ -13,6 +13,7 @@ val pulseModules = listOf(
     "mvi-core-runtime",
     "mvi-platform-android",
     "mvi-platform-android-compose",
+    "mvi-platform-android-testing",
     "mvi-extensions",
     "mvi-testing",
 )

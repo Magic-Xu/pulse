@@ -98,6 +98,7 @@ public final class com/magic/mvicore/contract/FailureContext {
 }
 
 public final class com/magic/mvicore/contract/FailurePhase : java/lang/Enum {
+	public static final field ADMISSION Lcom/magic/mvicore/contract/FailurePhase;
 	public static final field EXECUTOR Lcom/magic/mvicore/contract/FailurePhase;
 	public static final field LATE_MUTATION Lcom/magic/mvicore/contract/FailurePhase;
 	public static final field OVERFLOW Lcom/magic/mvicore/contract/FailurePhase;
@@ -106,6 +107,7 @@ public final class com/magic/mvicore/contract/FailurePhase : java/lang/Enum {
 	public static final field RESTORE Lcom/magic/mvicore/contract/FailurePhase;
 	public static final field SAVE Lcom/magic/mvicore/contract/FailurePhase;
 	public static final field STATE_CONSUMER Lcom/magic/mvicore/contract/FailurePhase;
+	public static final field TASK Lcom/magic/mvicore/contract/FailurePhase;
 	public static final field UI_EFFECT_CONSUMER Lcom/magic/mvicore/contract/FailurePhase;
 	public static final field UNDELIVERED_UI_EFFECT Lcom/magic/mvicore/contract/FailurePhase;
 	public static fun getEntries ()Lkotlin/enums/EnumEntries;
@@ -233,6 +235,21 @@ public final class com/magic/mvicore/contract/PulseFailure$ReducerFailure : com/
 	public fun toString ()Ljava/lang/String;
 }
 
+public final class com/magic/mvicore/contract/PulseFailure$SplitAdmissionOverflow : com/magic/mvicore/contract/PulseFailure {
+	public fun <init> (Lcom/magic/mvicore/contract/FailureContext;I)V
+	public final fun component1 ()Lcom/magic/mvicore/contract/FailureContext;
+	public final fun component2 ()I
+	public final fun copy (Lcom/magic/mvicore/contract/FailureContext;I)Lcom/magic/mvicore/contract/PulseFailure$SplitAdmissionOverflow;
+	public static synthetic fun copy$default (Lcom/magic/mvicore/contract/PulseFailure$SplitAdmissionOverflow;Lcom/magic/mvicore/contract/FailureContext;IILjava/lang/Object;)Lcom/magic/mvicore/contract/PulseFailure$SplitAdmissionOverflow;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCapacity ()I
+	public fun getCause ()Ljava/lang/Throwable;
+	public fun getContext ()Lcom/magic/mvicore/contract/FailureContext;
+	public fun getPhase ()Lcom/magic/mvicore/contract/FailurePhase;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
 public final class com/magic/mvicore/contract/PulseFailure$StateConsumerFailure : com/magic/mvicore/contract/PulseFailure {
 	public fun <init> (Lcom/magic/mvicore/contract/FailureContext;Ljava/lang/Throwable;)V
 	public final fun component1 ()Lcom/magic/mvicore/contract/FailureContext;
@@ -271,6 +288,24 @@ public final class com/magic/mvicore/contract/PulseFailure$StateSaveFailure : co
 	public fun getCause ()Ljava/lang/Throwable;
 	public fun getContext ()Lcom/magic/mvicore/contract/FailureContext;
 	public fun getPhase ()Lcom/magic/mvicore/contract/FailurePhase;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/magic/mvicore/contract/PulseFailure$TaskFailure : com/magic/mvicore/contract/PulseFailure {
+	public fun <init> (Lcom/magic/mvicore/contract/FailureContext;Ljava/lang/String;JLjava/lang/Throwable;)V
+	public final fun component1 ()Lcom/magic/mvicore/contract/FailureContext;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()J
+	public final fun component4 ()Ljava/lang/Throwable;
+	public final fun copy (Lcom/magic/mvicore/contract/FailureContext;Ljava/lang/String;JLjava/lang/Throwable;)Lcom/magic/mvicore/contract/PulseFailure$TaskFailure;
+	public static synthetic fun copy$default (Lcom/magic/mvicore/contract/PulseFailure$TaskFailure;Lcom/magic/mvicore/contract/FailureContext;Ljava/lang/String;JLjava/lang/Throwable;ILjava/lang/Object;)Lcom/magic/mvicore/contract/PulseFailure$TaskFailure;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getCause ()Ljava/lang/Throwable;
+	public fun getContext ()Lcom/magic/mvicore/contract/FailureContext;
+	public fun getPhase ()Lcom/magic/mvicore/contract/FailurePhase;
+	public final fun getTaskKey ()Ljava/lang/String;
+	public final fun getToken ()J
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
 }

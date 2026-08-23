@@ -1,3 +1,41 @@
 <resources>
     <string name="app_name">pulse</string>
+
+    <string name="sample_ingress_capacity_reached">Too many actions are pending. Try again.</string>
+    <string name="sample_ingress_screen_unavailable">This sample is no longer accepting actions.</string>
+    <string name="sample_list_item">- %1$s</string>
+
+    <string name="basic_description">Basic path: direct reducer + DropWhileRunning task, no DSL.</string>
+    <string name="basic_load_images">Load Images</string>
+    <string name="basic_load_videos">Load Videos</string>
+    <string name="basic_clear_result">Clear Result</string>
+    <string name="basic_request_count">requestCount = %1$d</string>
+    <string name="basic_last_operation">lastOperation = %1$s</string>
+    <string name="basic_operation_ready">Ready</string>
+    <string name="basic_operation_loading_images">Loading image models...</string>
+    <string name="basic_operation_loading_videos">Loading video models...</string>
+    <string name="basic_operation_images_loaded">Image models loaded</string>
+    <string name="basic_operation_videos_loaded">Video models loaded</string>
+    <string name="basic_operation_load_failed">Load failed</string>
+    <string name="basic_operation_cleared">Cleared</string>
+    <string name="basic_image_models_title">Image Models</string>
+    <string name="basic_video_models_title">Video Models</string>
+    <string name="basic_empty_models">empty</string>
+    <string name="basic_model_item">%1$s | %2$s</string>
+    <string name="basic_load_images_failed">Load image models failed</string>
+    <string name="basic_load_videos_failed">Load video models failed</string>
+
+    <string name="network_architecture_path">Repository -&gt; RemoteDataSource -&gt; RemoteService</string>
+    <string name="network_load_images">获取图片模型</string>
+    <string name="network_load_videos">获取视频模型</string>
+    <string name="network_status">状态: %1$s</string>
+    <string name="network_images_updated">Image models updated</string>
+    <string name="network_videos_updated">Video models updated</string>
+    <string name="network_image_models_title">图片模型列表</string>
+    <string name="network_video_models_title">视频模型列表</string>
+    <string name="network_empty_models">暂无数据</string>
+    <string name="network_image_model_item">%1$s | %2$s | %3$s</string>
+    <string name="network_video_model_item">%1$s | %2$s | %3$ds</string>
+    <string name="network_load_images_failed">Loading image models failed</string>
+    <string name="network_load_videos_failed">Loading video models failed</string>
 </resources>

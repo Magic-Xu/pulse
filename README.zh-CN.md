@@ -71,22 +71,43 @@ Android 功能优先使用 `PulseSplitStoreViewModel`：UI 侧只能看到返回
 
 Pulse 0.3.0 已发布到 Maven Central：
 
+> [!TIP]
+> **绝大多数 Android Compose 应用只需要一条生产依赖：**
+> `mvi-platform-android-compose`。它会自动带入 Android、runtime 和 contract 层，不要重复声明这些底层模块。
+
 ```kotlin
 repositories {
     google()
     mavenCentral()
 }
 
-val pulseVersion = "0.3.0"
 dependencies {
-    implementation("io.github.magic-xu:mvi-core-runtime:$pulseVersion")
-    implementation("io.github.magic-xu:mvi-platform-android-compose:$pulseVersion")
-    implementation("io.github.magic-xu:mvi-extensions:$pulseVersion")
-    testImplementation("io.github.magic-xu:mvi-testing:$pulseVersion")
+    implementation("io.github.magic-xu:mvi-platform-android-compose:0.3.0")
 }
 ```
 
-只添加功能真正需要的模块。Android Compose 模块会传递引入 Android、runtime 与 contract 层。
+根据项目类型，**主入口只选一个**：
+
+| 项目类型 | 主依赖 |
+| --- | --- |
+| Android + Compose | `mvi-platform-android-compose` |
+| Android，不使用 Compose | `mvi-platform-android` |
+| 纯 Kotlin / JVM | `mvi-core-runtime` |
+
+只有功能确实需要时，才添加可选模块：
+
+```kotlin
+dependencies {
+    // 可选：State Lens、Reducer 拆分、日志和 Transition 辅助能力
+    implementation("io.github.magic-xu:mvi-extensions:0.3.0")
+
+    // 可选：虚拟时间、Probe、TestPulseStore 和 TCK
+    testImplementation("io.github.magic-xu:mvi-testing:0.3.0")
+}
+```
+
+> [!IMPORTANT]
+> 不要把所有 Pulse 模块都加进来。先选一个主入口，再按需添加可选模块；同时使用多个 Pulse 模块时，版本必须一致。
 
 ## 示例
 
@@ -106,8 +127,9 @@ dependencies {
 ./gradlew clean mviReleaseCheck
 ```
 
-发布门禁包含标准测试、Store TCK、六模块 API/ABI dump、五制品 v0.2 源码/二进制兼容
-fixture、Android/Compose 检查、发布包校验、纯制品示例、多种子压力与可移植性能下限 harness。
+发布门禁包含标准测试、Store TCK、七模块 API/ABI 基线、六制品 v0.3 与五制品 v0.2
+源码/二进制兼容 fixture、Android/Compose 检查、发布包校验、纯制品示例、多种子压力与
+可移植性能下限 harness。
 
 继续阅读：[接入指南](docs/CONSUMER_GUIDE.zh-CN.md)、
 [0.2 到 0.3 迁移](docs/MIGRATION_0.2_TO_0.3.zh-CN.md) 与

@@ -38,24 +38,23 @@ keyed tasks, lifecycle-aware selectors, or replay-zero UI effects.
 
 ## 1. Update dependencies
 
-The five 0.2 coordinates remain, and 0.3 adds `mvi-testing`:
+The five 0.2 coordinates remain, and 0.3 adds `mvi-testing`. Upgrade the main entry your project
+already uses; do not add every coordinate:
 
 ```kotlin
 dependencies {
-    implementation("io.github.magic-xu:mvi-core-contract:0.3.0")
-    implementation("io.github.magic-xu:mvi-core-runtime:0.3.0")
-
-    // Android projects normally depend on only the highest adapter they use.
+    // Most Android Compose projects need only this production dependency.
     implementation("io.github.magic-xu:mvi-platform-android-compose:0.3.0")
 
-    // Optional.
+    // Optional: add only when the feature uses these capabilities.
     implementation("io.github.magic-xu:mvi-extensions:0.3.0")
     testImplementation("io.github.magic-xu:mvi-testing:0.3.0")
 }
 ```
 
-Do not use these stable coordinates until `0.3.0` is published. The Android Compose artifact exposes
-the Android, runtime, and contract APIs transitively.
+The Android Compose artifact exposes the Android, runtime, and contract APIs transitively. Android
+projects without Compose should use `mvi-platform-android`; pure Kotlin / JVM projects should use
+`mvi-core-runtime`. Keep all Pulse modules present in one project on version `0.3.0`.
 
 ## 2. Make reducer outcomes explicit
 

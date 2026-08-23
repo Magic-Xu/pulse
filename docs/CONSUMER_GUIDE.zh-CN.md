@@ -4,11 +4,27 @@
 
 本文面向接入 Maven Central 稳定版 `0.3.0` API 的应用开发者。
 
-## 选择最小能力面
+## 从一个主依赖开始
+
+> [!TIP]
+> 绝大多数 Android Compose 应用只需要
+> `implementation("io.github.magic-xu:mvi-platform-android-compose:0.3.0")`。
+> 它会自动带入 Android、runtime 和 contract 层。
+
+| 项目类型 | 添加这一条主依赖 |
+| --- | --- |
+| Android + Compose | `mvi-platform-android-compose` |
+| Android，不使用 Compose | `mvi-platform-android` |
+| 纯 Kotlin / JVM | `mvi-core-runtime` |
+
+主入口只选一个，不要三条都加。只有需要 State Lens、Reducer 拆分、日志或 Transition 辅助能力时，
+才添加 `mvi-extensions`；`mvi-testing` 只放在测试依赖中。同时使用多个 Pulse 模块时，版本必须一致。
+
+对应到 API：
 
 1. 平台无关的状态机使用 `DefaultPulseStore`。
 2. Android 中包含 UI Intent 与异步任务的功能使用 `PulseSplitStoreViewModel`。
-3. 只有当一个功能的 State 已出现多个独立领域时，才引入 `mvi-extensions` 的 State Decomposition。
+3. 只有当一个功能的 State 已出现多个独立领域时，才使用 State Decomposition。
 
 不要按视觉区块拆多个 ViewModel。先按功能或导航 Owner 保持一个 ViewModel，复杂度确实上升后再按
 子状态拆 Reducer。

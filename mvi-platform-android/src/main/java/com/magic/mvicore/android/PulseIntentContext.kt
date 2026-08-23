@@ -1,5 +1,6 @@
 package com.magic.mvicore.android
 
+import com.magic.mvicore.contract.FailureContext
 import com.magic.mvicore.contract.MviMutation
 import com.magic.mvicore.contract.MviState
 import com.magic.mvicore.contract.MviUiIntent
@@ -35,7 +36,15 @@ class PulseIntentContext<S : MviState, M : MviMutation> internal constructor(
         block: suspend PulseTaskContext<S, M>.() -> Unit,
     ): TaskLaunchResult {
         if (!lifecycleActive()) return TaskLaunchResult.Closed
-        return tasks.launch(key, policy) { token ->
+        return tasks.launch(
+            key = key,
+            policy = policy,
+            failureContext = FailureContext(
+                requestId = intentId,
+                component = key.value,
+                inputType = inputType,
+            ),
+        ) { token ->
             PulseTaskContext(
                 stateProvider = stateProvider,
                 mutationDispatcher = mutationDispatcher,
@@ -61,7 +70,7 @@ class PulseIntentContext<S : MviState, M : MviMutation> internal constructor(
     ) {
         failureReporter(
             PulseFailure.ExecutorFailure(
-                context = com.magic.mvicore.contract.FailureContext(
+                context = FailureContext(
                     requestId = intentId,
                     component = component,
                     inputType = inputType,

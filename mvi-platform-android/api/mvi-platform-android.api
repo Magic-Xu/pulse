@@ -17,6 +17,10 @@ public final class com/magic/mvicore/android/PulseAndroidExecutionOwner {
 	public static fun from (Lkotlinx/coroutines/CoroutineScope;)Lcom/magic/mvicore/android/PulseAndroidExecutionOwner;
 }
 
+public final class com/magic/mvicore/android/PulseCallbackIngress {
+	public final fun submit (Lcom/magic/mvicore/contract/MviUiIntent;)Lcom/magic/mvicore/contract/EnqueueResult;
+}
+
 public final class com/magic/mvicore/android/PulseIntentContext {
 	public final fun cancelAllTasks ()I
 	public final fun cancelTask-3UZBuMY (Ljava/lang/String;)Z
@@ -118,12 +122,39 @@ public abstract interface class com/magic/mvicore/android/PulseSavedStateAdapter
 	public abstract fun save (Lcom/magic/mvicore/contract/MviState;Landroidx/lifecycle/SavedStateHandle;)V
 }
 
+public abstract interface class com/magic/mvicore/android/PulseSplitInput : com/magic/mvicore/contract/MviIntent {
+}
+
+public final class com/magic/mvicore/android/PulseSplitInput$Mutation : com/magic/mvicore/android/PulseSplitInput {
+	public fun <init> (Lcom/magic/mvicore/contract/MviMutation;)V
+	public final fun component1 ()Lcom/magic/mvicore/contract/MviMutation;
+	public final fun copy (Lcom/magic/mvicore/contract/MviMutation;)Lcom/magic/mvicore/android/PulseSplitInput$Mutation;
+	public static synthetic fun copy$default (Lcom/magic/mvicore/android/PulseSplitInput$Mutation;Lcom/magic/mvicore/contract/MviMutation;ILjava/lang/Object;)Lcom/magic/mvicore/android/PulseSplitInput$Mutation;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getValue ()Lcom/magic/mvicore/contract/MviMutation;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/magic/mvicore/android/PulseSplitInput$Ui : com/magic/mvicore/android/PulseSplitInput {
+	public fun <init> (Lcom/magic/mvicore/contract/MviUiIntent;)V
+	public final fun component1 ()Lcom/magic/mvicore/contract/MviUiIntent;
+	public final fun copy (Lcom/magic/mvicore/contract/MviUiIntent;)Lcom/magic/mvicore/android/PulseSplitInput$Ui;
+	public static synthetic fun copy$default (Lcom/magic/mvicore/android/PulseSplitInput$Ui;Lcom/magic/mvicore/contract/MviUiIntent;ILjava/lang/Object;)Lcom/magic/mvicore/android/PulseSplitInput$Ui;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getValue ()Lcom/magic/mvicore/contract/MviUiIntent;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
 public class com/magic/mvicore/android/PulseSplitStoreViewModel : androidx/lifecycle/ViewModel, com/magic/mvicore/android/PulseStateHost, java/lang/AutoCloseable {
 	public fun <init> (Lcom/magic/mvicore/contract/MviState;Lcom/magic/mvicore/contract/PulseMutationReducer;Lcom/magic/mvicore/android/PulseUiIntentExecutor;Lcom/magic/mvicore/runtime/PulseRuntimeConfig;Lcom/magic/mvicore/android/PulseSavedState;Lcom/magic/mvicore/android/PulseAndroidExecutionOwner;)V
 	public synthetic fun <init> (Lcom/magic/mvicore/contract/MviState;Lcom/magic/mvicore/contract/PulseMutationReducer;Lcom/magic/mvicore/android/PulseUiIntentExecutor;Lcom/magic/mvicore/runtime/PulseRuntimeConfig;Lcom/magic/mvicore/android/PulseSavedState;Lcom/magic/mvicore/android/PulseAndroidExecutionOwner;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun awaitClosed (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun callbackIngress (Lkotlin/jvm/functions/Function2;)Lcom/magic/mvicore/android/PulseCallbackIngress;
 	public final fun close ()V
 	public final fun getState ()Lkotlinx/coroutines/flow/StateFlow;
+	public final fun getTransitions ()Lkotlinx/coroutines/flow/Flow;
 	public final fun getUiEffects ()Lcom/magic/mvicore/runtime/UiEffectStream;
 	protected final fun onCleared ()V
 	protected fun onPulseCleared ()V
@@ -133,6 +164,7 @@ public class com/magic/mvicore/android/PulseSplitStoreViewModel : androidx/lifec
 
 public final class com/magic/mvicore/android/PulseSplitStoreViewModelKt {
 	public static final fun androidPulseRuntimeConfig ()Lcom/magic/mvicore/runtime/PulseRuntimeConfig;
+	public static final fun androidPulseRuntimeConfig (Lcom/magic/mvicore/runtime/PulseRuntimeConfig;)Lcom/magic/mvicore/runtime/PulseRuntimeConfig;
 }
 
 public class com/magic/mvicore/android/PulseSplitViewModel : com/magic/mvicore/android/PulseViewModel {

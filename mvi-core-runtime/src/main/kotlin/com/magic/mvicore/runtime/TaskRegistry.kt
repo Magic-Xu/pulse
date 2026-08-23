@@ -46,6 +46,20 @@ internal class TaskRegistry(
         policy: TaskPolicy,
         block: suspend (TaskToken) -> Unit,
     ): TaskLaunchResult {
+        return launch(
+            key = key,
+            policy = policy,
+            failureContext = FailureContext(component = key.value),
+            block = block,
+        )
+    }
+
+    override fun launch(
+        key: TaskKey,
+        policy: TaskPolicy,
+        failureContext: FailureContext,
+        block: suspend (TaskToken) -> Unit,
+    ): TaskLaunchResult {
         val jobsToCancel = mutableListOf<Job>()
         val terminalUpdates = mutableListOf<TerminalUpdate>()
         var jobToStart: Job? = null
@@ -92,6 +106,7 @@ internal class TaskRegistry(
 
             admittedRequest = TaskRequest(
                 requestId = ++nextRequestId,
+                failureContext = failureContext.copy(component = key.value),
                 block = block,
             )
             if (state == null) {
@@ -282,8 +297,13 @@ internal class TaskRegistry(
         } catch (failure: Exception) {
             try {
                 failureReporter(
-                    PulseFailure.ExecutorFailure(
-                        context = FailureContext(component = token.key.value),
+                    PulseFailure.TaskFailure(
+                        context = request.failureContext.copy(
+                            component = token.key.value,
+                            thread = Thread.currentThread().name,
+                        ),
+                        taskKey = token.key.value,
+                        token = token.value,
                         cause = failure,
                     )
                 )
@@ -410,6 +430,7 @@ internal class TaskRegistry(
 
     private class TaskRequest(
         val requestId: Long,
+        val failureContext: FailureContext,
         val block: suspend (TaskToken) -> Unit,
     ) {
         val handle = RuntimeTaskHandle(requestId)

@@ -2,7 +2,7 @@
 
 Pulse 的可选扩展模块。状态拆分 API 只位于本模块，不属于 `mvi-core-contract`。
 
-> 当前稳定版为 `0.3.0`，已发布到 Maven Central。
+> 当前已发布稳定版为 `0.3.0`；本分支正在准备 `0.4.0`。
 
 ## 依赖
 
@@ -15,7 +15,7 @@ dependencies {
 ## State Decomposition
 
 - `StateLens<ROOT, SUB>`、`stateLens`、`updateSubState`：读取和回写局部状态；`SUB` 无需实现 `MviState`。
-- `pulseMutationReducer`：构建 v0.3 `PulseMutationReducer`。
+- `pulseMutationReducer`：构建 `PulseMutationReducer`。
 - `on`：处理根状态 mutation。
 - `onSub`：通过 lens 把局部 reducer 结果提升为根状态结果。
 - `ignore(reason)`：显式忽略某一 mutation 类型。
@@ -46,6 +46,39 @@ val reducer = pulseMutationReducer<RootState, RootMutation, RootEffect> {
 3. Put-Put：`lens.set(lens.set(root, a), b) == lens.set(root, b)`
 
 不满足这些规律会让局部更新丢失或产生不可预测的根状态。
+
+## 安全日志
+
+`PulseLoggingPlugin` 观察 `DefaultPulseStore` 发布的完整 `TransitionFrame` 和
+`PulseFailure`：
+
+```kotlin
+val logging = PulseLoggingPlugin<AppState, AppIntent, AppEffect>(
+    tag = "Checkout",
+    sink = LogSink(logger::debug),
+)
+
+val store = DefaultPulseStore(
+    initialState = initialState,
+    reducer = reducer,
+    plugins = listOf(logging),
+)
+```
+
+默认使用 `TypeOnlyPulseRedactor`。input、state、effect、忽略原因、task key 和诊断上下文中的
+字符串只输出类型；异常只输出类型，不输出 message 或 stacktrace。只有确认日志目的地和数据策略后，
+才应传入自定义 `PulseRedactor`。
+
+如果持有任意 `Flow<TransitionFrame<...>>`，可以用同一套格式和脱敏规则记录 frame：
+
+```kotlin
+transitions
+    .logPulseTransitions(tag = "Checkout", sink = LogSink(logger::debug))
+    .collect { frame -> consume(frame) }
+```
+
+`logPulseTransitions` 是惰性的 `onEach` operator：仅在 flow 被收集时写日志，不修改 frame。
+它遵循普通 `onEach` 的异常语义，因此除非确实要终止诊断收集，否则 `LogSink` 不应抛异常。
 
 ## v0.2 兼容扩展
 

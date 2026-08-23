@@ -40,6 +40,33 @@ class PulseApiVisibilityTest {
     }
 
     @Test
+    fun `Split transitions expose observation values without live runtime authority`() {
+        val transitionGetter = PulseSplitStoreViewModel::class.java.declaredMethods
+            .single { it.name == "getTransitions" }
+        val observedTypes = listOf(
+            PulseSplitInput.Ui::class.java,
+            PulseSplitInput.Mutation::class.java,
+        )
+
+        assertFalse(transitionGetter.genericReturnType.typeName.contains("SplitStoreInput"))
+        observedTypes.forEach { type ->
+            val exposedTypeNames = buildList {
+                type.declaredFields.mapTo(this) { it.genericType.typeName }
+                type.declaredMethods.mapTo(this) { it.genericReturnType.typeName }
+                type.declaredMethods.flatMapTo(this) { method ->
+                    method.genericParameterTypes.map(java.lang.reflect.Type::getTypeName)
+                }
+                type.declaredConstructors.flatMapTo(this) { constructor ->
+                    constructor.genericParameterTypes.map(java.lang.reflect.Type::getTypeName)
+                }
+            }
+            assertFalse(exposedTypeNames.any { it.contains("CompletableDeferred") })
+            assertFalse(exposedTypeNames.any { it.contains("SplitAdmissionLease") })
+            assertFalse(exposedTypeNames.any { it.contains("TaskToken") })
+        }
+    }
+
+    @Test
     fun `execution owner accepts a scope without exposing its context or Job`() {
         val methods = PulseAndroidExecutionOwner::class.java.declaredMethods
             .filter { Modifier.isPublic(it.modifiers) && !it.isSynthetic }

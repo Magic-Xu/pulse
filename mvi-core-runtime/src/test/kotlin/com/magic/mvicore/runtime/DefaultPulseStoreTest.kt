@@ -563,7 +563,7 @@ class DefaultPulseStoreTest {
                 storeDispatcher = Dispatchers.Default,
                 consumerDispatcher = Dispatchers.Default,
                 errorHandler = PulseErrorHandler { _, failure, _ ->
-                    if (failure is PulseFailure.ExecutorFailure) throw expected
+                    if (failure is PulseFailure.TaskFailure) throw expected
                 },
                 storeId = "terminal-task-diagnostic-test",
             ),

@@ -27,6 +27,20 @@ public final class com/magic/mvicore/extensions/MutationRouteTable {
 	public final fun register (Lkotlin/reflect/KClass;Lkotlin/jvm/functions/Function2;)V
 }
 
+public final class com/magic/mvicore/extensions/PulseLoggingKt {
+	public static final fun logPulseTransitions (Lkotlinx/coroutines/flow/Flow;Ljava/lang/String;Lcom/magic/mvicore/extensions/LogSink;Lcom/magic/mvicore/runtime/PulseRedactor;)Lkotlinx/coroutines/flow/Flow;
+	public static synthetic fun logPulseTransitions$default (Lkotlinx/coroutines/flow/Flow;Ljava/lang/String;Lcom/magic/mvicore/extensions/LogSink;Lcom/magic/mvicore/runtime/PulseRedactor;ILjava/lang/Object;)Lkotlinx/coroutines/flow/Flow;
+}
+
+public final class com/magic/mvicore/extensions/PulseLoggingPlugin : com/magic/mvicore/runtime/PulseStorePlugin {
+	public fun <init> ()V
+	public fun <init> (Ljava/lang/String;Lcom/magic/mvicore/extensions/LogSink;Lcom/magic/mvicore/runtime/PulseRedactor;Ljava/lang/String;)V
+	public synthetic fun <init> (Ljava/lang/String;Lcom/magic/mvicore/extensions/LogSink;Lcom/magic/mvicore/runtime/PulseRedactor;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun getPluginId ()Ljava/lang/String;
+	public fun onFailure (Lcom/magic/mvicore/contract/PulseFailure;)V
+	public fun onTransition (Lcom/magic/mvicore/contract/TransitionFrame;)V
+}
+
 public final class com/magic/mvicore/extensions/PulseMutationReducerBuilder {
 	public fun <init> ()V
 	public final fun build ()Lcom/magic/mvicore/contract/PulseMutationReducer;

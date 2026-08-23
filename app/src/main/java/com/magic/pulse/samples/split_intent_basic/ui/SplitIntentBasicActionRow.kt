@@ -10,7 +10,9 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.magic.pulse.R
 import com.magic.pulse.samples.split_intent_basic.mvi.BasicLoadingTarget
 
 @Composable
@@ -26,14 +28,14 @@ fun SplitIntentBasicActionRow(
         horizontalArrangement = Arrangement.spacedBy(10.dp),
     ) {
         LoadingButton(
-            text = "Load Images",
+            text = stringResource(R.string.basic_load_images),
             loading = isLoading && loadingTarget == BasicLoadingTarget.IMAGE,
             enabled = !isLoading,
             onClick = onLoadImages,
             modifier = Modifier.weight(1f),
         )
         LoadingButton(
-            text = "Load Videos",
+            text = stringResource(R.string.basic_load_videos),
             loading = isLoading && loadingTarget == BasicLoadingTarget.VIDEO,
             enabled = !isLoading,
             onClick = onLoadVideos,
@@ -45,7 +47,7 @@ fun SplitIntentBasicActionRow(
         enabled = !isLoading,
         modifier = Modifier.fillMaxWidth(),
     ) {
-        Text("Clear Result")
+        Text(stringResource(R.string.basic_clear_result))
     }
 }
 

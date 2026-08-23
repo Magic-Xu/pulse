@@ -4,11 +4,28 @@
 
 This guide targets application developers adopting the stable `0.3.0` API published on Maven Central.
 
-## Choose the smallest surface
+## Start with one main dependency
+
+> [!TIP]
+> Most Android Compose apps need only
+> `implementation("io.github.magic-xu:mvi-platform-android-compose:0.3.0")`.
+> It already brings Android, runtime, and contract transitively.
+
+| Project type | Add this main dependency |
+| --- | --- |
+| Android + Compose | `mvi-platform-android-compose` |
+| Android without Compose | `mvi-platform-android` |
+| Pure Kotlin / JVM | `mvi-core-runtime` |
+
+Pick one main entry; do not add all three. Add `mvi-extensions` only for State Lens, reducer
+decomposition, logging, or transition helpers. Add `mvi-testing` only to the test configuration.
+When multiple Pulse modules are used, keep them on the same version.
+
+At the API level:
 
 1. Use `DefaultPulseStore` for platform-neutral state machines.
 2. Use `PulseSplitStoreViewModel` for Android features with UI intents and asynchronous work.
-3. Add `mvi-extensions` State Decomposition only when one feature state has distinct domains.
+3. Add State Decomposition only when one feature state has distinct domains.
 
 Do not create one ViewModel per visual block. Start with one ViewModel per feature or navigation
 owner, then split its reducer by sub-state when complexity justifies it.

@@ -272,14 +272,20 @@ class PulseTaskTck(
 
     fun taskFailureIsTypedAndCancellationRemainsSilent() = runPulseTest {
         val store = taskStore()
-        val failed = store.tasks.launch(TaskKey("failed"), TaskPolicy.Latest) {
+        val failureKey = TaskKey("failed")
+        val failed = store.tasks.launch(failureKey, TaskPolicy.Latest) {
             throw IllegalStateException("task failed")
         }.acceptedHandle()
         runCurrent()
 
         val failedOutcome = assertIs<TaskOutcome.Failed>(failed.awaitOutcome())
         assertEquals("task failed", failedOutcome.cause.message)
-        assertIs<PulseFailure.ExecutorFailure>(store.failureProbe.snapshot().single())
+        val failure = assertIs<PulseFailure.TaskFailure>(store.failureProbe.snapshot().single())
+        assertEquals(failureKey.value, failure.taskKey)
+        assertTrue(failure.token > 0L)
+        assertEquals(failureKey.value, failure.context.component)
+        assertEquals(null, failure.context.requestId)
+        assertEquals("task failed", failure.cause.message)
 
         val cancellationKey = TaskKey("cancelled-without-failure")
         val cancelled = store.tasks.launch(cancellationKey, TaskPolicy.Latest) {
