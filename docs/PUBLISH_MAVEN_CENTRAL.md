@@ -2,9 +2,9 @@
 
 Chinese version: [PUBLISH_MAVEN_CENTRAL.zh-CN.md](./PUBLISH_MAVEN_CENTRAL.zh-CN.md)
 
-> Status: **release candidate — not public yet**. `0.3.0` remains the public stable release.
-> Branches, snapshots, RCs, different tags, and manual Gradle publication are not the official
-> `0.4.0` release path.
+> Status: **released on 2026-08-24** from the exact annotated tag `v0.4.0`.
+> [Workflow run 32659106344](https://github.com/Magic-Xu/pulse/actions/runs/32659106344) passed;
+> all seven signed Maven Central bundles are public, and both isolated artifact consumers passed.
 
 ## One-time setup
 
@@ -24,17 +24,23 @@ are documented in `gradle/maven-central-secrets.template.properties`.
 Maven Central's coordinate, signature, source archive, and POM requirements are described in the
 [publishing requirements](https://central.sonatype.org/publish/requirements/).
 
-## Prepare the candidate
+## 0.4.0 publication record
 
-Use JDK 21. Before creating the release commit:
+The guarded workflow completed `release-check`, `device-check`, signed publication, public
+verification of every POM, Gradle metadata file, sources archive, javadoc archive, binary, and
+signature, and both Maven-Central-only consumers. The published version and exact tag matched:
+`POM_VERSION_NAME=0.4.0` and `v0.4.0`.
 
-1. Set `POM_VERSION_NAME=0.4.0` in `gradle.properties`.
+## Prepare a future stable release
+
+Use JDK 21. For a target version `X.Y.Z`, before creating the release commit:
+
+1. Set `POM_VERSION_NAME=X.Y.Z` in `gradle.properties`.
 2. Confirm the group is `io.github.magic-xu` and all required POM metadata is final.
-3. Review intentional API changes for the six existing artifacts against their 0.3 baselines and
-   review the first baseline of `mvi-platform-android-testing`. Generate baselines only as part of
-   that review; do not accept an `apiDump` diff automatically.
-4. Confirm all seven modules publish the same version and all internal Pulse dependencies use that
-   version.
+3. Review intentional API changes against the current checked-in baselines. Review a new artifact's
+   first baseline explicitly; do not accept an `apiDump` diff automatically.
+4. Confirm every intended module publishes the same version and every internal Pulse dependency
+   uses that version.
 5. Keep release notes and migration documents marked candidate until public verification succeeds.
 
 Run the minimal complete local qualification:
@@ -51,33 +57,34 @@ artifact-only consumers, multi-seed stress, performance floors, version consiste
 `mviAndroidDeviceCheck` runs the sample end-to-end instrumentation suite on the managed API 35
 device.
 
-## Publish the stable tag
+## Publish a future stable tag
 
-The only official release path is `.github/workflows/publish-maven-central.yml`:
+The official release path is `.github/workflows/publish-maven-central.yml`:
 
-1. Commit the reviewed stable `0.4.0` candidate.
-2. Create the annotated tag `v0.4.0` on that exact commit.
-3. Push the commit and tag without moving or reusing an existing release tag.
-4. Observe the `Publish Maven Central` workflow through public-consumer completion.
+1. Configure the workflow to target only the exact stable tag `vX.Y.Z`.
+2. Commit the reviewed stable `X.Y.Z` candidate.
+3. Create the annotated tag `vX.Y.Z` on that exact commit.
+4. Push the commit and tag without moving or reusing an existing release tag.
+5. Observe the `Publish Maven Central` workflow through public-consumer completion.
 
-The workflow is triggered only by the exact tag `v0.4.0` and enforces this sequence:
+The workflow must be triggered only by the configured exact stable tag and enforce this sequence:
 
 | Job | Current command or responsibility |
 |---|---|
 | `device-check` | `./gradlew mviAndroidDeviceCheck --stacktrace -Pandroid.testoptions.manageddevices.emulator.gpu=swiftshader_indirect` |
-| `release-check` | Verify exact tag and `POM_VERSION_NAME=0.4.0`, then run `./gradlew verifyMavenCentralConfig mviReleaseCheck --stacktrace` |
-| `publish` | Depend on both prior jobs, run `./gradlew publishAndReleaseToMavenCentral --stacktrace`, wait for seven public bundles, then run the public consumers |
+| `release-check` | Verify the exact tag and matching `POM_VERSION_NAME`, then run `./gradlew verifyMavenCentralConfig mviReleaseCheck --stacktrace` |
+| `publish` | Depend on both prior jobs, run `./gradlew publishAndReleaseToMavenCentral --stacktrace`, wait for every public bundle, then run the public consumers |
 
 All jobs use the same workflow commit on JDK 21. The `publish` job cannot run unless both
 qualification jobs pass.
 
-Do not run `publishAndReleaseToMavenCentral` manually for the official v0.4.0 release. Remote
+Do not run `publishAndReleaseToMavenCentral` manually for an official stable release. Remote
 publication belongs to the guarded workflow; Gradle publish tasks deliberately do not depend back
 on `mviReleaseCheck`.
 
-## Published bundle
+## Published 0.4.0 bundle
 
-The workflow publishes one version of each artifact:
+The workflow published one version of each artifact:
 
 - `mvi-core-contract`
 - `mvi-core-runtime`
@@ -87,22 +94,22 @@ The workflow publishes one version of each artifact:
 - `mvi-extensions`
 - `mvi-testing`
 
-Local staging verifies each binary—JAR or AAR—plus its sources and javadoc archives, POM, Gradle
+Local staging verified each binary—JAR or AAR—plus its sources and javadoc archives, POM, Gradle
 module metadata, version, and internal Pulse dependency versions. The three Android artifacts
-publish AAR binaries; the other four publish JAR binaries.
+published AAR binaries; the other four published JAR binaries.
 
-## After publication
+## Verify a future publication
 
-The workflow polls Maven Central for every artifact's POM, Gradle metadata, sources archive,
-javadoc archive, binary, and their signatures, then builds both isolated consumers from Maven
-Central only. To reproduce the post-publication consumer gate locally:
+The workflow must poll Maven Central for every artifact's POM, Gradle metadata, sources archive,
+javadoc archive, binary, and their signatures, then build both isolated consumers from Maven
+Central only. To reproduce the post-publication consumer gate for `X.Y.Z` locally:
 
 ```bash
 ./gradlew publicArtifactSamplesCheck --refresh-dependencies --stacktrace \
-  -PpulsePublicVersion=0.4.0
+  -PpulsePublicVersion=X.Y.Z
 ```
 
-Do not announce availability or remove candidate notices until all seven bundles are public and
+Do not announce availability or remove candidate notices until every intended bundle is public and
 `publicArtifactSamplesCheck` passes.
 
 If `release-check` or `device-check` fails, no publish job runs. Fix the root cause and do not

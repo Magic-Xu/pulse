@@ -2,13 +2,12 @@
 
 English version: [MIGRATION_0.3_TO_0.4.md](./MIGRATION_0.3_TO_0.4.md)
 
-> 状态：**发布候选版，尚未公开发布**。下文中的 `0.4.0` 坐标只有在发布验证完成并更新本状态后
-> 才可使用。
+> 状态：**已发布**。Pulse `0.4.0` 已可从 Maven Central 使用。
 
 Pulse 0.4 是对 0.3 的加法演进。现有 feature 可以在不改变 reducer 或 ViewModel 架构的前提下
 升级，再按具体接入问题采用新的诊断、callback adapter 与 Android 测试宿主。
 
-## 1. 公开发布后对齐依赖
+## 1. 对齐依赖
 
 升级应用已经使用的最高层 Pulse 入口，只添加确实需要的可选能力：
 

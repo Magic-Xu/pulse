@@ -109,5 +109,5 @@ Stable `0.3.0` passed:
 - portable throughput, latency, memory, and bounded-mailbox performance floors;
 - publication bundle, metadata, version, tag, and Maven Central configuration checks.
 
-See [Release Plan](./RELEASE_PLAN.md) for the exact gates. Until those gates pass and the stable tag is
-published, this file describes the intended release rather than an available artifact.
+These gates completed before Maven Central publication on 2026-08-23. This file is the historical
+0.3 release record; see the [Consumer Guide](./CONSUMER_GUIDE.md) for the current stable version.

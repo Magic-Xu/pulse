@@ -2,19 +2,19 @@
 
 Pulse 的平台无关协程运行时，提供有序 Store、UI effect 协调、任务策略和类型化失败报告。
 
-> 当前稳定版为 `0.3.0`，已发布到 Maven Central。
+> 当前稳定版为 `0.4.0`，已发布到 Maven Central。
 
 ## 依赖
 
 ```kotlin
 dependencies {
-    implementation(project(":mvi-core-runtime"))
+    implementation("io.github.magic-xu:mvi-core-runtime:0.4.0")
 }
 ```
 
 本模块通过 `api` 公开传递 `mvi-core-contract` 和协程核心类型。
 
-## v0.3 Store
+## v0.4 Store
 
 `DefaultPulseStore<S, I, E>` 实现 `PulseStore<S, I, E>`，主要语义如下：
 
@@ -53,7 +53,7 @@ store.awaitClosed()
 
 ## v0.2 兼容
 
-`DefaultStore`、callback observer 和 `StorePlugin` 继续保留。它们是同一 v0.3 `PulseEngine` 上的兼容外观，不维护第二套 reducer 顺序或生命周期实现。与新 StateFlow 语义一致，相等 State 不会重复触发 legacy state callback 或 plugin state hook。
+`DefaultStore`、callback observer 和 `StorePlugin` 继续保留。它们是当前 `PulseEngine` 上的兼容外观，不维护第二套 reducer 顺序或生命周期实现。与新 StateFlow 语义一致，相等 State 不会重复触发 legacy state callback 或 plugin state hook。
 
 ## 验证
 

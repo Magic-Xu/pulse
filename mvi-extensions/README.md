@@ -2,13 +2,13 @@
 
 Pulse 的可选扩展模块。状态拆分 API 只位于本模块，不属于 `mvi-core-contract`。
 
-> 当前已发布稳定版为 `0.3.0`；本分支正在准备 `0.4.0`。
+> 当前稳定版为 `0.4.0`，已发布到 Maven Central。
 
 ## 依赖
 
 ```kotlin
 dependencies {
-    implementation(project(":mvi-extensions"))
+    implementation("io.github.magic-xu:mvi-extensions:0.4.0")
 }
 ```
 

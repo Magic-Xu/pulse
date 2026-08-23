@@ -2,29 +2,29 @@
 
 Chinese version: [RELEASE_PLAN.zh-CN.md](./RELEASE_PLAN.zh-CN.md)
 
-> Release status: **candidate — not public yet**. `0.3.0` remains the public stable release. Do not
-> announce or consume `0.4.0` until the exact `v0.4.0` workflow has verified Maven Central and the
-> public artifact-only consumers.
+> Release status: **stable, released on 2026-08-24** from the exact annotated tag `v0.4.0`.
+> [Workflow run 32659106344](https://github.com/Magic-Xu/pulse/actions/runs/32659106344) passed;
+> all seven signed Maven Central bundles are public, and both isolated artifact consumers passed.
 
-## Release objective
+## Release outcome
 
-Publish one coherent v0.4 line that hardens the 0.3 ordered runtime for real Android integrations.
-The candidate must resolve end-to-end Split admission, improve task and transition diagnostics, add
-deterministic tests for a real Split ViewModel, and correct framework-owned examples without
+Pulse 0.4 ships one coherent line that hardens the 0.3 ordered runtime for real Android
+integrations. It resolves end-to-end Split admission, improves task and transition diagnostics,
+adds deterministic tests for a real Split ViewModel, and corrects framework-owned examples without
 absorbing application domain, durable-work, or multi-Store orchestration policy.
 
-## Candidate sequence
+## Completed qualification
 
-| Stage | Required result |
+| Stage | Completed result |
 |---|---|
-| 0. Baseline | The published 0.3 API surface and retained 0.2 compatibility fixtures are identified before public behavior changes |
-| 1. Admission | One bounded budget covers Split UI admission through the serial executor decision; suspending and non-suspending contracts are explicit |
-| 2. Diagnostics | Split transitions are read-only, task failures retain request correlation, and Android config cannot silently move production work off Main |
-| 3. Testing and extensions | The Android Split test host and redacted modern logging build only on the ordered runtime |
-| 4. Samples and guidance | Official examples handle admission and task-launch results; integration guidance preserves framework/application ownership |
-| 5. API and compatibility | Seven API baselines, executable six-artifact 0.3 checks, and retained five-artifact 0.2 checks pass |
-| 6. Candidate artifacts | All seven staged publications and both artifact-only consumers pass |
-| 7. Release qualification | Framework, publication, stress, performance, managed-device, and stable-identity gates pass on one commit |
+| 0. Baseline | The published 0.3 API surface and retained 0.2 compatibility fixtures were identified before public behavior changes |
+| 1. Admission | One bounded budget covered Split UI admission through the serial executor decision; suspending and non-suspending contracts were explicit |
+| 2. Diagnostics | Split transitions were read-only, task failures retained request correlation, and Android config kept production work on Main |
+| 3. Testing and extensions | The Android Split test host and redacted modern logging built only on the ordered runtime |
+| 4. Samples and guidance | Official examples handled admission and task-launch results; integration guidance preserved framework/application ownership |
+| 5. API and compatibility | Seven API baselines, executable six-artifact 0.3 checks, and retained five-artifact 0.2 checks passed |
+| 6. Publication artifacts | All seven staged publications and both artifact-only consumers passed |
+| 7. Release qualification | Framework, publication, stress, performance, managed-device, and stable-identity gates passed on one commit |
 
 A later stage cannot weaken an earlier contract merely to pass its own check. Any public API or
 artifact change after qualification restarts API review, framework, compatibility, staged-consumer,
@@ -69,9 +69,9 @@ they are not published library artifacts.
 - both isolated staged-artifact consumers;
 - candidate version consistency.
 
-Both compatibility aggregates consume staged candidate artifacts. For the six artifacts already
-published in 0.3, `apiDump` changes must also be reviewed against the checked-in 0.3 surface before
-accepting the 0.4 baseline. The seventh baseline belongs only to the new Android testing artifact.
+Both compatibility aggregates consume staged candidate artifacts. Intentional API changes must
+also be reviewed against the currently checked-in surface before updating a baseline; the first
+baseline for a new artifact requires the same explicit review.
 
 ### Release aggregate
 
@@ -105,7 +105,7 @@ and `release-check`.
 A missing task, absent API baseline, skipped artifact consumer, or partial publication bundle is a
 release failure. No empty or best-effort gate is accepted.
 
-## Candidate commands
+## Qualification commands
 
 Run the minimal complete local qualification on JDK 21 from a clean checkout with release
 credentials absent:
@@ -129,12 +129,13 @@ git diff -- */api/*.api
 An `apiDump` diff is not self-approving. Review removals, signature changes, generic bounds,
 visibility, exhaustive sealed surfaces, and all three release-AAR APIs before accepting it.
 
-## Stable publication rules
+## Future stable publication rules
 
-Remote publication is permitted only when all of the following are true:
+For a future stable version `X.Y.Z`, remote publication is permitted only when all of the
+following are true:
 
-1. GitHub is processing the exact annotated tag `v0.4.0`.
-2. `POM_VERSION_NAME` is exactly `0.4.0` and matches the tag.
+1. The guarded workflow target and GitHub ref are the exact annotated tag `vX.Y.Z`.
+2. `POM_VERSION_NAME` is exactly `X.Y.Z` and matches the tag.
 3. The version contains no `SNAPSHOT`, `RC`, or other prerelease suffix.
 4. The `release-check` and `device-check` jobs pass on JDK 21 for the same commit.
 5. `verifyMavenCentralConfig` validates the required metadata.
@@ -143,17 +144,17 @@ Remote publication is permitted only when all of the following are true:
 The publish task must not depend back on `mviReleaseCheck`; workflow job ordering owns the remote
 publication barrier and avoids a Gradle dependency cycle.
 
-## Post-publication verification
+## Future post-publication verification
 
 After Maven Central reports the deployment as released:
 
-1. Resolve all seven `io.github.magic-xu:*:0.4.0` coordinates from Maven Central without a local or
-   staging repository.
+1. Resolve every intended `io.github.magic-xu:*:X.Y.Z` coordinate from Maven Central without a
+   local or staging repository.
 2. Verify each POM, Gradle module metadata file, sources archive, javadoc archive, binary, and their
    signatures.
 3. Build and test both artifact-only consumers with `--refresh-dependencies`.
-4. Confirm every internal Pulse dependency is exactly `0.4.0`.
-5. Only then change candidate notices and announce availability.
+4. Confirm every internal Pulse dependency is exactly `X.Y.Z`.
+5. Only then mark the release public and announce availability.
 
 The guarded workflow performs the artifact polling and runs `publicArtifactSamplesCheck`. A local
 staging result cannot replace this evidence.

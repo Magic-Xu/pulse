@@ -2,17 +2,17 @@
 
 Pulse 的 Android Compose 绑定层，公开传递 `mvi-platform-android`。
 
-> 当前稳定版为 `0.3.0`，已发布到 Maven Central。最低 Android API 为 23。
+> 当前稳定版为 `0.4.0`，已发布到 Maven Central。最低 Android API 为 23。
 
 ## 依赖
 
 ```kotlin
 dependencies {
-    implementation(project(":mvi-platform-android-compose"))
+    implementation("io.github.magic-xu:mvi-platform-android-compose:0.4.0")
 }
 ```
 
-## v0.3 Compose API
+## v0.4 Compose API
 
 - `pulseViewModel(owner, key, modelClass, creator)`：使用显式 owner 创建或复用 ViewModel，不做隐式 owner fallback。
 - `collectStateAsStateWithLifecycle`：按显式 `LifecycleOwner` 收集完整状态。

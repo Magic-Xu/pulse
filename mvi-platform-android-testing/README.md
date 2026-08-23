@@ -3,11 +3,12 @@
 `mvi-platform-android-testing` runs a real `PulseSplitStoreViewModel` with one virtual-time
 scheduler shared by Android Main, the Pulse runtime, and the explicit execution owner.
 
-> `0.4.0` is currently a release candidate and is not public on Maven Central yet. Use the
-> dependency below only after the guarded release and public-consumer verification complete.
+This is an optional test-only module. Pulse `0.4.0` is available from Maven Central.
 
 ```kotlin
-testImplementation("io.github.magic-xu:mvi-platform-android-testing:0.4.0")
+dependencies {
+    testImplementation("io.github.magic-xu:mvi-platform-android-testing:0.4.0")
+}
 ```
 
 ```kotlin

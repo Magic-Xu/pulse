@@ -2,8 +2,8 @@
 
 English version: [RELEASE_NOTES_0.4.0.md](./RELEASE_NOTES_0.4.0.md)
 
-> 状态：**发布候选版，尚未公开发布**。在发布验证完成并更新本状态之前，请勿从 Maven Central
-> 引用 `0.4.0`。
+> 状态：**已于 2026-08-24 发布**，来源为准确的 Annotated Tag `v0.4.0`。
+> 七个签名 Maven Central 发布包均已公开，两个隔离纯制品消费者均已通过。
 
 Pulse 0.4 针对真实 Android 项目加固了 0.3 runtime。它继续坚持单一、有序、进程内的状态
 runtime，重点完善 Split 端到端接纳、可行动的诊断、确定性的 Android 测试，以及不易误用的
@@ -82,9 +82,9 @@ UI-to-executor 路径，因此可能更早、更准确地报告过载。对 `Pul
 
 参见[从 Pulse 0.3 迁移到 0.4](./MIGRATION_0.3_TO_0.4.zh-CN.md)。
 
-## 候选 artifact 集合
+## 已发布 Artifact 集合
 
-候选版包含 `io.github.magic-xu` 下的七个 artifact：
+本次发布包含 `io.github.magic-xu` 下的七个 Artifact：
 
 - `mvi-core-contract`
 - `mvi-core-runtime`
@@ -94,7 +94,7 @@ UI-to-executor 路径，因此可能更早、更准确地报告过载。对 `Pul
 - `mvi-extensions`
 - `mvi-testing`
 
-0.4.0 公开后，同一项目中的所有 Pulse 模块应保持相同版本。
+同一项目中的所有 Pulse 模块应保持为 `0.4.0`。
 
 ## 明确边界
 

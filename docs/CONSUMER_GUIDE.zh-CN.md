@@ -1,14 +1,14 @@
-# Pulse 0.3 接入指南
+# Pulse 0.4 接入指南
 
 [English](CONSUMER_GUIDE.md)
 
-本文面向接入 Maven Central 稳定版 `0.3.0` API 的应用开发者。
+本文面向接入 Maven Central 稳定版 `0.4.0` API 的应用开发者。
 
 ## 从一个主依赖开始
 
 > [!TIP]
 > 绝大多数 Android Compose 应用只需要
-> `implementation("io.github.magic-xu:mvi-platform-android-compose:0.3.0")`。
+> `implementation("io.github.magic-xu:mvi-platform-android-compose:0.4.0")`。
 > 它会自动带入 Android、runtime 和 contract 层。
 
 | 项目类型 | 添加这一条主依赖 |
@@ -18,7 +18,9 @@
 | 纯 Kotlin / JVM | `mvi-core-runtime` |
 
 主入口只选一个，不要三条都加。只有需要 State Lens、Reducer 拆分、日志或 Transition 辅助能力时，
-才添加 `mvi-extensions`；`mvi-testing` 只放在测试依赖中。同时使用多个 Pulse 模块时，版本必须一致。
+才添加 `mvi-extensions`。测试平台无关 Store 时使用 `mvi-testing`；测试真实 Split ViewModel 时使用
+`mvi-platform-android-testing`，二者都只放在测试依赖中。Android testing 会传递暴露
+`mvi-testing`。同时使用多个 Pulse 模块时，版本必须一致。
 
 对应到 API：
 
@@ -133,7 +135,8 @@ Job 或 Scope。已接纳的 `Latest` 任务仍可能被替换，尚未开始的
 Handle 只描述进程内执行；持久业务完成状态仍应建模在 State 或持久操作中。
 
 挂起式 `viewModel.send(intent)` 返回 executor 端到端结果：`Completed`、`Ignored(reason)`、
-`Failed`、`Cancelled` 或 `Rejected`；`trySend` 只返回 mailbox 接纳结果。Executor 内使用
+`Failed`、`Cancelled` 或 `Rejected`；`trySend` 返回有界 UI-to-executor 路径的接纳结果，
+`Enqueued` 不代表 Executor 或 Keyed Task 已完成。Executor 内使用
 `stateAtStart` 做稳定快照决策、用 `currentState` 读取最新提交、用 `intentId` 做关联，并通过
 `reportFailure` 上报已经显式处理的功能失败。取消任务时使用 `cancelTask` 或 `cancelAllTasks`，
 不要保存 Coroutine Job。
@@ -197,7 +200,24 @@ Get-Put、Put-Get 与 Put-Put。
 
 ## 测试
 
-测试依赖引入 `mvi-testing`，使用虚拟时间：
+选择范围最窄的可选测试制品：
+
+```kotlin
+dependencies {
+    // 平台无关 Store 测试与 TCK。
+    testImplementation("io.github.magic-xu:mvi-testing:0.4.0")
+}
+```
+
+测试真实 `PulseSplitStoreViewModel` 时改用 Android testing；它会传递引入 `mvi-testing`：
+
+```kotlin
+dependencies {
+    testImplementation("io.github.magic-xu:mvi-platform-android-testing:0.4.0")
+}
+```
+
+平台无关 Store 测试使用 `mvi-testing` 的虚拟时间：
 
 ```kotlin
 @Test
@@ -212,11 +232,13 @@ fun refresh() = runPulseTest {
 Transition、Effect 与 Failure Probe 用于有序断言；自定义 Runtime 实现可复用 `PulseStoreTck`
 校验 Store 契约。Probe 断言消息会携带最新 Transition sequence，并通过配置的 Redactor 处理 State
 和 Effect；只有确认数据可打印时才使用自定义测试 Redactor。Task 取消通过 `TaskHandle.awaitOutcome`
-断言，关闭通过 `awaitClosed` 断言；Android 生命周期和 SavedState 行为应在平台测试中验证，不要依赖
-延时碰运气。
+断言，关闭通过 `awaitClosed` 断言。Split 接纳、executor、mutation、effect 与 `PulseSavedState`
+行为使用 `mvi-platform-android-testing` 的 `runPulseSplitTest`；Activity、Compose 和
+`LifecycleOwner` 集成保留在 Instrumentation Test 中，不要依赖延时碰运气。
 
 ## 迁移
 
-v0.2 的 `Store`、`DefaultStore`、`Reducer`、`Next` 与回调订阅仍通过同一个 0.3 引擎提供。
-新功能优先使用协程 API。行为变化与分步迁移方法见
+0.3 应用无需替换 Reducer 或 ViewModel 架构即可升级；新的接纳、诊断与 Android testing 接口见
+[0.3 到 0.4 迁移指南](MIGRATION_0.3_TO_0.4.zh-CN.md)。v0.2 的 `Store`、`DefaultStore`、
+`Reducer`、`Next` 与回调订阅仍通过兼容外观提供。新功能优先使用协程 API；从 v0.2 起步时先参考
 [0.2 到 0.3 迁移指南](MIGRATION_0.2_TO_0.3.zh-CN.md)。
