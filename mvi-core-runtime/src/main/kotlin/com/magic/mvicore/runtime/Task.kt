@@ -1,5 +1,6 @@
 package com.magic.mvicore.runtime
 
+import com.magic.mvicore.contract.FailureContext
 import com.magic.mvicore.contract.TaskKey
 import com.magic.mvicore.contract.TaskLaunchResult
 import com.magic.mvicore.contract.TaskPolicy
@@ -14,6 +15,19 @@ interface PulseTasks {
         policy: TaskPolicy,
         block: suspend (TaskToken) -> Unit,
     ): TaskLaunchResult
+
+    /**
+     * Launches keyed work with correlation metadata for a possible task failure.
+     *
+     * The default implementation preserves source and binary compatibility for existing
+     * [PulseTasks] implementations by delegating to the original launch contract.
+     */
+    fun launch(
+        key: TaskKey,
+        policy: TaskPolicy,
+        failureContext: FailureContext,
+        block: suspend (TaskToken) -> Unit,
+    ): TaskLaunchResult = launch(key, policy, block)
 
     fun isCurrent(token: TaskToken): Boolean
 

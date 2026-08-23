@@ -4,7 +4,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.magic.mvicore.contract.EnqueueResult
 import com.magic.mvicore.contract.FailureContext
-import com.magic.mvicore.contract.MviIntent
 import com.magic.mvicore.contract.MviMutation
 import com.magic.mvicore.contract.MviState
 import com.magic.mvicore.contract.MviUiIntent
@@ -15,6 +14,7 @@ import com.magic.mvicore.contract.ReduceOutcome
 import com.magic.mvicore.contract.RejectionReason
 import com.magic.mvicore.contract.TaskToken
 import com.magic.mvicore.contract.TransitionOutcome
+import com.magic.mvicore.contract.TransitionFrame
 import com.magic.mvicore.contract.TransitionResult
 import com.magic.mvicore.contract.UiEffect
 import com.magic.mvicore.runtime.DefaultPulseStore
@@ -34,17 +34,20 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.sync.Semaphore
 import java.util.Collections
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.coroutines.ContinuationInterceptor
 
 /**
- * v0.3 Split Intent ViewModel.
+ * Split Intent ViewModel with one ordered admission boundary.
  *
  * Its public input surface accepts [UI] only. Mutations can be emitted solely from the
  * executor-owned [PulseIntentContext]. The store drains UI frames admitted before [close], while
@@ -82,17 +85,26 @@ open class PulseSplitStoreViewModel<
     private val pendingExecutionResults = Collections.newSetFromMap(
         ConcurrentHashMap<CompletableDeferred<PulseIntentExecutionResult>, Boolean>()
     )
+    private val splitAdmissionPermits = Semaphore(runtimeConfig.mailboxCapacity)
+    private val activeAdmissions = Collections.newSetFromMap(
+        ConcurrentHashMap<SplitAdmissionLease, Boolean>()
+    )
+    private val splitOverflowDiagnosticPending = AtomicBoolean(false)
     private val executorInputs = Channel<ExecutorInput<S, UI>>(
         capacity = runtimeConfig.mailboxCapacity,
         onUndeliveredElement = { input ->
             input.completion?.complete(PulseIntentExecutionResult.Cancelled)
+            input.admission.release()
         },
     )
     private val store = DefaultPulseStore(
         initialState = restoredInitialState,
         reducer = PulseReducer<S, SplitStoreInput<UI, M>, E> { previous, input ->
             when (input) {
-                is SplitStoreInput.Ui -> ReduceOutcome.Unchanged()
+                is SplitStoreInput.Ui -> {
+                    input.admission.claim()
+                    ReduceOutcome.Unchanged()
+                }
                 is SplitStoreInput.Mutation -> {
                     val token = input.token
                     if (token != null && !taskAccess.validate(token)) {
@@ -136,6 +148,7 @@ open class PulseSplitStoreViewModel<
     private val executorJob: Job
     private val transitionJob: Job
     private val savedStateJob: Job?
+    private val storeClosureObserverJob: Job
     private val cleanupStarted = AtomicBoolean(false)
     private val pulseClearedHookInvoked = AtomicBoolean(false)
     private val platformClosed = CompletableDeferred<Unit>()
@@ -148,6 +161,9 @@ open class PulseSplitStoreViewModel<
 
     final override val state: StateFlow<S> = store.state
     final override val uiEffects: UiEffectStream<E> = store.effects
+    /** Read-only Split frames for diagnostics and tests; this exposes no Store or mutation sink. */
+    val transitions: Flow<TransitionFrame<S, PulseSplitInput<UI, M>, E>> =
+        store.transitions.map { frame -> frame.toObservedFrame() }
 
     init {
         taskAccess = store.tasks
@@ -200,19 +216,22 @@ open class PulseSplitStoreViewModel<
                     input.completion?.completeExceptionally(fatal)
                     close()
                     throw fatal
+                } finally {
+                    input.admission.release()
                 }
             }
         }
         transitionJob = ownerScope.launch(start = CoroutineStart.UNDISPATCHED) {
             store.transitions.collect { frame ->
                 val input = frame.input
-                if (input is SplitStoreInput.Ui) {
+                if (input is SplitStoreInput.Ui && input.admission.transferToExecutor()) {
                     executorInputs.send(
                         ExecutorInput(
                             intentId = frame.requestId,
                             intent = input.value,
                             stateAtStart = frame.stateBefore,
                             completion = input.completion,
+                            admission = input.admission,
                         )
                     )
                 }
@@ -230,24 +249,63 @@ open class PulseSplitStoreViewModel<
                 }
             }
         }
+        storeClosureObserverJob = cleanupScope.launch(start = CoroutineStart.UNDISPATCHED) {
+            try {
+                store.awaitClosed()
+            } catch (_: Throwable) {
+                // close() awaits the Store again and preserves its terminal cleanup failure in
+                // platformClosed. This observer only establishes adapter cleanup.
+            } finally {
+                close()
+            }
+        }
         parentCompletionHandle = registerParentCancellation()
     }
 
-    /** Suspends through ordered admission and the serial executor decision for this UI intent. */
+    /**
+     * Suspends through ordered admission and the serial executor decision for this UI intent.
+     *
+     * Cancellation while waiting for a Split permit prevents admission. After admission, caller
+     * cancellation can suppress executor work that has not yet been transferred; transferred work
+     * remains runtime-owned and releases its permit during executor cleanup.
+     */
     suspend fun send(intent: UI): PulseIntentExecutionResult {
         if (!isExecutionActive()) {
             return PulseIntentExecutionResult.Rejected(RejectionReason.Closing)
         }
+        splitAdmissionPermits.acquire()
+        if (!isExecutionActive()) {
+            splitAdmissionPermits.release()
+            return PulseIntentExecutionResult.Rejected(RejectionReason.Closing)
+        }
+        val admission = newAdmissionLease()
         val completion = CompletableDeferred<PulseIntentExecutionResult>()
         pendingExecutionResults += completion
         completion.invokeOnCompletion { pendingExecutionResults -= completion }
-        return when (val result = store.send(SplitStoreInput.Ui(intent, completion))) {
-            is TransitionResult.Completed -> completion.await()
-            is TransitionResult.Failed -> PulseIntentExecutionResult.Failed(result.failure.cause as Exception)
-            is TransitionResult.Rejected -> {
-                completion.complete(PulseIntentExecutionResult.Rejected(result.reason))
-                PulseIntentExecutionResult.Rejected(result.reason)
+        return try {
+            when (val result = store.send(SplitStoreInput.Ui(intent, completion, admission))) {
+                is TransitionResult.Completed -> completion.await()
+                is TransitionResult.Failed -> {
+                    PulseIntentExecutionResult.Failed(result.failure.cause as Exception)
+                }
+                is TransitionResult.Rejected -> {
+                    admission.release()
+                    completion.complete(PulseIntentExecutionResult.Rejected(result.reason))
+                    PulseIntentExecutionResult.Rejected(result.reason)
+                }
             }
+        } catch (cancelled: CancellationException) {
+            admission.cancelBeforeExecutor()
+            completion.complete(PulseIntentExecutionResult.Cancelled)
+            throw cancelled
+        } catch (failure: Throwable) {
+            try {
+                admission.release()
+                completion.completeExceptionally(failure)
+            } finally {
+                close()
+            }
+            throw failure
         }
     }
 
@@ -256,8 +314,30 @@ open class PulseSplitStoreViewModel<
         if (!isExecutionActive()) {
             return EnqueueResult.Rejected(RejectionReason.Closing)
         }
-        return store.trySend(SplitStoreInput.Ui(intent, completion = null))
+        if (!splitAdmissionPermits.tryAcquire()) {
+            reportSplitAdmissionOverflow(intent)
+            return EnqueueResult.Full
+        }
+        if (!isExecutionActive()) {
+            splitAdmissionPermits.release()
+            return EnqueueResult.Rejected(RejectionReason.Closing)
+        }
+        val admission = newAdmissionLease()
+        return store.trySend(SplitStoreInput.Ui(intent, completion = null, admission)).also { result ->
+            if (result !is EnqueueResult.Enqueued) admission.release()
+        }
     }
+
+    /**
+     * Adapts a non-suspending listener to the bounded Split admission path.
+     *
+     * Every accepted callback is processed in admission order. A bounded non-suspending path cannot
+     * guarantee acceptance under overload, so [onRejected] is mandatory and observes both Full and
+     * lifecycle rejection instead of allowing a silent drop.
+     */
+    fun callbackIngress(
+        onRejected: (intent: UI, result: EnqueueResult) -> Unit,
+    ): PulseCallbackIngress<UI> = PulseCallbackIngress(::trySend, onRejected)
 
     final override fun close() {
         if (!cleanupStarted.compareAndSet(false, true)) return
@@ -268,6 +348,7 @@ open class PulseSplitStoreViewModel<
         pendingExecutionResults.forEach { result ->
             result.complete(PulseIntentExecutionResult.Cancelled)
         }
+        activeAdmissions.toList().forEach(SplitAdmissionLease::release)
         executorInputs.cancel(CancellationException("PulseSplitStoreViewModel closed."))
         parentCompletionHandle?.dispose()
         parentCompletionHandle = null
@@ -279,6 +360,11 @@ open class PulseSplitStoreViewModel<
                 store.awaitClosed()
             } catch (failure: Throwable) {
                 terminalFailure = failure
+            }
+            try {
+                storeClosureObserverJob.join()
+            } catch (failure: Throwable) {
+                terminalFailure = terminalFailure.combine(failure)
             }
             try {
                 transitionJob.join()
@@ -409,6 +495,38 @@ open class PulseSplitStoreViewModel<
         }
     }
 
+    private fun newAdmissionLease(): SplitAdmissionLease {
+        lateinit var admission: SplitAdmissionLease
+        admission = SplitAdmissionLease {
+            activeAdmissions.remove(admission)
+            splitAdmissionPermits.release()
+        }
+        activeAdmissions += admission
+        return admission
+    }
+
+    private fun reportSplitAdmissionOverflow(intent: UI) {
+        if (runtimeConfig.overflowPolicy != com.magic.mvicore.runtime.MailboxOverflowPolicy.REJECT_AND_REPORT) {
+            return
+        }
+        if (!splitOverflowDiagnosticPending.compareAndSet(false, true)) return
+        ownerScope.launch {
+            try {
+                reportPlatformFailure(
+                    PulseFailure.SplitAdmissionOverflow(
+                        context = FailureContext(
+                            component = COMPONENT_SPLIT_ADMISSION,
+                            inputType = intent.typeName(),
+                        ),
+                        capacity = runtimeConfig.mailboxCapacity,
+                    )
+                )
+            } finally {
+                splitOverflowDiagnosticPending.set(false)
+            }
+        }
+    }
+
     private fun registerParentCancellation(): DisposableHandle {
         return cancellationSentinel.invokeOnCompletion {
             // The sentinel has no child work, so parent cancellation completes it without waiting
@@ -425,31 +543,47 @@ open class PulseSplitStoreViewModel<
 
     private fun Any.typeName(): String = this::class.qualifiedName ?: javaClass.name
 
+    private fun TransitionFrame<S, SplitStoreInput<UI, M>, E>.toObservedFrame():
+        TransitionFrame<S, PulseSplitInput<UI, M>, E> {
+        val observedInput = when (val runtimeInput = input) {
+            is SplitStoreInput.Ui -> PulseSplitInput.Ui(runtimeInput.value)
+            is SplitStoreInput.Mutation -> PulseSplitInput.Mutation(runtimeInput.value)
+        }
+        return TransitionFrame(
+            requestId = requestId,
+            sequenceId = sequenceId,
+            stateRevision = stateRevision,
+            input = observedInput,
+            stateBefore = stateBefore,
+            stateAfter = stateAfter,
+            outcome = outcome,
+            uiEffects = uiEffects,
+            startedAtNanos = startedAtNanos,
+            completedAtNanos = completedAtNanos,
+            dispatcher = dispatcher,
+            reducerFailure = reducerFailure,
+            mailboxDepthAtStart = mailboxDepthAtStart,
+            mailboxHighWater = mailboxHighWater,
+        )
+    }
+
     private companion object {
         val COMPONENT_UI_INTENT_EXECUTOR = "ui-intent-executor"
         val COMPONENT_SAVED_STATE = "saved-state"
+        val COMPONENT_SPLIT_ADMISSION = "split-admission"
         val REASON_LATE_TASK_MUTATION = "late-task-mutation"
     }
 }
 
 /** Android defaults keep reducer, transition, plugin, and coordinator work on Main.immediate. */
-fun androidPulseRuntimeConfig(): PulseRuntimeConfig {
-    return PulseRuntimeConfig(
+fun androidPulseRuntimeConfig(): PulseRuntimeConfig = androidPulseRuntimeConfig(PulseRuntimeConfig())
+
+/** Applies Android Main dispatchers while preserving every non-dispatcher option from [base]. */
+fun androidPulseRuntimeConfig(base: PulseRuntimeConfig): PulseRuntimeConfig {
+    return base.copy(
         storeDispatcher = Dispatchers.Main.immediate,
         consumerDispatcher = Dispatchers.Main.immediate,
     )
-}
-
-private sealed interface SplitStoreInput<out UI : MviUiIntent, out M : MviMutation> : MviIntent {
-    data class Ui<UI : MviUiIntent>(
-        val value: UI,
-        val completion: CompletableDeferred<PulseIntentExecutionResult>?,
-    ) : SplitStoreInput<UI, Nothing>
-
-    data class Mutation<M : MviMutation>(
-        val value: M,
-        val token: TaskToken?,
-    ) : SplitStoreInput<Nothing, M>
 }
 
 private data class ExecutorInput<S : MviState, UI : MviUiIntent>(
@@ -457,4 +591,5 @@ private data class ExecutorInput<S : MviState, UI : MviUiIntent>(
     val intent: UI,
     val stateAtStart: S,
     val completion: CompletableDeferred<PulseIntentExecutionResult>?,
+    val admission: SplitAdmissionLease,
 )

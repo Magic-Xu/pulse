@@ -3,7 +3,7 @@ name: Publish Maven Central
 on:
   push:
     tags:
-      - "v0.3.0"
+      - "v0.4.0"
 
 concurrency:
   group: publish-maven-central-${{ github.ref }}
@@ -18,16 +18,16 @@ jobs:
     timeout-minutes: 45
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
 
       - name: Set up JDK 21
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
         with:
           distribution: temurin
           java-version: "21"
 
       - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@v4
+        uses: gradle/actions/setup-gradle@9c971963bec38e04b3d30dcc455b5382be2fdbfb # v6
 
       - name: Enable KVM access
         shell: bash
@@ -44,7 +44,7 @@ jobs:
 
       - name: Upload managed-device results
         if: ${{ always() }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
         with:
           name: pulse-release-managed-device-results
           if-no-files-found: ignore
@@ -57,29 +57,41 @@ jobs:
     timeout-minutes: 60
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          fetch-depth: 0
+          fetch-tags: true
 
       - name: Set up JDK 21
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
         with:
           distribution: temurin
           java-version: "21"
 
       - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@v4
+        uses: gradle/actions/setup-gradle@9c971963bec38e04b3d30dcc455b5382be2fdbfb # v6
 
       - name: Verify stable release identity
         shell: bash
         run: |
           set -euo pipefail
-          if [[ "${GITHUB_REF_TYPE}" != "tag" || "${GITHUB_REF_NAME}" != "v0.3.0" ]]; then
-            echo "Only the exact stable tag v0.3.0 may publish." >&2
+          if [[ "${GITHUB_REF_TYPE}" != "tag" || "${GITHUB_REF_NAME}" != "v0.4.0" ]]; then
+            echo "Only the exact stable tag v0.4.0 may publish." >&2
+            exit 1
+          fi
+
+          if ! tag_object_type="$(git cat-file -t "refs/tags/${GITHUB_REF_NAME}" 2>/dev/null)"; then
+            echo "The release ref must resolve to an annotated tag object." >&2
+            exit 1
+          fi
+          if [[ "${tag_object_type}" != "tag" ]]; then
+            echo "The release ref must be an annotated tag, not a lightweight tag." >&2
             exit 1
           fi
 
           version="$(sed -n 's/^POM_VERSION_NAME=//p' gradle.properties)"
-          if [[ "${version}" != "0.3.0" || "v${version}" != "${GITHUB_REF_NAME}" ]]; then
-            echo "POM_VERSION_NAME must be stable 0.3.0 and match v0.3.0." >&2
+          if [[ "${version}" != "0.4.0" || "v${version}" != "${GITHUB_REF_NAME}" ]]; then
+            echo "POM_VERSION_NAME must be stable 0.4.0 and match v0.4.0." >&2
             exit 1
           fi
 
@@ -91,7 +103,7 @@ jobs:
 
       - name: Upload performance report
         if: ${{ always() && hashFiles('build/reports/performance/pulse-performance.json') != '' }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
         with:
           name: pulse-release-performance-report
           path: build/reports/performance/pulse-performance.json
@@ -100,21 +112,21 @@ jobs:
     needs:
       - release-check
       - device-check
-    if: github.ref_type == 'tag' && github.ref_name == 'v0.3.0'
+    if: github.ref_type == 'tag' && github.ref_name == 'v0.4.0'
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
 
       - name: Set up JDK 21
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
         with:
           distribution: temurin
           java-version: "21"
 
       - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@v4
+        uses: gradle/actions/setup-gradle@9c971963bec38e04b3d30dcc455b5382be2fdbfb # v6
 
       - name: Publish and release to Maven Central
         run: ./gradlew publishAndReleaseToMavenCentral --stacktrace
@@ -133,6 +145,7 @@ jobs:
             mvi-core-runtime:jar
             mvi-platform-android:aar
             mvi-platform-android-compose:aar
+            mvi-platform-android-testing:aar
             mvi-extensions:jar
             mvi-testing:jar
           )
@@ -142,21 +155,25 @@ jobs:
             for entry in "${modules[@]}"; do
               module="${entry%%:*}"
               binary_extension="${entry##*:}"
-              module_base="${base}/${module}/0.3.0/${module}-0.3.0"
+              module_base="${base}/${module}/0.4.0/${module}-0.4.0"
               files=(
                 "${module_base}.pom"
                 "${module_base}.module"
                 "${module_base}-sources.jar"
+                "${module_base}-javadoc.jar"
                 "${module_base}.${binary_extension}"
               )
               for file in "${files[@]}"; do
                 if ! curl --fail --silent --head --output /dev/null "${file}"; then
                   missing+=("${file##*/}")
                 fi
+                if ! curl --fail --silent --head --output /dev/null "${file}.asc"; then
+                  missing+=("${file##*/}.asc")
+                fi
               done
             done
             if [[ ${#missing[@]} -eq 0 ]]; then
-              echo "All Pulse 0.3.0 artifacts are public on Maven Central."
+              echo "All Pulse 0.4.0 artifacts are public on Maven Central."
               exit 0
             fi
             if [[ ${attempt} -eq 60 ]]; then
@@ -170,11 +187,11 @@ jobs:
       - name: Consume the public release from isolated samples
         run: >-
           ./gradlew publicArtifactSamplesCheck --refresh-dependencies --stacktrace
-          -PpulsePublicVersion=0.3.0
+          -PpulsePublicVersion=0.4.0
 
       - name: Upload public consumer results
         if: ${{ always() }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
         with:
           name: pulse-public-consumer-results
           if-no-files-found: ignore

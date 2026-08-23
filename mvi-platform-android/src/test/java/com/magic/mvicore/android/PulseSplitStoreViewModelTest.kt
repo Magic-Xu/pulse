@@ -51,6 +51,7 @@ import java.util.concurrent.atomic.AtomicInteger
 import kotlin.coroutines.ContinuationInterceptor
 import kotlin.coroutines.CoroutineContext
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertIs
 import kotlin.test.assertSame
@@ -279,6 +280,111 @@ class PulseSplitStoreViewModelTest {
             assertEquals(TestState(4), viewModel.state.value)
 
             close(viewModel)
+        }
+
+    @Test
+    fun `failing keyed task keeps originating Split intent correlation`() =
+        runTest(mainDispatcherRule.dispatcher) {
+            val failures = mutableListOf<PulseFailure>()
+            val key = TaskKey("correlated-task")
+            val expected = IllegalStateException("task failed")
+            var originatingRequestId = -1L
+            lateinit var launch: TaskLaunchResult.Accepted
+            val viewModel = viewModel(
+                failures = failures,
+                runtimeConfig = PulseRuntimeConfig(
+                    storeDispatcher = mainDispatcherRule.dispatcher,
+                    consumerDispatcher = mainDispatcherRule.dispatcher,
+                    errorHandler = PulseErrorHandler { _, failure, _ -> failures += failure },
+                    storeId = "correlated-task-store",
+                ),
+                executor = PulseUiIntentExecutor { intent, context ->
+                    if (intent == TestUi.FailTask) {
+                        originatingRequestId = context.intentId
+                        launch = assertIs<TaskLaunchResult.Accepted>(
+                            context.launchTask(key, TaskPolicy.Latest) {
+                                throw expected
+                            }
+                        )
+                    }
+                    PulseIntentExecutionDecision.Completed
+                },
+            )
+
+            assertEquals(
+                PulseIntentExecutionResult.Completed,
+                viewModel.send(TestUi.FailTask),
+            )
+            advanceUntilIdle()
+
+            val outcome = assertIs<TaskOutcome.Failed>(launch.handle.awaitOutcome())
+            assertSame(expected, outcome.cause)
+            val failure = assertIs<PulseFailure.TaskFailure>(failures.single())
+            assertSame(expected, failure.cause)
+            assertEquals("correlated-task-store", failure.context.storeId)
+            assertEquals(originatingRequestId, failure.context.requestId)
+            assertEquals(TestUi.FailTask::class.qualifiedName, failure.context.inputType)
+            assertEquals(key.value, failure.taskKey)
+            assertTrue(failure.token > 0L)
+            assertTrue(failures.none { it is PulseFailure.ExecutorFailure })
+
+            close(viewModel)
+        }
+
+    @Test
+    fun `terminal task diagnostic closes Store and every Split adapter job`() =
+        runTest(mainDispatcherRule.dispatcher) {
+            val parentJob = SupervisorJob()
+            val ownerScope = CoroutineScope(parentJob + mainDispatcherRule.dispatcher)
+            val observed = mutableListOf<PulseFailure>()
+            val terminal = LinkageError("terminal task reporter")
+            lateinit var launch: TaskLaunchResult.Accepted
+            val viewModel = PulseSplitStoreViewModel<
+                TestState,
+                TestUi,
+                TestMutation,
+                TestEffect,
+                >(
+                initialState = TestState(0),
+                mutationReducer = reducer(),
+                uiIntentExecutor = PulseUiIntentExecutor { intent, context ->
+                    if (intent == TestUi.FailTask) {
+                        launch = assertIs<TaskLaunchResult.Accepted>(
+                            context.launchTask(TaskKey("terminal-task"), TaskPolicy.Latest) {
+                                throw IllegalStateException("ordinary task failure")
+                            }
+                        )
+                    }
+                    PulseIntentExecutionDecision.Completed
+                },
+                runtimeConfig = PulseRuntimeConfig(
+                    storeDispatcher = mainDispatcherRule.dispatcher,
+                    consumerDispatcher = mainDispatcherRule.dispatcher,
+                    errorHandler = PulseErrorHandler { _, failure, _ ->
+                        observed += failure
+                        if (failure is PulseFailure.TaskFailure) throw terminal
+                    },
+                    storeId = "terminal-task-store",
+                ),
+                executionOwner = PulseAndroidExecutionOwner.from(ownerScope),
+            )
+
+            assertEquals(
+                PulseIntentExecutionResult.Completed,
+                viewModel.send(TestUi.FailTask),
+            )
+            advanceUntilIdle()
+
+            val handleFailure = assertFailsWith<LinkageError> {
+                launch.handle.awaitOutcome()
+            }
+            assertEquals(terminal.message, handleFailure.message)
+            viewModel.awaitClosed()
+            assertIs<PulseFailure.TaskFailure>(observed.single())
+            assertIs<EnqueueResult.Rejected>(viewModel.trySend(TestUi.Add(1)))
+            assertTrue(parentJob.isActive)
+
+            parentJob.cancel()
         }
 
     @Test
@@ -783,6 +889,7 @@ class PulseSplitStoreViewModelTest {
         data object ReplaceLatest : TestUi
         data object CancelExecutor : TestUi
         data object CrashExecutor : TestUi
+        data object FailTask : TestUi
         data object BlockExecutor : TestUi
         data object Ignore : TestUi
     }

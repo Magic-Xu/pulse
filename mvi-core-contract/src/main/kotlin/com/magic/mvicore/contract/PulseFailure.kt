@@ -12,6 +12,8 @@ enum class FailurePhase {
     LATE_MUTATION,
     RESTORE,
     SAVE,
+    TASK,
+    ADMISSION,
 }
 
 /** Redacted correlation metadata shared by all Pulse failures. */
@@ -70,11 +72,29 @@ sealed interface PulseFailure {
         override val phase: FailurePhase = FailurePhase.EXECUTOR
     }
 
+    data class TaskFailure(
+        override val context: FailureContext,
+        val taskKey: String,
+        val token: Long,
+        override val cause: Throwable,
+    ) : PulseFailure {
+        override val phase: FailurePhase = FailurePhase.TASK
+    }
+
     data class MailboxOverflow(
         override val context: FailureContext,
         val capacity: Int,
     ) : PulseFailure {
         override val phase: FailurePhase = FailurePhase.OVERFLOW
+        override val cause: Throwable? = null
+    }
+
+    /** The Android Split pipeline reached its end-to-end in-flight UI limit. */
+    data class SplitAdmissionOverflow(
+        override val context: FailureContext,
+        val capacity: Int,
+    ) : PulseFailure {
+        override val phase: FailurePhase = FailurePhase.ADMISSION
         override val cause: Throwable? = null
     }
 

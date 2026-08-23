@@ -105,7 +105,12 @@ public abstract interface class com/magic/mvicore/runtime/PulseTasks {
 	public abstract fun isClosed ()Z
 	public abstract fun isCurrent (Lcom/magic/mvicore/contract/TaskToken;)Z
 	public abstract fun launch-X6WvQZY (Ljava/lang/String;Lcom/magic/mvicore/contract/TaskPolicy;Lkotlin/jvm/functions/Function2;)Lcom/magic/mvicore/contract/TaskLaunchResult;
+	public fun launch-jwpIM8w (Ljava/lang/String;Lcom/magic/mvicore/contract/TaskPolicy;Lcom/magic/mvicore/contract/FailureContext;Lkotlin/jvm/functions/Function2;)Lcom/magic/mvicore/contract/TaskLaunchResult;
 	public abstract fun validate (Lcom/magic/mvicore/contract/TaskToken;)Z
+}
+
+public final class com/magic/mvicore/runtime/PulseTasks$DefaultImpls {
+	public static fun launch-jwpIM8w (Lcom/magic/mvicore/runtime/PulseTasks;Ljava/lang/String;Lcom/magic/mvicore/contract/TaskPolicy;Lcom/magic/mvicore/contract/FailureContext;Lkotlin/jvm/functions/Function2;)Lcom/magic/mvicore/contract/TaskLaunchResult;
 }
 
 public final class com/magic/mvicore/runtime/StandardErrorPulseErrorHandler : com/magic/mvicore/runtime/PulseErrorHandler {

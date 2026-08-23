@@ -1,45 +1,48 @@
-# Pulse 0.3.0 Release Plan
+# Pulse 0.4.0 Release Plan
 
 Chinese version: [RELEASE_PLAN.zh-CN.md](./RELEASE_PLAN.zh-CN.md)
 
-> Release status: stable `0.3.0`, **published on 2026-08-23** from the exact `v0.3.0` tag. Branches,
-> snapshots, release candidates, and prerelease tags cannot publish.
+> Release status: **candidate — not public yet**. `0.3.0` remains the public stable release. Do not
+> announce or consume `0.4.0` until the exact `v0.4.0` workflow has verified Maven Central and the
+> public artifact-only consumers.
 
 ## Release objective
 
-Publish one coherent v0.3 line in which the ordered runtime, public contracts, Android lifecycle
-bindings, extensions, testing tools, compatibility checks, and documentation agree. Convenience DSLs
-are not released ahead of the runtime contracts they build on.
+Publish one coherent v0.4 line that hardens the 0.3 ordered runtime for real Android integrations.
+The candidate must resolve end-to-end Split admission, improve task and transition diagnostics, add
+deterministic tests for a real Split ViewModel, and correct framework-owned examples without
+absorbing application domain, durable-work, or multi-Store orchestration policy.
 
 ## Candidate sequence
 
 | Stage | Required result |
 |---|---|
-| 0. Baseline | Frozen 0.2 source/binary consumers and failing contract cases exist before behavior changes |
-| 1. Public API | Runtime, effect, task, lifecycle, and failure decisions are accepted and reflected in contracts |
-| 2. Core runtime | One FIFO processor owns reduce, commit, transition, effect, completion, and close ordering |
-| 3. Split, task, effect | UI input boundaries, keyed task policies, token validation, and replay-zero effects are complete |
-| 4. Android and Compose | Main-thread, owner, lifecycle, saved-state, and cleanup contracts are verified |
-| 5. Testing and extensions | Public probes/TCK and state-decomposition helpers build on the stable runtime surface |
-| 6. Documentation | Migration, compatibility, consumer, and release documents match the candidate artifacts |
-| 7. Release candidate | All framework, compatibility, artifact, stress, performance, and publication gates pass |
+| 0. Baseline | The published 0.3 API surface and retained 0.2 compatibility fixtures are identified before public behavior changes |
+| 1. Admission | One bounded budget covers Split UI admission through the serial executor decision; suspending and non-suspending contracts are explicit |
+| 2. Diagnostics | Split transitions are read-only, task failures retain request correlation, and Android config cannot silently move production work off Main |
+| 3. Testing and extensions | The Android Split test host and redacted modern logging build only on the ordered runtime |
+| 4. Samples and guidance | Official examples handle admission and task-launch results; integration guidance preserves framework/application ownership |
+| 5. API and compatibility | Seven API baselines, executable six-artifact 0.3 checks, and retained five-artifact 0.2 checks pass |
+| 6. Candidate artifacts | All seven staged publications and both artifact-only consumers pass |
+| 7. Release qualification | Framework, publication, stress, performance, managed-device, and stable-identity gates pass on one commit |
 
-A later stage cannot weaken an earlier contract merely to pass its own check. Any public API change
-after candidate qualification restarts API, compatibility, artifact-consumer, stress, and performance
-verification.
+A later stage cannot weaken an earlier contract merely to pass its own check. Any public API or
+artifact change after qualification restarts API review, framework, compatibility, staged-consumer,
+stress, performance, and managed-device verification.
 
-## Six published artifacts
+## Seven published artifacts
 
 All artifacts use group `io.github.magic-xu` and one identical version.
 
 | Artifact | Purpose |
 |---|---|
-| `mvi-core-contract` | Platform-neutral legacy and 0.3 contracts |
-| `mvi-core-runtime` | Ordered Store, effect coordinator, tasks, configuration, and legacy adapters |
-| `mvi-platform-android` | ViewModel, explicit owner, Main dispatcher, and saved-state integration |
+| `mvi-core-contract` | Platform-neutral Store, transition, task, effect, and typed-failure contracts |
+| `mvi-core-runtime` | Ordered Store engine, effect coordinator, keyed tasks, configuration, and legacy adapters |
+| `mvi-platform-android` | Split ViewModel, explicit owner, Android Main configuration, saved state, and callback ingress |
 | `mvi-platform-android-compose` | Lifecycle-aware state selectors and UI-effect coordination |
-| `mvi-extensions` | Optional plugins, `StateLens`, and reducer composition |
-| `mvi-testing` | Virtual-time helpers, probes, and Store TCK |
+| `mvi-platform-android-testing` | Real Split ViewModel host, shared virtual-time scheduler, probes, and deterministic cleanup |
+| `mvi-extensions` | Optional redacted logging, `StateLens`, and reducer composition |
+| `mvi-testing` | Platform-neutral virtual-time helpers, probes, and Store TCK |
 
 The sample app, compatibility fixtures, isolated consumers, and benchmarks are verification inputs;
 they are not published library artifacts.
@@ -49,65 +52,73 @@ they are not published library artifacts.
 ### Pull-request framework gate
 
 ```bash
-./gradlew mviFrameworkCheck
+./gradlew mviFrameworkCheck --stacktrace
 ```
 
-This gate must cover:
+`.github/workflows/ci.yml` runs this task on JDK 21. The aggregate covers:
 
-- `check` for contract, runtime, extensions, and testing modules;
-- Android and Compose unit tests plus `lintDebug`;
-- sample app unit tests, `assembleDebug`, and `lintDebug`;
-- controlled API baselines for all six published artifacts;
-- a frozen 0.2 Kotlin source surface and archive-level compatibility comparison for all five
-  existing artifacts, plus executable core-runtime binary linkage;
-- both isolated sample consumers built from staged Maven artifacts only;
-- publication version consistency.
+- contract, runtime, extensions, and pure-JVM testing module checks;
+- unit tests and `lintDebug` for all three Android library artifacts;
+- sample app unit tests, debug assembly, and lint;
+- `apiCheck` for all seven published artifacts;
+- `compatibility03Check`: frozen source compilation and archive comparison for all six 0.3
+  artifacts, plus baseline/candidate JVM runs, frozen 0.3 bytecode on the candidate runtime, and the
+  legacy `PulseTasks` implementation bridge;
+- retained `compatibilityCheck`: the 0.2 five-artifact source/archive fixture and executable
+  core-runtime linkage consumer;
+- both isolated staged-artifact consumers;
+- candidate version consistency.
 
-### Release-only gates
+Both compatibility aggregates consume staged candidate artifacts. For the six artifacts already
+published in 0.3, `apiDump` changes must also be reviewed against the checked-in 0.3 surface before
+accepting the 0.4 baseline. The seventh baseline belongs only to the new Android testing artifact.
+
+### Release aggregate
 
 ```bash
-./gradlew mviReleaseCheck
+./gradlew mviReleaseCheck --stacktrace
 ```
 
-The release aggregate must include the complete framework gate plus:
+The release aggregate includes the complete framework gate and additionally requires:
 
-- `verifyPublicationBundle` for all six binaries, source archives, POMs, Gradle metadata, versions,
-  and internal dependency versions;
-- `:mvi-testing:multiSeedStressCheck` for deterministic multi-seed 10,000-input stress;
-- `:mvi-benchmarks:performanceRegressionCheck` for throughput, frame and collector p95 latency,
-  retained-memory, bounded-mailbox floors, and the real platform-neutral selector pipeline.
+- `verifyPublicationBundle` for seven binaries, source and javadoc archives, POMs, Gradle metadata,
+  versions, and internal dependency versions;
+- `:mvi-testing:multiSeedStressCheck`;
+- `:mvi-benchmarks:performanceRegressionCheck`;
+- `verifyMavenCentralConfig`.
 
-The five-artifact compatibility fixture verifies Android, Compose, and extensions at source and
-archive level; executable runtime replacement is covered by the core-runtime consumer. The
-performance harness is a portable catastrophic-regression check, not a device rendering benchmark;
-Compose lifecycle and recomposition behavior remains covered by its own tests.
+The scheduled `.github/workflows/stress.yml` runs the stress and performance tasks independently.
+The performance harness is a portable catastrophic-regression floor, not a device-rendering
+benchmark.
 
-Real Android instrumentation is a separate device gate because it requires an emulator or attached
-device:
+### Managed-device gate
 
 ```bash
-./gradlew mviAndroidDeviceCheck
+./gradlew mviAndroidDeviceCheck --stacktrace
 ```
 
-Pull requests run it in `.github/workflows/android-device.yml`; the stable publish workflow runs the
-same managed-device task and requires both the device job and `release-check` before publication.
+This task runs the sample end-to-end instrumentation suite on the managed API 35 device.
+`.github/workflows/android-device.yml` runs it for pull requests and pushes. The stable publish
+workflow runs the same task in a separate `device-check` job; publication requires both that job
+and `release-check`.
 
-`verifyMavenCentralConfig` is also required before remote publication. A missing task, skipped
-artifact consumer, or absent API baseline is a release failure; no empty or best-effort gate is
-accepted.
+A missing task, absent API baseline, skipped artifact consumer, or partial publication bundle is a
+release failure. No empty or best-effort gate is accepted.
 
 ## Candidate commands
 
-Run on JDK 21 from a clean checkout with release credentials absent:
+Run the minimal complete local qualification on JDK 21 from a clean checkout with release
+credentials absent:
 
 ```bash
-./gradlew clean
-./gradlew mviFrameworkCheck
-./gradlew mviReleaseCheck
-./gradlew mviAndroidDeviceCheck
+./gradlew clean mviReleaseCheck --stacktrace
+./gradlew mviAndroidDeviceCheck --stacktrace
 ```
 
-API baselines are updated only during intentional public API review:
+`mviReleaseCheck` already includes `mviFrameworkCheck`, `verifyPublicationBundle`, stress,
+performance, and Maven metadata validation.
+
+Update API baselines only during intentional public API review:
 
 ```bash
 ./gradlew apiDump
@@ -115,36 +126,37 @@ git diff -- */api/*.api
 ./gradlew apiCheck
 ```
 
-An `apiDump` diff is not self-approving. Review removals, signature changes, generic bounds, and
-Android release-AAR surfaces before accepting the baseline.
+An `apiDump` diff is not self-approving. Review removals, signature changes, generic bounds,
+visibility, exhaustive sealed surfaces, and all three release-AAR APIs before accepting it.
 
 ## Stable publication rules
 
 Remote publication is permitted only when all of the following are true:
 
-1. GitHub is processing the exact tag `v0.3.0`.
-2. `POM_VERSION_NAME` is exactly `0.3.0` and matches the tag.
+1. GitHub is processing the exact annotated tag `v0.4.0`.
+2. `POM_VERSION_NAME` is exactly `0.4.0` and matches the tag.
 3. The version contains no `SNAPSHOT`, `RC`, or other prerelease suffix.
-4. The release-check and managed-device instrumentation jobs have passed on JDK 21.
-5. `verifyMavenCentralConfig` has validated required metadata.
-6. The publish job depends on both jobs and uses the same commit.
+4. The `release-check` and `device-check` jobs pass on JDK 21 for the same commit.
+5. `verifyMavenCentralConfig` validates the required metadata.
+6. The `publish` job depends on both jobs and publishes that workflow commit.
 
-The publish task must not depend back on `mviReleaseCheck`; job ordering owns the remote-publication
-barrier and avoids a Gradle dependency cycle.
+The publish task must not depend back on `mviReleaseCheck`; workflow job ordering owns the remote
+publication barrier and avoids a Gradle dependency cycle.
 
 ## Post-publication verification
 
 After Maven Central reports the deployment as released:
 
-1. Resolve all six `io.github.magic-xu:*:0.3.0` coordinates from Maven Central without a local or
+1. Resolve all seven `io.github.magic-xu:*:0.4.0` coordinates from Maven Central without a local or
    staging repository.
-2. Build the synchronous and asynchronous artifact-only consumers against those coordinates.
-3. Confirm POM and Gradle metadata expose only `0.3.0` internal dependencies.
-4. Publish the release notes and migration links only after resolution succeeds.
+2. Verify each POM, Gradle module metadata file, sources archive, javadoc archive, binary, and their
+   signatures.
+3. Build and test both artifact-only consumers with `--refresh-dependencies`.
+4. Confirm every internal Pulse dependency is exactly `0.4.0`.
+5. Only then change candidate notices and announce availability.
 
-The guarded release workflow waits for the public POM, Gradle metadata, sources, and binary of all
-six modules and runs `publicArtifactSamplesCheck` with `--refresh-dependencies`. That step is part of
-the definition of done and cannot be replaced by a local staging result.
+The guarded workflow performs the artifact polling and runs `publicArtifactSamplesCheck`. A local
+staging result cannot replace this evidence.
 
 A failed or partial candidate is not retagged or overwritten. Fix the cause, choose a new version,
 and run the complete qualification sequence again.

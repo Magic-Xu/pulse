@@ -22,16 +22,18 @@ val publishableModules = setOf(
     "mvi-core-runtime",
     "mvi-platform-android",
     "mvi-platform-android-compose",
+    "mvi-platform-android-testing",
     "mvi-extensions",
     "mvi-testing",
 )
 val androidPublishedModules = setOf(
     "mvi-platform-android",
     "mvi-platform-android-compose",
+    "mvi-platform-android-testing",
 )
 val nativeBcvModules = publishableModules - androidPublishedModules
 val pulseGroup = providers.gradleProperty("POM_GROUP_ID").orElse("io.github.magic-xu")
-val pulseVersion = providers.gradleProperty("POM_VERSION_NAME").orElse("0.3.0-SNAPSHOT")
+val pulseVersion = providers.gradleProperty("POM_VERSION_NAME").orElse("0.4.0-SNAPSHOT")
 val pulseStagingRepository = layout.buildDirectory.dir("staging-repo")
 val publicPulseRepository = providers.gradleProperty("pulsePublicRepository")
     .orElse("https://repo.maven.apache.org/maven2")
@@ -109,14 +111,14 @@ val androidApiTasks = androidPublishedModules.associateWith { moduleName ->
 
 tasks.register("apiDump") {
     group = "other"
-    description = "Updates API baselines for all six published Pulse modules."
+    description = "Updates API baselines for all seven published Pulse modules."
     dependsOn(nativeBcvModules.map { ":$it:apiDump" })
     dependsOn(androidApiTasks.values.map { it.first })
 }
 
 tasks.register("apiCheck") {
     group = "verification"
-    description = "Checks API baselines for all six published Pulse modules."
+    description = "Checks API baselines for all seven published Pulse modules."
     dependsOn(nativeBcvModules.map { ":$it:apiCheck" })
     dependsOn(androidApiTasks.values.map { it.second })
 }
@@ -130,12 +132,15 @@ subprojects {
         configure<SigningExtension> {
             // Vanniktech requires every stable publication to be signed by default. The local
             // PulseStaging repository is an isolated verification input, not a remote release.
-            // Requiring a signatory only when a Maven Central task is actually selected keeps
-            // ordinary CI secret-free while a stable Central publication still fails without keys.
+            // Requiring a signatory only when a Maven Central publish task is selected keeps local
+            // staging and metadata validation secret-free while a stable remote publication still
+            // fails without keys. In particular, verifyMavenCentralConfig is validation, not a
+            // remote publication despite its name.
             setRequired({
                 !project.version.toString().endsWith("-SNAPSHOT") &&
                     gradle.taskGraph.allTasks.any { task ->
-                        task.name.contains("MavenCentral", ignoreCase = true)
+                        task.name.startsWith("publish", ignoreCase = true) &&
+                            task.name.contains("MavenCentral", ignoreCase = true)
                     }
             })
         }
@@ -162,14 +167,14 @@ val stagingPublicationTasks = publishableModules.map { moduleName ->
 
 tasks.register("stagePulsePublications") {
     group = "publishing"
-    description = "Publishes all six candidate modules into an isolated local Maven repository."
+    description = "Publishes all seven candidate modules into an isolated local Maven repository."
     dependsOn(cleanPulseStagingRepository)
     dependsOn(stagingPublicationTasks)
 }
 
 tasks.register("verifyPublicationBundle") {
     group = "verification"
-    description = "Verifies candidate artifacts, sources, POMs, metadata, versions, and dependencies."
+    description = "Verifies candidate binaries, sources, javadocs, POMs, metadata, versions, and dependencies."
     dependsOn("stagePulsePublications")
     doLast {
         val repository = pulseStagingRepository.get().asFile
@@ -200,6 +205,7 @@ tasks.register("verifyPublicationBundle") {
                         (!name.endsWith("-sources.jar") && !name.endsWith("-javadoc.jar")))
             }
             publicationFile("sources JAR") { name -> name.endsWith("-sources.jar") }
+            publicationFile("javadoc JAR") { name -> name.endsWith("-javadoc.jar") }
             val pomFile = publicationFile("POM") { name -> name.endsWith(".pom") }
             val metadataFile = publicationFile("Gradle module metadata") { name ->
                 name.endsWith(".module")
@@ -382,6 +388,16 @@ tasks.register<GradleBuild>("compatibilityCheck") {
     )
 }
 
+tasks.register<GradleBuild>("compatibility03Check") {
+    group = "verification"
+    description = "Checks all six v0.3 artifact surfaces against the staged candidate."
+    dependsOn("verifyPublicationBundle")
+    configureCandidateConsumer(
+        buildDirectoryPath = "compatibility/consumer-0.3",
+        requestedTasks = listOf("compatibilityCheck"),
+    )
+}
+
 tasks.register("verifyVersionConsistency") {
     group = "verification"
     description = "Checks candidate module versions and an optional stable release tag."
@@ -422,11 +438,14 @@ tasks.register("mviFrameworkCheck") {
         ":mvi-platform-android:lintDebug",
         ":mvi-platform-android-compose:testDebugUnitTest",
         ":mvi-platform-android-compose:lintDebug",
+        ":mvi-platform-android-testing:testDebugUnitTest",
+        ":mvi-platform-android-testing:lintDebug",
         ":app:testDebugUnitTest",
         ":app:assembleDebug",
         ":app:lintDebug",
         "apiCheck",
         "compatibilityCheck",
+        "compatibility03Check",
         "artifactSamplesCheck",
         "verifyVersionConsistency",
     )

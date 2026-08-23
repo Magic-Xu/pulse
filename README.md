@@ -71,23 +71,45 @@ admission. Mutations and keyed tasks are available only inside `PulseIntentConte
 
 Pulse 0.3.0 is available from Maven Central:
 
+> [!TIP]
+> **Most Android Compose apps need one production dependency:**
+> `mvi-platform-android-compose`. It already brings the Android, runtime, and contract layers
+> transitively. Do not declare those lower layers again.
+
 ```kotlin
 repositories {
     google()
     mavenCentral()
 }
 
-val pulseVersion = "0.3.0"
 dependencies {
-    implementation("io.github.magic-xu:mvi-core-runtime:$pulseVersion")
-    implementation("io.github.magic-xu:mvi-platform-android-compose:$pulseVersion")
-    implementation("io.github.magic-xu:mvi-extensions:$pulseVersion")
-    testImplementation("io.github.magic-xu:mvi-testing:$pulseVersion")
+    implementation("io.github.magic-xu:mvi-platform-android-compose:0.3.0")
 }
 ```
 
-Use only the modules your feature needs. Android Compose already brings the Android, runtime, and
-contract layers transitively.
+Choose **one** main entry for the platform you use:
+
+| Project type | Main dependency |
+| --- | --- |
+| Android + Compose | `mvi-platform-android-compose` |
+| Android without Compose | `mvi-platform-android` |
+| Pure Kotlin / JVM | `mvi-core-runtime` |
+
+Add optional modules only when the feature needs them:
+
+```kotlin
+dependencies {
+    // Optional: State Lens, reducer decomposition, logging, and transition helpers
+    implementation("io.github.magic-xu:mvi-extensions:0.3.0")
+
+    // Optional: virtual time, probes, TestPulseStore, and TCK
+    testImplementation("io.github.magic-xu:mvi-testing:0.3.0")
+}
+```
+
+> [!IMPORTANT]
+> Do not add every Pulse module. Pick one main entry, then add only the optional modules you use.
+> When multiple Pulse modules are present, keep them on the same version.
 
 ## Samples
 
@@ -107,9 +129,10 @@ contract layers transitively.
 ./gradlew clean mviReleaseCheck
 ```
 
-The release gate includes standard tests, Store TCK, six-module API/ABI dumps, a five-artifact v0.2
-source/binary compatibility fixture, Android/Compose checks, publication-bundle verification,
-artifact-only samples, multi-seed stress, and a portable performance-floor harness.
+The release gate includes standard tests, Store TCK, seven-module API/ABI baselines, six-artifact
+v0.3 and five-artifact v0.2 source/binary compatibility fixtures, Android/Compose checks,
+publication-bundle verification, artifact-only samples, multi-seed stress, and a portable
+performance-floor harness.
 
 See [Consumer Guide](docs/CONSUMER_GUIDE.md),
 [0.2 to 0.3 Migration](docs/MIGRATION_0.2_TO_0.3.md), and

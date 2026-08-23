@@ -1,5 +1,6 @@
 package com.magic.mvicore.runtime
 
+import com.magic.mvicore.contract.FailureContext
 import com.magic.mvicore.contract.PulseFailure
 import com.magic.mvicore.contract.TaskHandle
 import com.magic.mvicore.contract.TaskKey
@@ -33,6 +34,41 @@ class TaskRegistryTest {
         assertFailsWith<IllegalArgumentException> { TaskKey("") }
         assertFailsWith<IllegalArgumentException> { TaskKey("   ") }
         assertEquals("refresh", TaskKey("refresh").toString())
+    }
+
+    @Test
+    fun `correlated launch overload delegates to legacy PulseTasks implementations`() {
+        val key = TaskKey("legacy")
+        var legacyLaunchCalled = false
+        val legacyTasks = object : PulseTasks {
+            override val isClosed: Boolean = false
+
+            override fun launch(
+                key: TaskKey,
+                policy: TaskPolicy,
+                block: suspend (TaskToken) -> Unit,
+            ): TaskLaunchResult {
+                legacyLaunchCalled = true
+                return TaskLaunchResult.Closed
+            }
+
+            override fun isCurrent(token: TaskToken): Boolean = false
+
+            override fun validate(token: TaskToken): Boolean = false
+
+            override fun cancel(key: TaskKey): Boolean = false
+
+            override fun cancelAll(): Int = 0
+        }
+
+        val result = legacyTasks.launch(
+            key = key,
+            policy = TaskPolicy.Latest,
+            failureContext = FailureContext(requestId = 12L),
+        ) { }
+
+        assertEquals(TaskLaunchResult.Closed, result)
+        assertTrue(legacyLaunchCalled)
     }
 
     @Test
@@ -372,8 +408,41 @@ class TaskRegistryTest {
 
         val outcome = assertIs<TaskOutcome.Failed>(handle.awaitOutcome())
         assertSame(expected, outcome.cause)
-        val failure = assertIs<PulseFailure.ExecutorFailure>(fixture.failures.single())
+        val failure = assertIs<PulseFailure.TaskFailure>(fixture.failures.single())
         assertEquals(key.value, failure.context.component)
+        assertEquals(key.value, failure.taskKey)
+        assertEquals(handle.requestId, failure.token)
+        assertSame(expected, failure.cause)
+        fixture.close()
+    }
+
+    @Test
+    fun `task failure preserves correlated UI request metadata`() = runTest {
+        val fixture = Fixture(this)
+        val key = TaskKey("correlated-refresh")
+        val expected = IllegalStateException("request failed")
+
+        val handle = fixture.registry.launch(
+            key = key,
+            policy = TaskPolicy.Latest,
+            failureContext = FailureContext(
+                requestId = 73L,
+                inputType = "com.example.RefreshIntent",
+            ),
+        ) {
+            throw expected
+        }.accepted()
+        runCurrent()
+
+        val outcome = assertIs<TaskOutcome.Failed>(handle.awaitOutcome())
+        assertSame(expected, outcome.cause)
+        val failure = assertIs<PulseFailure.TaskFailure>(fixture.failures.single())
+        assertEquals("task-registry-test", failure.context.storeId)
+        assertEquals(73L, failure.context.requestId)
+        assertEquals("com.example.RefreshIntent", failure.context.inputType)
+        assertEquals(key.value, failure.context.component)
+        assertEquals(key.value, failure.taskKey)
+        assertEquals(handle.requestId, failure.token)
         assertSame(expected, failure.cause)
         fixture.close()
     }

@@ -50,7 +50,7 @@ fun <SUB, E : UiEffect> subStateWithEffects(
     effects: Iterable<E>,
 ): SubStateNext<SUB, E> = SubStateNext(state, effects)
 
-/** v0.3 reducer DSL with explicit Changed/Unchanged/Ignored outcomes. */
+/** Reducer DSL with explicit Changed/Unchanged/Ignored outcomes. */
 class PulseMutationReducerBuilder<S : MviState, M : MviMutation, E : UiEffect>
 @PublishedApi internal constructor() {
     @PublishedApi
@@ -88,7 +88,7 @@ class PulseMutationReducerBuilder<S : MviState, M : MviMutation, E : UiEffect>
     }
 }
 
-/** Builds a fail-fast v0.3 mutation reducer with duplicate-route validation. */
+/** Builds a fail-fast mutation reducer with duplicate-route validation. */
 fun <S : MviState, M : MviMutation, E : UiEffect> pulseMutationReducer(
     block: PulseMutationReducerBuilder<S, M, E>.() -> Unit,
 ): PulseMutationReducer<S, M, E> {

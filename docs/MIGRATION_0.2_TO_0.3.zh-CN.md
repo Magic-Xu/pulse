@@ -36,24 +36,22 @@ Pulse 0.3 保留 0.2 的公开 API 和制品坐标作为兼容层。应用可以
 
 ## 1. 更新依赖
 
-0.2 的五个坐标保持不变，0.3 新增 `mvi-testing`：
+0.2 的五个坐标保持不变，0.3 新增 `mvi-testing`。升级项目原本使用的主入口，不要把所有坐标都加进来：
 
 ```kotlin
 dependencies {
-    implementation("io.github.magic-xu:mvi-core-contract:0.3.0")
-    implementation("io.github.magic-xu:mvi-core-runtime:0.3.0")
-
-    // Android 项目通常只需要依赖实际使用的最高层适配器。
+    // 绝大多数 Android Compose 项目只需要这一条生产依赖。
     implementation("io.github.magic-xu:mvi-platform-android-compose:0.3.0")
 
-    // 可选。
+    // 可选：功能确实使用这些能力时再添加。
     implementation("io.github.magic-xu:mvi-extensions:0.3.0")
     testImplementation("io.github.magic-xu:mvi-testing:0.3.0")
 }
 ```
 
-`0.3.0` 正式发布前不要使用以上稳定版坐标。Android Compose 制品会传递暴露 Android、runtime
-和 contract API。
+Android Compose 制品会传递暴露 Android、runtime 和 contract API。不使用 Compose 的 Android
+项目选择 `mvi-platform-android`；纯 Kotlin / JVM 项目选择 `mvi-core-runtime`。同一项目中出现的
+Pulse 模块统一使用 `0.3.0`。
 
 ## 2. 显式表达 reducer 结果
 

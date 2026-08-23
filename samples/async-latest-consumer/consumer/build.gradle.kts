@@ -21,6 +21,6 @@ val pulseVersion = providers.gradleProperty("pulseVersion").get()
 dependencies {
     implementation("io.github.magic-xu:mvi-platform-android-compose:$pulseVersion")
     implementation("io.github.magic-xu:mvi-extensions:$pulseVersion")
-    testImplementation("io.github.magic-xu:mvi-testing:$pulseVersion")
+    testImplementation("io.github.magic-xu:mvi-platform-android-testing:$pulseVersion")
     testImplementation("junit:junit:4.13.2")
 }

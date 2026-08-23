@@ -5,6 +5,7 @@ import com.magic.mvicore.android.PulseIntentExecutionDecision
 import com.magic.mvicore.android.PulseUiIntentExecutor
 import com.magic.mvicore.contract.TaskKey
 import com.magic.mvicore.contract.TaskPolicy
+import com.magic.pulse.samples.common.toSampleExecutionDecision
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.delay
 
@@ -19,50 +20,67 @@ class SplitIntentBasicViewModel : PulseSplitStoreViewModel<
     uiIntentExecutor = PulseUiIntentExecutor { intent, context ->
         when (intent) {
             SplitIntentBasicUiIntent.LoadImageModelsClicked -> {
-                context.launchTask(LOAD_TASK, TaskPolicy.DropWhileRunning) {
-                    mutate(SplitIntentBasicMutation.LoadingStarted(BasicLoadingTarget.IMAGE))
+                val launchResult = context.launchTask(LOAD_TASK, TaskPolicy.DropWhileRunning) {
+                    val loadingStarted = mutate(
+                        SplitIntentBasicMutation.LoadingStarted(BasicLoadingTarget.IMAGE)
+                    )
+                    if (!loadingStarted) return@launchTask
                     try {
-                        mutate(
+                        val modelsLoaded = mutate(
                             SplitIntentBasicMutation.ImageModelsLoaded(fakeFetchImageModels())
                         )
-                        mutate(SplitIntentBasicMutation.LoadingFinished)
+                        if (!modelsLoaded) return@launchTask
+                        val loadingFinished = mutate(SplitIntentBasicMutation.LoadingFinished)
+                        if (!loadingFinished) return@launchTask
                     } catch (cancelled: CancellationException) {
                         throw cancelled
-                    } catch (failure: Exception) {
-                        mutate(
+                    } catch (_: Exception) {
+                        val failureRecorded = mutate(
                             SplitIntentBasicMutation.LoadFailed(
-                                failure.message ?: "Load image models failed",
+                                BasicLoadError.IMAGE_MODELS_UNAVAILABLE,
                             )
                         )
+                        if (!failureRecorded) return@launchTask
                     }
                 }
+                launchResult.toSampleExecutionDecision()
             }
 
             SplitIntentBasicUiIntent.LoadVideoModelsClicked -> {
-                context.launchTask(LOAD_TASK, TaskPolicy.DropWhileRunning) {
-                    mutate(SplitIntentBasicMutation.LoadingStarted(BasicLoadingTarget.VIDEO))
+                val launchResult = context.launchTask(LOAD_TASK, TaskPolicy.DropWhileRunning) {
+                    val loadingStarted = mutate(
+                        SplitIntentBasicMutation.LoadingStarted(BasicLoadingTarget.VIDEO)
+                    )
+                    if (!loadingStarted) return@launchTask
                     try {
-                        mutate(
+                        val modelsLoaded = mutate(
                             SplitIntentBasicMutation.VideoModelsLoaded(fakeFetchVideoModels())
                         )
-                        mutate(SplitIntentBasicMutation.LoadingFinished)
+                        if (!modelsLoaded) return@launchTask
+                        val loadingFinished = mutate(SplitIntentBasicMutation.LoadingFinished)
+                        if (!loadingFinished) return@launchTask
                     } catch (cancelled: CancellationException) {
                         throw cancelled
-                    } catch (failure: Exception) {
-                        mutate(
+                    } catch (_: Exception) {
+                        val failureRecorded = mutate(
                             SplitIntentBasicMutation.LoadFailed(
-                                failure.message ?: "Load video models failed",
+                                BasicLoadError.VIDEO_MODELS_UNAVAILABLE,
                             )
                         )
+                        if (!failureRecorded) return@launchTask
                     }
                 }
+                launchResult.toSampleExecutionDecision()
             }
 
             SplitIntentBasicUiIntent.ClearAllClicked -> {
-                context.mutate(SplitIntentBasicMutation.Cleared)
+                if (context.mutate(SplitIntentBasicMutation.Cleared)) {
+                    PulseIntentExecutionDecision.Completed
+                } else {
+                    PulseIntentExecutionDecision.Ignored("clear-mutation-not-accepted")
+                }
             }
         }
-        PulseIntentExecutionDecision.Completed
     },
 ) {
     private companion object {

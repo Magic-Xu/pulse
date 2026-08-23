@@ -2,6 +2,36 @@
 
 Notable changes to Pulse are recorded here.
 
+## 0.4.0 — release candidate
+
+Pulse 0.4.0 is not public yet. Pulse 0.3.0 remains the stable Maven Central release until the
+0.4.0 publication and isolated-consumer checks pass.
+
+### Added
+
+- End-to-end Split Store admission: suspending callers wait for capacity, non-suspending callers
+  see full-pipeline rejection, callback ingress requires rejection handling, and transition frames
+  remain read-only.
+- Typed `TASK` failures with task correlation metadata and typed `ADMISSION` failures when the
+  complete Split pipeline reaches its configured in-flight limit.
+- `mvi-platform-android-testing`, a deterministic host for testing Split Store flows without
+  recreating framework internals in consumer projects.
+- Safe structured logging helpers that redact payload values by default.
+
+### Changed
+
+- Android runtime configuration is now an explicit overlay on the core runtime defaults.
+- Task closure, cancellation, overflow, and late-callback convergence are verified across both
+  store-owned and store-independent execution paths.
+- Official samples demonstrate admission failure handling, callback bridging, lifecycle-safe UI
+  collection, and the new Android testing artifact.
+- Release verification now covers seven API baselines, the complete 0.3 six-artifact surface, the
+  retained 0.2 five-artifact surface, managed-device tests, and complete signed public bundles.
+
+See [the 0.4 migration guide](docs/MIGRATION_0.3_TO_0.4.md),
+[integration patterns](docs/INTEGRATION_PATTERNS.md), and
+[release notes](docs/RELEASE_NOTES_0.4.0.md).
+
 ## 0.3.0 — 2026-08-23
 
 Pulse 0.3.0 is published to Maven Central.

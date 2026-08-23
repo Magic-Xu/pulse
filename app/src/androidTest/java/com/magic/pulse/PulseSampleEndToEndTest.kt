@@ -16,7 +16,7 @@ class PulseSampleEndToEndTest {
     val compose = createAndroidComposeRule<MainActivity>()
 
     @Test
-    fun basicLatestTaskCompletesAcrossActivityRecreation() {
+    fun basicDropWhileRunningTaskCompletesAcrossActivityRecreation() {
         compose.onNodeWithText("Basic - Split Intent").performClick()
         compose.onNodeWithText("requestCount = 0").assertIsDisplayed()
 

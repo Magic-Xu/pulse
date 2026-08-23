@@ -15,6 +15,7 @@ import java.io.PrintStream
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
+import kotlin.test.assertIs
 import kotlin.test.assertSame
 import kotlin.test.assertTrue
 
@@ -72,6 +73,35 @@ class PulseRuntimeConfigTest {
         assertEquals("test-store", reported.context.storeId)
         assertEquals(failure.context.copy(storeId = "test-store"), reported.context)
         assertEquals(failure.phase, reported.phase)
+    }
+
+    @Test
+    fun `task failure store enrichment preserves launch correlation`() {
+        val cause = IllegalStateException("task failed")
+        val original = PulseFailure.TaskFailure(
+            context = FailureContext(
+                requestId = 41L,
+                component = "refresh-feed",
+                inputType = "com.example.Refresh",
+                thread = "task-thread",
+            ),
+            taskKey = "refresh-feed",
+            token = 17L,
+            cause = cause,
+        )
+
+        val enriched = assertIs<PulseFailure.TaskFailure>(
+            original.withStoreId("correlated-store")
+        )
+
+        assertEquals("correlated-store", enriched.context.storeId)
+        assertEquals(41L, enriched.context.requestId)
+        assertEquals("refresh-feed", enriched.context.component)
+        assertEquals("com.example.Refresh", enriched.context.inputType)
+        assertEquals("task-thread", enriched.context.thread)
+        assertEquals("refresh-feed", enriched.taskKey)
+        assertEquals(17L, enriched.token)
+        assertSame(cause, enriched.cause)
     }
 
     @Test

@@ -14,12 +14,22 @@ enum class LoadingTarget {
     VIDEO,
 }
 
+enum class NetworkModelsUpdate {
+    IMAGE_MODELS,
+    VIDEO_MODELS,
+}
+
+enum class NetworkLoadError {
+    IMAGE_MODELS_UNAVAILABLE,
+    VIDEO_MODELS_UNAVAILABLE,
+}
+
 data class NetworkModelsState(
     val isLoading: Boolean = false,
     val loadingTarget: LoadingTarget? = null,
     val imageModels: List<ImageModel> = emptyList(),
     val videoModels: List<VideoModel> = emptyList(),
-    val lastUpdatedLabel: String? = null,
+    val lastUpdated: NetworkModelsUpdate? = null,
 ) : MviState
 
 sealed interface NetworkModelsUiIntent : MviUiIntent {
@@ -32,11 +42,11 @@ sealed interface NetworkModelsMutation : MviMutation {
     data class ImageModelsLoaded(val models: List<ImageModel>) : NetworkModelsMutation
     data class VideoModelsLoaded(val models: List<VideoModel>) : NetworkModelsMutation
     data object LoadingCompleted : NetworkModelsMutation
-    data class LoadFailed(val message: String) : NetworkModelsMutation
+    data class LoadFailed(val error: NetworkLoadError) : NetworkModelsMutation
 }
 
 sealed interface NetworkModelsEffect : UiEffect {
-    data class ShowMessage(val text: String) : NetworkModelsEffect
+    data class ShowLoadError(val error: NetworkLoadError) : NetworkModelsEffect
 }
 
 object NetworkModelsReducer :
@@ -60,7 +70,7 @@ object NetworkModelsReducer :
                 ReduceOutcome.Changed(
                     previous.copy(
                         imageModels = mutation.models,
-                        lastUpdatedLabel = "Image models updated",
+                        lastUpdated = NetworkModelsUpdate.IMAGE_MODELS,
                     )
                 )
             }
@@ -69,7 +79,7 @@ object NetworkModelsReducer :
                 ReduceOutcome.Changed(
                     previous.copy(
                         videoModels = mutation.models,
-                        lastUpdatedLabel = "Video models updated",
+                        lastUpdated = NetworkModelsUpdate.VIDEO_MODELS,
                     )
                 )
             }
@@ -89,7 +99,7 @@ object NetworkModelsReducer :
                         isLoading = false,
                         loadingTarget = null,
                     ),
-                    uiEffects = listOf(NetworkModelsEffect.ShowMessage(mutation.message)),
+                    uiEffects = listOf(NetworkModelsEffect.ShowLoadError(mutation.error)),
                 )
             }
         }

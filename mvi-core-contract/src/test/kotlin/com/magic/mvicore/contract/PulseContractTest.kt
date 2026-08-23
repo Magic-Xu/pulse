@@ -98,7 +98,14 @@ class PulseContractTest {
             PulseFailure.UiEffectConsumerFailure(context, cause) to FailurePhase.UI_EFFECT_CONSUMER,
             PulseFailure.PluginFailure(context, cause) to FailurePhase.PLUGIN,
             PulseFailure.ExecutorFailure(context, cause) to FailurePhase.EXECUTOR,
+            PulseFailure.TaskFailure(
+                context = context,
+                taskKey = "refresh",
+                token = 10L,
+                cause = cause,
+            ) to FailurePhase.TASK,
             PulseFailure.MailboxOverflow(context, capacity = 16) to FailurePhase.OVERFLOW,
+            PulseFailure.SplitAdmissionOverflow(context, capacity = 16) to FailurePhase.ADMISSION,
             PulseFailure.UndeliveredUiEffect(
                 context = context,
                 envelope = EffectEnvelope(
@@ -119,6 +126,26 @@ class PulseContractTest {
         failures.forEach { (failure, phase) ->
             assertEquals(phase, failure.phase)
         }
+    }
+
+    @Test
+    fun `failure phase additions preserve the published 0_3 ordinals`() {
+        val published = listOf(
+            FailurePhase.REDUCER,
+            FailurePhase.STATE_CONSUMER,
+            FailurePhase.UI_EFFECT_CONSUMER,
+            FailurePhase.PLUGIN,
+            FailurePhase.EXECUTOR,
+            FailurePhase.OVERFLOW,
+            FailurePhase.UNDELIVERED_UI_EFFECT,
+            FailurePhase.LATE_MUTATION,
+            FailurePhase.RESTORE,
+            FailurePhase.SAVE,
+        )
+
+        assertEquals((0..9).toList(), published.map(FailurePhase::ordinal))
+        assertEquals(10, FailurePhase.TASK.ordinal)
+        assertEquals(11, FailurePhase.ADMISSION.ordinal)
     }
 
     @Test

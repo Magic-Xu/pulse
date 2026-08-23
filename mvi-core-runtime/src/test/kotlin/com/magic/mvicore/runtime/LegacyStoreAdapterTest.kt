@@ -18,6 +18,8 @@ import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeoutException
+import java.util.concurrent.atomic.AtomicInteger
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
@@ -160,6 +162,7 @@ class LegacyStoreAdapterTest {
     fun `observe snapshot never regresses while dispatch races registration`() {
         val store = store()
         val observations = mutableListOf<MutableList<Int>>()
+        val systemProgress = AtomicInteger()
 
         withExecutor(2) { executor ->
             val start = CountDownLatch(1)
@@ -167,6 +170,7 @@ class LegacyStoreAdapterTest {
                 check(start.await(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS))
                 repeat(SNAPSHOT_DISPATCH_COUNT) {
                     check(store.dispatch(Intent.Add(1)) == DispatchResult.Accepted)
+                    systemProgress.incrementAndGet()
                 }
             }
             val registrations = executor.submit {
@@ -176,11 +180,12 @@ class LegacyStoreAdapterTest {
                     observations += values
                     val subscription = store.observeState { values += it.value }
                     subscription.cancel()
+                    systemProgress.incrementAndGet()
                 }
             }
             start.countDown()
-            dispatches.await()
-            registrations.await()
+            dispatches.awaitWhileMakingProgress(systemProgress)
+            registrations.awaitWhileMakingProgress(systemProgress)
         }
 
         observations.forEach { observation ->
@@ -421,6 +426,23 @@ class LegacyStoreAdapterTest {
     }
 
     private fun <T> Future<T>.await(): T = get(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS)
+
+    /**
+     * This stress case verifies a race invariant, not a fixed throughput target. Keep the existing
+     * five-second liveness cutoff, but apply it to stalled work instead of the total operation count.
+     */
+    private fun <T> Future<T>.awaitWhileMakingProgress(progress: AtomicInteger): T {
+        var lastProgress = progress.get()
+        while (true) {
+            try {
+                return get(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS)
+            } catch (timeout: TimeoutException) {
+                val currentProgress = progress.get()
+                if (currentProgress == lastProgress) throw timeout
+                lastProgress = currentProgress
+            }
+        }
+    }
 
     private inline fun captureStandardError(block: () -> Unit): String {
         val output = ByteArrayOutputStream()

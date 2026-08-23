@@ -9,7 +9,9 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.magic.pulse.R
 import com.magic.pulse.samples.network.mvi.LoadingTarget
 
 @Composable
@@ -24,14 +26,14 @@ fun NetworkActionButtons(
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         LoadingActionButton(
-            text = "获取图片模型",
+            text = stringResource(R.string.network_load_images),
             isLoading = isLoading && loadingTarget == LoadingTarget.IMAGE,
             enabled = !isLoading,
             onClick = onLoadImages,
             modifier = Modifier.weight(1f),
         )
         LoadingActionButton(
-            text = "获取视频模型",
+            text = stringResource(R.string.network_load_videos),
             isLoading = isLoading && loadingTarget == LoadingTarget.VIDEO,
             enabled = !isLoading,
             onClick = onLoadVideos,

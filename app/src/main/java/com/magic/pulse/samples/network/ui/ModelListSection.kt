@@ -5,7 +5,9 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.magic.pulse.R
 
 @Composable
 fun ModelListSection(
@@ -21,10 +23,10 @@ fun ModelListSection(
             style = MaterialTheme.typography.titleMedium,
         )
         if (items.isEmpty()) {
-            Text("- $emptyText")
+            Text(stringResource(R.string.sample_list_item, emptyText))
         } else {
             items.forEach { item ->
-                Text("- $item")
+                Text(stringResource(R.string.sample_list_item, item))
             }
         }
     }
