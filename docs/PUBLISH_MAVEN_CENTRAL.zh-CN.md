@@ -2,7 +2,7 @@
 
 英文版：[PUBLISH_MAVEN_CENTRAL.md](./PUBLISH_MAVEN_CENTRAL.md)
 
-受控候选版为 **0.5.0**，准确 Tag 为 `v0.5.0`。全部签名制品和两个公共消费者通过验证后，发布才算完成。
+**0.5.0** 已从准确 Tag `v0.5.0` 发布，全部签名制品和两个公共消费者均通过[验证](https://github.com/Magic-Xu/pulse/actions/runs/34136328471)。
 
 ## 一次性准备
 

@@ -1,14 +1,25 @@
 # Pulse Iteration Roadmap
 
-The current development target is 0.5: precise mutation results and bounded Split correlation/timing. Application scaffolding and input-delivery policy remain in Platform/Factory and consumers. See [candidate scope](./RELEASE_NOTES_0.5.0.md).
-
 [简体中文](ITERATION_ROADMAP.zh-CN.md)
 
 ## Current line
 
-`0.4.0` is the current public stable release. It was published on 2026-08-24 from the exact
-annotated tag `v0.4.0`; all seven signed bundles and both isolated artifact consumers passed
-public verification. `0.3.0` is the preceding stable line.
+`0.5.0` is the current public stable release, published from exact annotated tag `v0.5.0`.
+All seven signed bundles and both public consumers passed [release verification](https://github.com/Magic-Xu/pulse/actions/runs/34136328471).
+0.4 is the direct compatibility baseline; 0.3/0.2 checks remain required.
+
+## 0.5 delivered scope
+
+- Precise mutation results distinguish commits, business ignores, failures, lifecycle rejection,
+  and stale tasks while retaining Boolean methods.
+- Bounded Split diagnostics correlate originating UI requests, task mutations, Core frames, and
+  executor timing.
+- The Android test host owns a diagnostic probe, and frozen seven-artifact 0.4 compatibility is
+  part of the release gate.
+- The selector benchmark acknowledges each bucket while retaining its expected count and thresholds.
+
+Application scaffolding and input policies remain with Platform/Factory and consumers. Pulse stays
+independent. See [release notes](./RELEASE_NOTES_0.5.0.md).
 
 ## 0.3 foundation
 
@@ -92,7 +103,7 @@ configured stable version, exact annotated tag, and guarded workflow target must
 job must depend on both qualification jobs, verify every public bundle, and run the public
 artifact-only consumers before availability is announced.
 
-## After 0.4
+## After 0.5
 
 Future work must preserve the single ordered runtime and earn framework ownership through repeated
 cross-application evidence, domain-independent semantics, and executable compatibility or

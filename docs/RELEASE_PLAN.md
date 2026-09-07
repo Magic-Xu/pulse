@@ -2,7 +2,7 @@
 
 Chinese version: [RELEASE_PLAN.zh-CN.md](./RELEASE_PLAN.zh-CN.md)
 
-> Status: **candidate**. The guarded release target is exact annotated tag `v0.5.0`.
+> Status: **released** from exact annotated tag `v0.5.0`. [Release verification](https://github.com/Magic-Xu/pulse/actions/runs/34136328471) passed.
 
 ## Scope
 
@@ -16,7 +16,7 @@ feature task policies. Pulse remains independent of that application scaffold.
 
 Public API or artifact changes require API review, framework and compatibility checks, staged
 consumers, stress/performance qualification, and managed-device verification on the final candidate.
-Previous release evidence is in the versioned release notes and does not qualify this candidate.
+Each release qualifies its own final commit; previous release evidence is not a substitute.
 
 ## Seven published artifacts
 

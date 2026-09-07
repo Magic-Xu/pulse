@@ -1,14 +1,14 @@
-# Pulse 0.4 Consumer Guide
+# Pulse 0.5 Consumer Guide
 
 [简体中文](CONSUMER_GUIDE.zh-CN.md)
 
-This guide targets application developers adopting the stable `0.4.0` API published on Maven Central.
+This guide targets application developers adopting the stable `0.5.0` API published on Maven Central.
 
 ## Start with one main dependency
 
 > [!TIP]
 > Most Android Compose apps need only
-> `implementation("io.github.magic-xu:mvi-platform-android-compose:0.4.0")`.
+> `implementation("io.github.magic-xu:mvi-platform-android-compose:0.5.0")`.
 > It already brings Android, runtime, and contract transitively.
 
 | Project type | Add this main dependency |
@@ -213,7 +213,7 @@ Choose the narrowest optional test artifact:
 ```kotlin
 dependencies {
     // Platform-neutral Store tests and TCK.
-    testImplementation("io.github.magic-xu:mvi-testing:0.4.0")
+    testImplementation("io.github.magic-xu:mvi-testing:0.5.0")
 }
 ```
 
@@ -222,7 +222,7 @@ For real `PulseSplitStoreViewModel` tests, use the Android artifact instead; it 
 
 ```kotlin
 dependencies {
-    testImplementation("io.github.magic-xu:mvi-platform-android-testing:0.4.0")
+    testImplementation("io.github.magic-xu:mvi-platform-android-testing:0.5.0")
 }
 ```
 
@@ -246,6 +246,14 @@ custom test redactor only for values that are safe to print. Test task cancellat
 `mvi-platform-android-testing` for Split admission, executor, mutation, effect, and `PulseSavedState`
 behavior. Keep Activity, Compose, and `LifecycleOwner` integration in instrumentation tests rather
 than relying on delays.
+
+## Precise outcomes and Split diagnostics
+
+Use executor/task context `mutateResult` to distinguish committed decisions, business ignores,
+failures, lifecycle rejection, and stale tasks. Existing Boolean `mutate` calls remain supported.
+`viewModel.diagnostics` correlates executor timing and mutations using `storeId` and `originIntentId`.
+This bounded replay-zero stream may lose events; use `send` for reliable completion. Test hosts
+provide `diagnosticProbe`. See [0.4 to 0.5 migration](MIGRATION_0.4_TO_0.5.md).
 
 ## Migration
 

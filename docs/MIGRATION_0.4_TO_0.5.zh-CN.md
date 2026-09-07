@@ -2,10 +2,10 @@
 
 英文版：[MIGRATION_0.4_TO_0.5.md](./MIGRATION_0.4_TO_0.5.md)
 
-> 状态：**候选版**。生产依赖继续使用已经完成公共验证的版本。
+> 状态：**已发布**。七个签名制品与两个公共消费者均通过[发布验证](https://github.com/Magic-Xu/pulse/actions/runs/34136328471)。
 
-所有 Pulse 模块保持同一版本。通过 Magic Android Platform 接入时，升级已验证 Pulse 0.5 的
-Platform 版本，不单独覆盖传递依赖。直接接入者在公共验证完成后使用
+项目使用到的所有 Pulse 模块保持同一版本。通过 Magic Android Platform 接入时，升级已验证 Pulse 0.5 的
+Platform 版本，不单独覆盖传递依赖。直接接入者使用
 `mvi-platform-android-compose:0.5.0`，Android 测试使用 `mvi-platform-android-testing:0.5.0`。
 
 现有 Boolean Mutation 调用无需修改。需要区分业务忽略、应用成功或任务失效时使用

@@ -1,14 +1,14 @@
-# Pulse 0.4 接入指南
+# Pulse 0.5 接入指南
 
 [English](CONSUMER_GUIDE.md)
 
-本文面向接入 Maven Central 稳定版 `0.4.0` API 的应用开发者。
+本文面向接入 Maven Central 稳定版 `0.5.0` API 的应用开发者。
 
 ## 从一个主依赖开始
 
 > [!TIP]
 > 绝大多数 Android Compose 应用只需要
-> `implementation("io.github.magic-xu:mvi-platform-android-compose:0.4.0")`。
+> `implementation("io.github.magic-xu:mvi-platform-android-compose:0.5.0")`。
 > 它会自动带入 Android、runtime 和 contract 层。
 
 | 项目类型 | 添加这一条主依赖 |
@@ -205,7 +205,7 @@ Get-Put、Put-Get 与 Put-Put。
 ```kotlin
 dependencies {
     // 平台无关 Store 测试与 TCK。
-    testImplementation("io.github.magic-xu:mvi-testing:0.4.0")
+    testImplementation("io.github.magic-xu:mvi-testing:0.5.0")
 }
 ```
 
@@ -213,7 +213,7 @@ dependencies {
 
 ```kotlin
 dependencies {
-    testImplementation("io.github.magic-xu:mvi-platform-android-testing:0.4.0")
+    testImplementation("io.github.magic-xu:mvi-platform-android-testing:0.5.0")
 }
 ```
 
@@ -235,6 +235,14 @@ Transition、Effect 与 Failure Probe 用于有序断言；自定义 Runtime 实
 断言，关闭通过 `awaitClosed` 断言。Split 接纳、executor、mutation、effect 与 `PulseSavedState`
 行为使用 `mvi-platform-android-testing` 的 `runPulseSplitTest`；Activity、Compose 和
 `LifecycleOwner` 集成保留在 Instrumentation Test 中，不要依赖延时碰运气。
+
+## 精确结果与 Split 诊断
+
+需要区分已提交、业务忽略、失败、关闭拒绝或任务过期时，使用 Executor/Task Context 的
+`mutateResult`；原有 Boolean `mutate` 仍保留。`viewModel.diagnostics` 通过
+`storeId` 和 `originIntentId` 关联 Executor 耗时及 Mutation。该流不重放、有界且可能丢失，
+可靠完成判断继续使用 `send`。测试宿主提供 `diagnosticProbe`。
+参见 [0.4 到 0.5 迁移](MIGRATION_0.4_TO_0.5.zh-CN.md)。
 
 ## 迁移
 

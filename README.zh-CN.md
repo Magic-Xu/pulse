@@ -1,14 +1,13 @@
 # Pulse
 
-当前开发目标为 **0.5.0**，参见[候选版发布说明](docs/RELEASE_NOTES_0.5.0.zh-CN.md)及[迁移指南](docs/MIGRATION_0.4_TO_0.5.zh-CN.md)。
-
 [English](README.md)
 
 Pulse 是一个面向 Kotlin 与 Android 的有序、协程优先 MVI 运行时。每个 Store 只拥有一个有界
 输入邮箱和一个处理器，通过 `StateFlow` 发布唯一状态，把每次输入记录成可关联的 Transition
 Frame，并由单一协调者交付 replay=0 的 UI Effect。
 
-最新稳定版为 **0.4.0**，已发布到 Maven Central。
+最新稳定版为 **0.5.0**，已发布到 Maven Central。参见[发布说明](docs/RELEASE_NOTES_0.5.0.zh-CN.md)
+及[迁移指南](docs/MIGRATION_0.4_TO_0.5.zh-CN.md)。
 
 ## 模块
 
@@ -72,7 +71,7 @@ Task 只存在于 `PulseIntentContext` 内。
 
 ## 依赖配置
 
-Pulse 0.4.0 已发布到 Maven Central：
+Pulse 0.5.0 已发布到 Maven Central：
 
 > [!TIP]
 > **绝大多数 Android Compose 应用只需要一条生产依赖：**
@@ -85,7 +84,7 @@ repositories {
 }
 
 dependencies {
-    implementation("io.github.magic-xu:mvi-platform-android-compose:0.4.0")
+    implementation("io.github.magic-xu:mvi-platform-android-compose:0.5.0")
 }
 ```
 
@@ -102,13 +101,13 @@ dependencies {
 ```kotlin
 dependencies {
     // 可选：State Lens、Reducer 拆分、日志和 Transition 辅助能力
-    implementation("io.github.magic-xu:mvi-extensions:0.4.0")
+    implementation("io.github.magic-xu:mvi-extensions:0.5.0")
 
     // 可选：测试真实 Split ViewModel；会传递引入 mvi-testing
-    testImplementation("io.github.magic-xu:mvi-platform-android-testing:0.4.0")
+    testImplementation("io.github.magic-xu:mvi-platform-android-testing:0.5.0")
 
     // 或者，只测试平台无关 Store 或运行 TCK：
-    // testImplementation("io.github.magic-xu:mvi-testing:0.4.0")
+    // testImplementation("io.github.magic-xu:mvi-testing:0.5.0")
 }
 ```
 
@@ -133,11 +132,12 @@ dependencies {
 ./gradlew clean mviReleaseCheck
 ```
 
-发布门禁包含标准测试、Store TCK、七模块 API/ABI 基线、六制品 v0.3 与五制品 v0.2
+发布门禁包含标准测试、Store TCK、七模块 API/ABI 基线、七制品 v0.4、六制品 v0.3 与五制品 v0.2
 源码/二进制兼容 fixture、Android/Compose 检查、发布包校验、纯制品示例、多种子压力与
 可移植性能下限 harness。
 
 继续阅读：[接入指南](docs/CONSUMER_GUIDE.zh-CN.md)、
+[0.4 到 0.5 迁移](docs/MIGRATION_0.4_TO_0.5.zh-CN.md)、
 [0.3 到 0.4 迁移](docs/MIGRATION_0.3_TO_0.4.zh-CN.md)、
 [0.2 到 0.3 迁移](docs/MIGRATION_0.2_TO_0.3.zh-CN.md) 与
 [架构决策](docs/decisions/)。

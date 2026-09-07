@@ -1,14 +1,13 @@
 # Pulse
 
-Development targets **0.5.0**. See the [candidate release notes](docs/RELEASE_NOTES_0.5.0.md) and [migration guide](docs/MIGRATION_0.4_TO_0.5.md).
-
 [简体中文](README.zh-CN.md)
 
 Pulse is an ordered, coroutine-first MVI runtime for Kotlin and Android. A store owns one bounded
 input mailbox and one processor, publishes state through `StateFlow`, records every processed input
 as a correlated transition frame, and delivers replay-zero UI effects through one coordinator.
 
-The latest stable release is **0.4.0**, available from Maven Central.
+The latest stable release is **0.5.0**, available from Maven Central. See the
+[release notes](docs/RELEASE_NOTES_0.5.0.md) and [migration guide](docs/MIGRATION_0.4_TO_0.5.md).
 
 ## Modules
 
@@ -73,7 +72,7 @@ admission to the bounded UI-to-executor path. Mutations and keyed tasks are avai
 
 ## Dependency setup
 
-Pulse 0.4.0 is available from Maven Central:
+Pulse 0.5.0 is available from Maven Central:
 
 > [!TIP]
 > **Most Android Compose apps need one production dependency:**
@@ -87,7 +86,7 @@ repositories {
 }
 
 dependencies {
-    implementation("io.github.magic-xu:mvi-platform-android-compose:0.4.0")
+    implementation("io.github.magic-xu:mvi-platform-android-compose:0.5.0")
 }
 ```
 
@@ -104,13 +103,13 @@ Add optional modules only when the feature needs them:
 ```kotlin
 dependencies {
     // Optional: State Lens, reducer decomposition, logging, and transition helpers
-    implementation("io.github.magic-xu:mvi-extensions:0.4.0")
+    implementation("io.github.magic-xu:mvi-extensions:0.5.0")
 
     // Optional: real Split ViewModel tests; includes mvi-testing transitively
-    testImplementation("io.github.magic-xu:mvi-platform-android-testing:0.4.0")
+    testImplementation("io.github.magic-xu:mvi-platform-android-testing:0.5.0")
 
     // Or, for platform-neutral Store tests and TCK only:
-    // testImplementation("io.github.magic-xu:mvi-testing:0.4.0")
+    // testImplementation("io.github.magic-xu:mvi-testing:0.5.0")
 }
 ```
 
@@ -136,12 +135,13 @@ dependencies {
 ./gradlew clean mviReleaseCheck
 ```
 
-The release gate includes standard tests, Store TCK, seven-module API/ABI baselines, six-artifact
+The release gate includes standard tests, Store TCK, seven-module API/ABI baselines, seven-artifact v0.4, six-artifact
 v0.3 and five-artifact v0.2 source/binary compatibility fixtures, Android/Compose checks,
 publication-bundle verification, artifact-only samples, multi-seed stress, and a portable
 performance-floor harness.
 
 See [Consumer Guide](docs/CONSUMER_GUIDE.md),
+[0.4 to 0.5 Migration](docs/MIGRATION_0.4_TO_0.5.md),
 [0.3 to 0.4 Migration](docs/MIGRATION_0.3_TO_0.4.md),
 [0.2 to 0.3 Migration](docs/MIGRATION_0.2_TO_0.3.md), and
 [release decisions](docs/decisions/).

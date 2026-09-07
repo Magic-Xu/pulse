@@ -1,11 +1,11 @@
 # Compatibility Policy
 
-The 0.5 candidate adds `compatibility04Check` for all seven published 0.4 artifacts, including the Android Split test host. The 0.3 and 0.2 fixtures remain required. Public Boolean mutation methods and observed Split input shapes are preserved.
+The 0.5 release includes `compatibility04Check` for all seven published 0.4 artifacts, including the Android Split test host. The 0.3 and 0.2 fixtures remain required. Public Boolean mutation methods and observed Split input shapes are preserved.
 
 Chinese version: [COMPATIBILITY.zh-CN.md](./COMPATIBILITY.zh-CN.md)
 
-> `0.4.0` is the current stable release on Maven Central. `0.3.0` is the direct compatibility
-> baseline, and the five-artifact `0.2.0` surface remains a long-term compatibility commitment.
+> `0.5.0` is the current stable release on Maven Central. `0.4.0` is the direct compatibility
+> baseline; the six-artifact 0.3 and five-artifact 0.2 checks remain required.
 
 This document distinguishes API compatibility from runtime behavior. A program can remain source
 and binary compatible while receiving stronger ordering and failure semantics.
@@ -15,13 +15,23 @@ and binary compatible while receiving stronger ordering and failure semantics.
 | Line | Status | Intended use |
 |---|---|---|
 | `0.2.0` | Long-term compatibility surface | Existing five-artifact integrations retained through the legacy adapters |
-| `0.3.0` | Direct compatibility baseline | Six-artifact ordered-runtime surface used to qualify 0.4 |
-| `0.4.0` | Current stable | Hardened Android integration, diagnostics, logging, and a seventh testing artifact |
+| `0.3.0` | Retained compatibility baseline | Six-artifact ordered-runtime surface used to qualify 0.4 |
+| `0.4.0` | Direct compatibility baseline | Hardened Android integration, diagnostics, logging, and a seventh testing artifact |
+| `0.5.0` | Current stable | Precise mutation outcomes and bounded Split correlation/timing |
 
 Pulse uses `0.x.y` versions. Before 1.0, a minor release may add or revise public APIs. Patch releases
 must not intentionally remove public APIs or change documented behavior incompatibly.
 
-## 0.3 to 0.4 direct compatibility target
+## 0.4 to 0.5 direct compatibility target
+
+Keep all seven coordinates, Boolean mutation methods, public Split input shapes, and existing JVM
+call signatures. Result and diagnostic APIs are additive; business ignored reasons no longer
+impersonate stale-task rejection. Application persistence schemas remain application-owned.
+`compatibility04Check` compiles frozen source against 0.4 and staged 0.5, compares all seven archives,
+and executes JVM source, frozen bytecode, and legacy implementation bridges. The retained 0.3/0.2
+aggregates also qualify the 0.5 artifacts.
+
+## Historical 0.3 to 0.4 compatibility target
 
 | Dimension | 0.4 target |
 |---|---|
@@ -89,7 +99,7 @@ should not mix Pulse module versions within one dependency graph.
 
 ## Intentional runtime differences
 
-The retained 0.2 and 0.3 APIs are backed by the 0.4 ordered engine. For 0.2 consumers, the following
+The retained 0.2 and 0.3 APIs are backed by the 0.5 ordered engine. For 0.2 consumers, the following
 0.3 changes remain intentional and must be tested if an application relied on timing rather than
 documented results:
 
@@ -118,7 +128,7 @@ delivery. Tasks and UI effects are process-local.
 
 ## Platform baseline
 
-Pulse 0.4.0 continues to use Java 11 bytecode targets. Android artifacts retain `minSdk 23`; the
+Pulse 0.5.0 continues to use Java 11 bytecode targets. Android artifacts retain `minSdk 23`; the
 release project compiles against Android API 36.1. Release and CI gates run on JDK 21. The published
 dependency set is defined by its Gradle metadata and POM; consumer dependency resolution must be
 checked against the application's own platform and constraints.
