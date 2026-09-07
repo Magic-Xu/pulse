@@ -34,7 +34,10 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.map
@@ -90,11 +93,21 @@ open class PulseSplitStoreViewModel<
         ConcurrentHashMap<SplitAdmissionLease, Boolean>()
     )
     private val splitOverflowDiagnosticPending = AtomicBoolean(false)
+    private val diagnosticLock = Any()
+    private var diagnosticSequence = 0L
+    private val diagnosticEvents = MutableSharedFlow<PulseSplitDiagnosticEvent>(
+        extraBufferCapacity = runtimeConfig.mailboxCapacity,
+        onBufferOverflow = BufferOverflow.DROP_OLDEST,
+    )
     private val executorInputs = Channel<ExecutorInput<S, UI>>(
         capacity = runtimeConfig.mailboxCapacity,
         onUndeliveredElement = { input ->
             input.completion?.complete(PulseIntentExecutionResult.Cancelled)
-            input.admission.release()
+            try {
+                recordExecution(input, null, PulseIntentExecutionStatus.CANCELLED)
+            } finally {
+                input.admission.release()
+            }
         },
     )
     private val store = DefaultPulseStore(
@@ -108,6 +121,7 @@ open class PulseSplitStoreViewModel<
                 is SplitStoreInput.Mutation -> {
                     val token = input.token
                     if (token != null && !taskAccess.validate(token)) {
+                        input.rejectedAsStaleTask = true
                         ReduceOutcome.Ignored(REASON_LATE_TASK_MUTATION)
                     } else {
                         mutationReducer.reduce(previous, input.value)
@@ -117,23 +131,47 @@ open class PulseSplitStoreViewModel<
         },
         config = runtimeConfig,
     )
-    private val mutationDispatcher = MutationDispatcher<M> { mutation, token ->
+    private val mutationDispatcher: MutationDispatcher<M> = DetailedMutationDispatcher<M> { mutation, token, originIntentId ->
+        fun observed(result: PulseMutationResult, requestId: Long? = null): PulseMutationResult {
+            recordDiagnostic { sequenceId ->
+                PulseSplitDiagnosticEvent.MutationCompleted(
+                    sequenceId = sequenceId,
+                    storeId = runtimeConfig.storeId,
+                    originIntentId = originIntentId,
+                    mutationRequestId = requestId,
+                    mutationType = mutation.typeName(),
+                    taskToken = token?.value,
+                    outcome = result.diagnosticStatus(),
+                )
+            }
+            return result
+        }
         if (!isExecutionActive()) {
             if (token != null && validateTaskToken(token)) {
                 reportLateMutation(token)
             }
-            return@MutationDispatcher false
+            return@DetailedMutationDispatcher observed(PulseMutationResult.Rejected(RejectionReason.Closing))
         }
         if (token != null && !validateTaskToken(token)) {
-            return@MutationDispatcher false
+            return@DetailedMutationDispatcher observed(PulseMutationResult.StaleTask)
         }
-        when (val result = store.send(SplitStoreInput.Mutation(mutation, token))) {
+        val input = SplitStoreInput.Mutation(mutation, token)
+        when (val result = store.send(input)) {
             is TransitionResult.Completed -> {
-                val outcome = result.frame.outcome
-                outcome !is TransitionOutcome.Ignored || outcome.reason != REASON_LATE_TASK_MUTATION
+                val outcome = if (input.rejectedAsStaleTask) {
+                    PulseMutationResult.StaleTask
+                } else {
+                    when (val outcome = result.frame.outcome) {
+                        TransitionOutcome.Changed -> PulseMutationResult.Changed
+                        TransitionOutcome.Unchanged -> PulseMutationResult.Unchanged
+                        is TransitionOutcome.Ignored -> PulseMutationResult.Ignored(outcome.reason)
+                        TransitionOutcome.ReducerFailed -> error("Failed frame must carry a reducer failure")
+                    }
+                }
+                observed(outcome, result.frame.requestId)
             }
 
-            is TransitionResult.Failed -> false
+            is TransitionResult.Failed -> observed(PulseMutationResult.Failed(result.failure), result.frame.requestId)
             is TransitionResult.Rejected -> {
                 if (token != null && validateTaskToken(token)) {
                     // The close cutoff and task invalidation are adjacent operations. If this
@@ -141,7 +179,7 @@ open class PulseSplitStoreViewModel<
                     // rejected attempt explicitly instead of losing the late-mutation diagnostic.
                     reportLateMutation(token)
                 }
-                false
+                observed(PulseMutationResult.Rejected(result.reason))
             }
         }
     }
@@ -165,10 +203,20 @@ open class PulseSplitStoreViewModel<
     val transitions: Flow<TransitionFrame<S, PulseSplitInput<UI, M>, E>> =
         store.transitions.map { frame -> frame.toObservedFrame() }
 
+    /**
+     * Best-effort, replay-zero correlation and executor timing. Slow observers never suspend Store
+     * work: at most mailboxCapacity events are buffered and oldest entries are dropped on overflow.
+     * Sequence gaps expose loss. Subscribe before sending; this is not a reliable completion log.
+     * Events do not copy input values, task keys, ignored reasons, or exception messages.
+     */
+    val diagnostics: Flow<PulseSplitDiagnosticEvent> = diagnosticEvents.asSharedFlow()
+
     init {
         taskAccess = store.tasks
         executorJob = ownerScope.launch(start = CoroutineStart.UNDISPATCHED) {
             for (input in executorInputs) {
+                val startedAtNanos = runtimeConfig.clock.nanoTime()
+                var diagnosticStatus = PulseIntentExecutionStatus.CANCELLED
                 val context = PulseIntentContext(
                     intentId = input.intentId,
                     stateAtStart = input.stateAtStart,
@@ -186,6 +234,11 @@ open class PulseSplitStoreViewModel<
                             PulseIntentExecutionResult.Ignored(decision.reason)
                         }
                     }
+                    diagnosticStatus = when (result) {
+                        PulseIntentExecutionResult.Completed -> PulseIntentExecutionStatus.COMPLETED
+                        is PulseIntentExecutionResult.Ignored -> PulseIntentExecutionStatus.IGNORED
+                        else -> error("Executor decision must be Completed or Ignored")
+                    }
                     input.completion?.complete(result)
                 } catch (cancelled: CancellationException) {
                     // A feature may cancel one intent without cancelling the serial executor lane.
@@ -193,6 +246,7 @@ open class PulseSplitStoreViewModel<
                     input.completion?.complete(PulseIntentExecutionResult.Cancelled)
                     currentCoroutineContext().ensureActive()
                 } catch (failure: Exception) {
+                    diagnosticStatus = PulseIntentExecutionStatus.FAILED
                     try {
                         reportPlatformFailure(
                             PulseFailure.ExecutorFailure(
@@ -213,11 +267,16 @@ open class PulseSplitStoreViewModel<
                         throw terminal
                     }
                 } catch (fatal: Throwable) {
+                    diagnosticStatus = PulseIntentExecutionStatus.FATAL
                     input.completion?.completeExceptionally(fatal)
                     close()
                     throw fatal
                 } finally {
-                    input.admission.release()
+                    try {
+                        recordExecution(input, startedAtNanos, diagnosticStatus)
+                    } finally {
+                        input.admission.release()
+                    }
                 }
             }
         }
@@ -232,6 +291,8 @@ open class PulseSplitStoreViewModel<
                             stateAtStart = frame.stateBefore,
                             completion = input.completion,
                             admission = input.admission,
+                            timing = input.timing,
+                            inputFrameCompletedAtNanos = frame.completedAtNanos,
                         )
                     )
                 }
@@ -273,17 +334,19 @@ open class PulseSplitStoreViewModel<
         if (!isExecutionActive()) {
             return PulseIntentExecutionResult.Rejected(RejectionReason.Closing)
         }
+        val submittedAtNanos = runtimeConfig.clock.nanoTime()
         splitAdmissionPermits.acquire()
         if (!isExecutionActive()) {
             splitAdmissionPermits.release()
             return PulseIntentExecutionResult.Rejected(RejectionReason.Closing)
         }
         val admission = newAdmissionLease()
+        val timing = SplitInputTiming(submittedAtNanos, runtimeConfig.clock.nanoTime())
         val completion = CompletableDeferred<PulseIntentExecutionResult>()
         pendingExecutionResults += completion
         completion.invokeOnCompletion { pendingExecutionResults -= completion }
         return try {
-            when (val result = store.send(SplitStoreInput.Ui(intent, completion, admission))) {
+            when (val result = store.send(SplitStoreInput.Ui(intent, completion, admission, timing))) {
                 is TransitionResult.Completed -> completion.await()
                 is TransitionResult.Failed -> {
                     PulseIntentExecutionResult.Failed(result.failure.cause as Exception)
@@ -314,6 +377,7 @@ open class PulseSplitStoreViewModel<
         if (!isExecutionActive()) {
             return EnqueueResult.Rejected(RejectionReason.Closing)
         }
+        val submittedAtNanos = runtimeConfig.clock.nanoTime()
         if (!splitAdmissionPermits.tryAcquire()) {
             reportSplitAdmissionOverflow(intent)
             return EnqueueResult.Full
@@ -323,7 +387,8 @@ open class PulseSplitStoreViewModel<
             return EnqueueResult.Rejected(RejectionReason.Closing)
         }
         val admission = newAdmissionLease()
-        return store.trySend(SplitStoreInput.Ui(intent, completion = null, admission)).also { result ->
+        val timing = SplitInputTiming(submittedAtNanos, runtimeConfig.clock.nanoTime())
+        return store.trySend(SplitStoreInput.Ui(intent, completion = null, admission, timing)).also { result ->
             if (result !is EnqueueResult.Enqueued) admission.release()
         }
     }
@@ -543,6 +608,34 @@ open class PulseSplitStoreViewModel<
 
     private fun Any.typeName(): String = this::class.qualifiedName ?: javaClass.name
 
+    private fun recordDiagnostic(event: (Long) -> PulseSplitDiagnosticEvent) {
+        synchronized(diagnosticLock) {
+            diagnosticEvents.tryEmit(event(++diagnosticSequence))
+        }
+    }
+
+    private fun recordExecution(
+        input: ExecutorInput<S, UI>,
+        startedAtNanos: Long?,
+        outcome: PulseIntentExecutionStatus,
+    ) {
+        val completedAtNanos = runtimeConfig.clock.nanoTime()
+        recordDiagnostic { sequenceId ->
+            PulseSplitDiagnosticEvent.ExecutionCompleted(
+                sequenceId = sequenceId,
+                storeId = runtimeConfig.storeId,
+                originIntentId = input.intentId,
+                inputType = input.intent.typeName(),
+                submittedAtNanos = input.timing.submittedAtNanos,
+                admittedAtNanos = input.timing.admittedAtNanos,
+                inputFrameCompletedAtNanos = input.inputFrameCompletedAtNanos,
+                executorStartedAtNanos = startedAtNanos,
+                completedAtNanos = completedAtNanos,
+                outcome = outcome,
+            )
+        }
+    }
+
     private fun TransitionFrame<S, SplitStoreInput<UI, M>, E>.toObservedFrame():
         TransitionFrame<S, PulseSplitInput<UI, M>, E> {
         val observedInput = when (val runtimeInput = input) {
@@ -592,4 +685,6 @@ private data class ExecutorInput<S : MviState, UI : MviUiIntent>(
     val stateAtStart: S,
     val completion: CompletableDeferred<PulseIntentExecutionResult>?,
     val admission: SplitAdmissionLease,
+    val timing: SplitInputTiming,
+    val inputFrameCompletedAtNanos: Long,
 )

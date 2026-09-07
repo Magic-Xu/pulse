@@ -1,5 +1,7 @@
 # Pulse Iteration Roadmap
 
+The current development target is 0.5: precise mutation results and bounded Split correlation/timing. Application scaffolding and input-delivery policy remain in Platform/Factory and consumers. See [candidate scope](./RELEASE_NOTES_0.5.0.md).
+
 [简体中文](ITERATION_ROADMAP.zh-CN.md)
 
 ## Current line

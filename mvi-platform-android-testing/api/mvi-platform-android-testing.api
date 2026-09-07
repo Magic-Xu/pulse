@@ -1,3 +1,10 @@
+public final class com/magic/mvicore/android/testing/PulseSplitDiagnosticProbe {
+	public final fun awaitCount (IJLkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun awaitCount$default (Lcom/magic/mvicore/android/testing/PulseSplitDiagnosticProbe;IJLkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public final fun forIntent (J)Ljava/util/List;
+	public final fun snapshot ()Ljava/util/List;
+}
+
 public final class com/magic/mvicore/android/testing/PulseSplitEffectProbe {
 	public final fun awaitCount (IJLkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public static synthetic fun awaitCount$default (Lcom/magic/mvicore/android/testing/PulseSplitEffectProbe;IJLkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
@@ -67,6 +74,7 @@ public abstract interface class com/magic/mvicore/android/testing/PulseSplitView
 
 public final class com/magic/mvicore/android/testing/TestPulseSplitHost {
 	public final fun closeAndDrain (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun getDiagnosticProbe ()Lcom/magic/mvicore/android/testing/PulseSplitDiagnosticProbe;
 	public final fun getEffectProbe ()Lcom/magic/mvicore/android/testing/PulseSplitEffectProbe;
 	public final fun getFailureProbe ()Lcom/magic/mvicore/testing/FailureProbe;
 	public final fun getStateProbe ()Lcom/magic/mvicore/android/testing/PulseSplitStateProbe;

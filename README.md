@@ -1,5 +1,7 @@
 # Pulse
 
+Development targets **0.5.0**. See the [candidate release notes](docs/RELEASE_NOTES_0.5.0.md) and [migration guide](docs/MIGRATION_0.4_TO_0.5.md).
+
 [简体中文](README.zh-CN.md)
 
 Pulse is an ordered, coroutine-first MVI runtime for Kotlin and Android. A store owns one bounded

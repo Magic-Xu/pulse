@@ -1,5 +1,7 @@
 # Pulse 迭代路线图
 
+当前开发目标为 0.5：精确 Mutation 结果及有界 Split 关联和耗时诊断。应用脚手架和输入交付策略继续由 Platform、Factory 和消费者负责。参见[候选版范围](./RELEASE_NOTES_0.5.0.zh-CN.md)。
+
 [English](ITERATION_ROADMAP.md)
 
 ## 当前版本线

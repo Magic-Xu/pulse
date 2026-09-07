@@ -179,14 +179,25 @@ private fun measureSelectorHits(): Int = runBlocking {
             .take(expectedHits)
             .collect { hits += 1 }
     }
-    repeat(ITERATIONS) { store.send(BenchmarkIntent.Increment) }
-    collector.join()
-    store.close()
-    store.awaitClosed()
-    check(hits == expectedHits) {
-        "Selector pipeline emitted $hits values; expected $expectedHits."
+    try {
+        // StateFlow may conflate intermediate states. Confirm each selected bucket before sending
+        // the next one so this distinctness check does not assume lossless StateFlow delivery.
+        repeat(ITERATIONS / 10) { bucket ->
+            repeat(10) { store.send(BenchmarkIntent.Increment) }
+            withTimeout(5_000L) {
+                while (hits < bucket + 2) yield()
+            }
+        }
+        withTimeout(5_000L) { collector.join() }
+        check(hits == expectedHits) {
+            "Selector pipeline emitted $hits values; expected $expectedHits."
+        }
+        hits
+    } finally {
+        collector.cancelAndJoin()
+        store.close()
+        store.awaitClosed()
     }
-    hits
 }
 
 private fun measureCollectorDeliveryP95(): Long = runBlocking {

@@ -1,10 +1,8 @@
-# 将 Pulse 0.4.0 发布到 Maven Central
+# 将 Pulse 发布到 Maven Central
 
 英文版：[PUBLISH_MAVEN_CENTRAL.md](./PUBLISH_MAVEN_CENTRAL.md)
 
-> 状态：**已于 2026-08-24 发布**，来源为准确的 Annotated Tag `v0.4.0`。
-> [Workflow Run 32659106344](https://github.com/Magic-Xu/pulse/actions/runs/32659106344) 已通过；
-> 七个签名 Maven Central 发布包均已公开，两个隔离纯制品消费者均已通过。
+受控候选版为 **0.5.0**，准确 Tag 为 `v0.5.0`。全部签名制品和两个公共消费者通过验证后，发布才算完成。
 
 ## 一次性准备
 
@@ -24,12 +22,6 @@
 Maven Central 对坐标、签名、Source Archive 和 POM Metadata 的要求参见
 [发布要求](https://central.sonatype.org/publish/requirements/)。
 
-## 0.4.0 发布记录
-
-受保护 Workflow 已完成 `release-check`、`device-check`、签名发布，对每个 POM、Gradle
-Metadata、Source Archive、Javadoc Archive、Binary 与签名的公共验证，以及两个只使用 Maven
-Central 的消费者。发布版本与准确 Tag 一致：`POM_VERSION_NAME=0.4.0`、`v0.4.0`。
-
 ## 准备后续稳定版
 
 使用 JDK 21。目标版本为 `X.Y.Z` 时，创建发布提交前：
@@ -48,7 +40,7 @@ Central 的消费者。发布版本与准确 Tag 一致：`POM_VERSION_NAME=0.4.
 ./gradlew mviAndroidDeviceCheck --stacktrace
 ```
 
-`mviReleaseCheck` 包含 `mviFrameworkCheck`、七制品暂存与发布包验证、0.3 六制品与保留的
+`mviReleaseCheck` 包含 `mviFrameworkCheck`、七制品暂存与发布包验证、0.4 七制品、0.3 六制品与保留的
 0.2 五制品兼容 Fixture、两个暂存纯制品消费者、多 Seed 压力、性能下限、版本一致性与
 `verifyMavenCentralConfig`。`mviAndroidDeviceCheck` 会在托管 API 35 设备上运行示例端到端
 Instrumentation。
@@ -77,9 +69,9 @@ Workflow 必须只由已配置的准确稳定 Tag 触发，并强制以下顺序
 不要为正式稳定版手动运行 `publishAndReleaseToMavenCentral`。远程发布只属于受保护
 Workflow；Gradle Publish Task 也不会反向依赖 `mviReleaseCheck`。
 
-## 已发布的 0.4.0 发布包
+## 必需发布包
 
-Workflow 已用同一个版本发布七个制品：
+Workflow 必须用同一个版本发布七个制品：
 
 - `mvi-core-contract`
 - `mvi-core-runtime`
@@ -89,9 +81,9 @@ Workflow 已用同一个版本发布七个制品：
 - `mvi-extensions`
 - `mvi-testing`
 
-本地 Staging 已验证每个 Binary（JAR 或 AAR）、Source Archive、Javadoc Archive、POM、
-Gradle Module Metadata、版本和内部 Pulse 依赖版本。三个 Android 制品发布了 AAR，其余四个
-发布了 JAR。
+本地 Staging 必须验证每个 Binary（JAR 或 AAR）、Source Archive、Javadoc Archive、POM、
+Gradle Module Metadata、版本和内部 Pulse 依赖版本。三个 Android 制品发布 AAR，其余四个
+发布 JAR。
 
 ## 验证后续发布
 

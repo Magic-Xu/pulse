@@ -29,6 +29,7 @@ public final class com/magic/mvicore/android/PulseIntentContext {
 	public final fun getStateAtStart ()Lcom/magic/mvicore/contract/MviState;
 	public final fun launchTask-X6WvQZY (Ljava/lang/String;Lcom/magic/mvicore/contract/TaskPolicy;Lkotlin/jvm/functions/Function2;)Lcom/magic/mvicore/contract/TaskLaunchResult;
 	public final fun mutate (Lcom/magic/mvicore/contract/MviMutation;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun mutateResult (Lcom/magic/mvicore/contract/MviMutation;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public final fun reportFailure (Ljava/lang/String;Ljava/lang/Exception;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
 
@@ -103,6 +104,86 @@ public final class com/magic/mvicore/android/PulseIntentExecutionResult$Rejected
 	public fun toString ()Ljava/lang/String;
 }
 
+public final class com/magic/mvicore/android/PulseIntentExecutionStatus : java/lang/Enum {
+	public static final field CANCELLED Lcom/magic/mvicore/android/PulseIntentExecutionStatus;
+	public static final field COMPLETED Lcom/magic/mvicore/android/PulseIntentExecutionStatus;
+	public static final field FAILED Lcom/magic/mvicore/android/PulseIntentExecutionStatus;
+	public static final field FATAL Lcom/magic/mvicore/android/PulseIntentExecutionStatus;
+	public static final field IGNORED Lcom/magic/mvicore/android/PulseIntentExecutionStatus;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/magic/mvicore/android/PulseIntentExecutionStatus;
+	public static fun values ()[Lcom/magic/mvicore/android/PulseIntentExecutionStatus;
+}
+
+public abstract interface class com/magic/mvicore/android/PulseMutationResult {
+}
+
+public final class com/magic/mvicore/android/PulseMutationResult$Changed : com/magic/mvicore/android/PulseMutationResult {
+	public static final field INSTANCE Lcom/magic/mvicore/android/PulseMutationResult$Changed;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/magic/mvicore/android/PulseMutationResult$Failed : com/magic/mvicore/android/PulseMutationResult {
+	public fun <init> (Lcom/magic/mvicore/contract/PulseFailure$ReducerFailure;)V
+	public final fun component1 ()Lcom/magic/mvicore/contract/PulseFailure$ReducerFailure;
+	public final fun copy (Lcom/magic/mvicore/contract/PulseFailure$ReducerFailure;)Lcom/magic/mvicore/android/PulseMutationResult$Failed;
+	public static synthetic fun copy$default (Lcom/magic/mvicore/android/PulseMutationResult$Failed;Lcom/magic/mvicore/contract/PulseFailure$ReducerFailure;ILjava/lang/Object;)Lcom/magic/mvicore/android/PulseMutationResult$Failed;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getFailure ()Lcom/magic/mvicore/contract/PulseFailure$ReducerFailure;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/magic/mvicore/android/PulseMutationResult$Ignored : com/magic/mvicore/android/PulseMutationResult {
+	public fun <init> (Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;)Lcom/magic/mvicore/android/PulseMutationResult$Ignored;
+	public static synthetic fun copy$default (Lcom/magic/mvicore/android/PulseMutationResult$Ignored;Ljava/lang/String;ILjava/lang/Object;)Lcom/magic/mvicore/android/PulseMutationResult$Ignored;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getReason ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/magic/mvicore/android/PulseMutationResult$Rejected : com/magic/mvicore/android/PulseMutationResult {
+	public fun <init> (Lcom/magic/mvicore/contract/RejectionReason;)V
+	public final fun component1 ()Lcom/magic/mvicore/contract/RejectionReason;
+	public final fun copy (Lcom/magic/mvicore/contract/RejectionReason;)Lcom/magic/mvicore/android/PulseMutationResult$Rejected;
+	public static synthetic fun copy$default (Lcom/magic/mvicore/android/PulseMutationResult$Rejected;Lcom/magic/mvicore/contract/RejectionReason;ILjava/lang/Object;)Lcom/magic/mvicore/android/PulseMutationResult$Rejected;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getReason ()Lcom/magic/mvicore/contract/RejectionReason;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/magic/mvicore/android/PulseMutationResult$StaleTask : com/magic/mvicore/android/PulseMutationResult {
+	public static final field INSTANCE Lcom/magic/mvicore/android/PulseMutationResult$StaleTask;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/magic/mvicore/android/PulseMutationResult$Unchanged : com/magic/mvicore/android/PulseMutationResult {
+	public static final field INSTANCE Lcom/magic/mvicore/android/PulseMutationResult$Unchanged;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/magic/mvicore/android/PulseMutationStatus : java/lang/Enum {
+	public static final field CHANGED Lcom/magic/mvicore/android/PulseMutationStatus;
+	public static final field FAILED Lcom/magic/mvicore/android/PulseMutationStatus;
+	public static final field IGNORED Lcom/magic/mvicore/android/PulseMutationStatus;
+	public static final field REJECTED Lcom/magic/mvicore/android/PulseMutationStatus;
+	public static final field STALE_TASK Lcom/magic/mvicore/android/PulseMutationStatus;
+	public static final field UNCHANGED Lcom/magic/mvicore/android/PulseMutationStatus;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/magic/mvicore/android/PulseMutationStatus;
+	public static fun values ()[Lcom/magic/mvicore/android/PulseMutationStatus;
+}
+
 public final class com/magic/mvicore/android/PulseRestoreFailurePolicy : java/lang/Enum {
 	public static final field FAIL_CREATION Lcom/magic/mvicore/android/PulseRestoreFailurePolicy;
 	public static final field FALLBACK_TO_INITIAL_STATE Lcom/magic/mvicore/android/PulseRestoreFailurePolicy;
@@ -120,6 +201,68 @@ public final class com/magic/mvicore/android/PulseSavedState {
 public abstract interface class com/magic/mvicore/android/PulseSavedStateAdapter {
 	public abstract fun restore (Landroidx/lifecycle/SavedStateHandle;)Lcom/magic/mvicore/contract/MviState;
 	public abstract fun save (Lcom/magic/mvicore/contract/MviState;Landroidx/lifecycle/SavedStateHandle;)V
+}
+
+public abstract interface class com/magic/mvicore/android/PulseSplitDiagnosticEvent {
+	public abstract fun getOriginIntentId ()J
+	public abstract fun getSequenceId ()J
+	public abstract fun getStoreId ()Ljava/lang/String;
+}
+
+public final class com/magic/mvicore/android/PulseSplitDiagnosticEvent$ExecutionCompleted : com/magic/mvicore/android/PulseSplitDiagnosticEvent {
+	public fun <init> (JLjava/lang/String;JLjava/lang/String;JJJLjava/lang/Long;JLcom/magic/mvicore/android/PulseIntentExecutionStatus;)V
+	public final fun component1 ()J
+	public final fun component10 ()Lcom/magic/mvicore/android/PulseIntentExecutionStatus;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()J
+	public final fun component4 ()Ljava/lang/String;
+	public final fun component5 ()J
+	public final fun component6 ()J
+	public final fun component7 ()J
+	public final fun component8 ()Ljava/lang/Long;
+	public final fun component9 ()J
+	public final fun copy (JLjava/lang/String;JLjava/lang/String;JJJLjava/lang/Long;JLcom/magic/mvicore/android/PulseIntentExecutionStatus;)Lcom/magic/mvicore/android/PulseSplitDiagnosticEvent$ExecutionCompleted;
+	public static synthetic fun copy$default (Lcom/magic/mvicore/android/PulseSplitDiagnosticEvent$ExecutionCompleted;JLjava/lang/String;JLjava/lang/String;JJJLjava/lang/Long;JLcom/magic/mvicore/android/PulseIntentExecutionStatus;ILjava/lang/Object;)Lcom/magic/mvicore/android/PulseSplitDiagnosticEvent$ExecutionCompleted;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAdmissionWaitNanos ()J
+	public final fun getAdmittedAtNanos ()J
+	public final fun getCompletedAtNanos ()J
+	public final fun getExecutionDurationNanos ()J
+	public final fun getExecutorStartedAtNanos ()Ljava/lang/Long;
+	public final fun getExecutorWaitNanos ()J
+	public final fun getInputFrameCompletedAtNanos ()J
+	public final fun getInputType ()Ljava/lang/String;
+	public fun getOriginIntentId ()J
+	public final fun getOutcome ()Lcom/magic/mvicore/android/PulseIntentExecutionStatus;
+	public fun getSequenceId ()J
+	public fun getStoreId ()Ljava/lang/String;
+	public final fun getSubmittedAtNanos ()J
+	public final fun getTotalDurationNanos ()J
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/magic/mvicore/android/PulseSplitDiagnosticEvent$MutationCompleted : com/magic/mvicore/android/PulseSplitDiagnosticEvent {
+	public fun <init> (JLjava/lang/String;JLjava/lang/Long;Ljava/lang/String;Ljava/lang/Long;Lcom/magic/mvicore/android/PulseMutationStatus;)V
+	public final fun component1 ()J
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()J
+	public final fun component4 ()Ljava/lang/Long;
+	public final fun component5 ()Ljava/lang/String;
+	public final fun component6 ()Ljava/lang/Long;
+	public final fun component7 ()Lcom/magic/mvicore/android/PulseMutationStatus;
+	public final fun copy (JLjava/lang/String;JLjava/lang/Long;Ljava/lang/String;Ljava/lang/Long;Lcom/magic/mvicore/android/PulseMutationStatus;)Lcom/magic/mvicore/android/PulseSplitDiagnosticEvent$MutationCompleted;
+	public static synthetic fun copy$default (Lcom/magic/mvicore/android/PulseSplitDiagnosticEvent$MutationCompleted;JLjava/lang/String;JLjava/lang/Long;Ljava/lang/String;Ljava/lang/Long;Lcom/magic/mvicore/android/PulseMutationStatus;ILjava/lang/Object;)Lcom/magic/mvicore/android/PulseSplitDiagnosticEvent$MutationCompleted;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getMutationRequestId ()Ljava/lang/Long;
+	public final fun getMutationType ()Ljava/lang/String;
+	public fun getOriginIntentId ()J
+	public final fun getOutcome ()Lcom/magic/mvicore/android/PulseMutationStatus;
+	public fun getSequenceId ()J
+	public fun getStoreId ()Ljava/lang/String;
+	public final fun getTaskToken ()Ljava/lang/Long;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
 }
 
 public abstract interface class com/magic/mvicore/android/PulseSplitInput : com/magic/mvicore/contract/MviIntent {
@@ -153,6 +296,7 @@ public class com/magic/mvicore/android/PulseSplitStoreViewModel : androidx/lifec
 	public final fun awaitClosed (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public final fun callbackIngress (Lkotlin/jvm/functions/Function2;)Lcom/magic/mvicore/android/PulseCallbackIngress;
 	public final fun close ()V
+	public final fun getDiagnostics ()Lkotlinx/coroutines/flow/Flow;
 	public final fun getState ()Lkotlinx/coroutines/flow/StateFlow;
 	public final fun getTransitions ()Lkotlinx/coroutines/flow/Flow;
 	public final fun getUiEffects ()Lcom/magic/mvicore/runtime/UiEffectStream;
@@ -183,8 +327,10 @@ public abstract interface class com/magic/mvicore/android/PulseStateHost {
 
 public final class com/magic/mvicore/android/PulseTaskContext {
 	public final fun getCurrentState ()Lcom/magic/mvicore/contract/MviState;
+	public final fun getOriginIntentId ()J
 	public final fun getToken ()Lcom/magic/mvicore/contract/TaskToken;
 	public final fun mutate (Lcom/magic/mvicore/contract/MviMutation;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun mutateResult (Lcom/magic/mvicore/contract/MviMutation;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
 
 public abstract interface class com/magic/mvicore/android/PulseUiIntentExecutor {

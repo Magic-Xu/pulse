@@ -39,6 +39,7 @@ class TestPulseSplitHost<
     val stateProbe = PulseSplitStateProbe<S>()
     val transitionProbe = PulseSplitTransitionProbe<S, UI, M, E>()
     val effectProbe = PulseSplitEffectProbe<E>()
+    val diagnosticProbe = PulseSplitDiagnosticProbe()
 
     private val closeStarted = AtomicBoolean(false)
     private val cleanupStarted = AtomicBoolean(false)
@@ -57,6 +58,11 @@ class TestPulseSplitHost<
         start = CoroutineStart.UNDISPATCHED,
     ) {
         viewModel.transitions.collect(transitionProbe::record)
+    }
+    private val diagnosticCollector: Job = testScope.backgroundScope.launch(
+        start = CoroutineStart.UNDISPATCHED,
+    ) {
+        viewModel.diagnostics.collect(diagnosticProbe::record)
     }
 
     /**
@@ -108,6 +114,11 @@ class TestPulseSplitHost<
             }
             try {
                 transitionCollector.cancelAndJoin()
+            } catch (collectorFailure: Throwable) {
+                failure = failure.combine(collectorFailure)
+            }
+            try {
+                diagnosticCollector.cancelAndJoin()
             } catch (collectorFailure: Throwable) {
                 failure = failure.combine(collectorFailure)
             }

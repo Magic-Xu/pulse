@@ -1,5 +1,7 @@
 # 兼容性政策
 
+0.5 候选版新增 `compatibility04Check`，覆盖 0.4 七个制品及 Android Split 测试宿主；0.3 和 0.2 检查继续保留。公开 Boolean Mutation 方法和可观察 Split 输入类型保持不变。
+
 英文版：[COMPATIBILITY.md](./COMPATIBILITY.md)
 
 > `0.4.0` 是 Maven Central 当前稳定版；`0.3.0` 是直接兼容基线，0.2.0 的五制品表面继续作为
