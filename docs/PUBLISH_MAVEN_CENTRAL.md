@@ -2,7 +2,7 @@
 
 Chinese version: [PUBLISH_MAVEN_CENTRAL.zh-CN.md](./PUBLISH_MAVEN_CENTRAL.zh-CN.md)
 
-The guarded candidate is **0.5.0**, tagged exactly `v0.5.0`. Publication is not complete until every signed artifact and both public consumers pass verification.
+**0.5.0** was published from exact tag `v0.5.0`; every signed artifact and both public consumers passed [verification](https://github.com/Magic-Xu/pulse/actions/runs/34136328471).
 
 ## One-time setup
 

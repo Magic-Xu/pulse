@@ -1,13 +1,21 @@
 # Pulse 迭代路线图
 
-当前开发目标为 0.5：精确 Mutation 结果及有界 Split 关联和耗时诊断。应用脚手架和输入交付策略继续由 Platform、Factory 和消费者负责。参见[候选版范围](./RELEASE_NOTES_0.5.0.zh-CN.md)。
-
 [English](ITERATION_ROADMAP.md)
 
 ## 当前版本线
 
-`0.4.0` 是当前公开稳定版，已于 2026-08-24 从准确的 Annotated Tag `v0.4.0` 发布。七个
-签名发布包和两个隔离纯制品消费者均已通过公共验证。`0.3.0` 是上一条稳定版本线。
+`0.5.0` 是当前公开稳定版，来源为准确的 Annotated Tag `v0.5.0`。
+七个签名制品与两个公共消费者均通过[发布验证](https://github.com/Magic-Xu/pulse/actions/runs/34136328471)；0.4 是直接兼容基线，0.3/0.2 兼容检查继续保留。
+
+## 0.5 已交付范围
+
+- 精确 Mutation 结果区分提交、业务忽略、失败、生命周期拒绝和过期任务，并保留 Boolean 方法；
+- 有界 Split 诊断关联原始 UI 请求、任务 Mutation、Core 帧与 Executor 耗时；
+- Android 测试宿主管理诊断 Probe；0.4 七制品冻结兼容检查进入发布门禁；
+- Selector 基准按已确认的分组推进，保持原有命中数和性能阈值。
+
+应用脚手架与接入策略继续归 Platform/Factory 和消费者；Pulse 保持独立。
+参见[发布说明](./RELEASE_NOTES_0.5.0.zh-CN.md)。
 
 ## 0.3 基础
 
@@ -83,7 +91,7 @@ Service 基类、全局 Bus、Writer DSL/KSP、Lint 套件和开发者面板不�
 与受保护 Workflow 目标必须一致；Publish Job 必须依赖两个准入 Job，验证全部公共发布包并运行
 公共纯制品消费者，之后才能宣布可用。
 
-## 0.4 之后
+## 0.5 之后
 
 后续能力必须保持单一有序运行时，并通过跨应用重复证据、与领域无关的语义，以及可执行的兼容或
 一致性检查证明其框架归属。

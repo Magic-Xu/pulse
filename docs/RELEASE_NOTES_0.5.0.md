@@ -2,7 +2,7 @@
 
 Chinese version: [RELEASE_NOTES_0.5.0.zh-CN.md](./RELEASE_NOTES_0.5.0.zh-CN.md)
 
-> Status: **candidate**. Public availability is established by the guarded release workflow.
+> Status: **released**. All seven signed bundles and both public consumers passed [release verification](https://github.com/Magic-Xu/pulse/actions/runs/34136328471).
 
 ## Mutation decisions
 
@@ -35,7 +35,7 @@ The selector benchmark acknowledges each selected bucket before producing the ne
 ## Upgrade and qualification
 
 See [0.4 → 0.5 migration](./MIGRATION_0.4_TO_0.5.md). All seven artifacts retain their coordinates.
-The release gate includes reviewed API baselines, frozen 0.4 source/archive checks for all seven
+Release qualification passed API checks with reviewed baselines, frozen 0.4 source/archive checks for all seven
 artifacts, retained 0.3 and 0.2 checks, artifact-only consumers, stress/performance checks, and
-managed-device instrumentation. Publication must verify every signed bundle and both public
-consumers before this candidate is announced as available.
+managed-device instrumentation. Every signed bundle and both public consumers passed the guarded
+release workflow.
