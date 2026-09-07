@@ -8,6 +8,7 @@ import com.magic.mvicore.contract.TaskLaunchResult
 import com.magic.mvicore.contract.TaskPolicy
 import com.magic.mvicore.contract.TaskToken
 import com.magic.mvicore.runtime.PulseTasks
+import kotlinx.coroutines.test.runTest
 import org.junit.Test
 import kotlin.test.assertEquals
 
@@ -21,7 +22,7 @@ class PulseIntentContextTest {
             stateAtStart = TestState,
             inputType = "com.example.RefreshIntent",
             stateProvider = { TestState },
-            mutationDispatcher = MutationDispatcher { _, _ -> true },
+            mutationDispatcher = DetailedMutationDispatcher { _, _, _ -> PulseMutationResult.Changed },
             tasks = tasks,
             lifecycleActive = { true },
             failureReporter = { },
@@ -33,6 +34,24 @@ class PulseIntentContextTest {
         assertEquals(83L, tasks.failureContext?.requestId)
         assertEquals("com.example.RefreshIntent", tasks.failureContext?.inputType)
         assertEquals(key.value, tasks.failureContext?.component)
+    }
+
+    @Test
+    fun `legacy dispatcher and task constructor retain Boolean behavior`() = runTest {
+        val token = object : TaskToken {
+            override val key = TaskKey("legacy")
+            override val value = 1L
+        }
+        var accepted = true
+        val dispatcher = MutationDispatcher<TestMutation> { mutation, receivedToken ->
+            assertEquals(TestMutation, mutation)
+            assertEquals(token, receivedToken)
+            accepted
+        }
+        val context = PulseTaskContext({ TestState }, dispatcher, token)
+        assertEquals(true, context.mutate(TestMutation))
+        accepted = false
+        assertEquals(false, context.mutate(TestMutation))
     }
 
     private class RecordingPulseTasks : PulseTasks {

@@ -398,6 +398,16 @@ tasks.register<GradleBuild>("compatibility03Check") {
     )
 }
 
+tasks.register<GradleBuild>("compatibility04Check") {
+    group = "verification"
+    description = "Checks all seven v0.4 artifact surfaces against the staged candidate."
+    dependsOn("verifyPublicationBundle")
+    configureCandidateConsumer(
+        buildDirectoryPath = "compatibility/consumer-0.4",
+        requestedTasks = listOf("compatibilityCheck"),
+    )
+}
+
 tasks.register("verifyVersionConsistency") {
     group = "verification"
     description = "Checks candidate module versions and an optional stable release tag."
@@ -446,6 +456,7 @@ tasks.register("mviFrameworkCheck") {
         "apiCheck",
         "compatibilityCheck",
         "compatibility03Check",
+        "compatibility04Check",
         "artifactSamplesCheck",
         "verifyVersionConsistency",
     )

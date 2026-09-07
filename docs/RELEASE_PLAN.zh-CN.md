@@ -1,32 +1,20 @@
-# Pulse 0.4.0 发布规划
+# Pulse 0.5.0 发布规划
 
 英文版：[RELEASE_PLAN.md](./RELEASE_PLAN.md)
 
-> 发布状态：**稳定版，已于 2026-08-24 发布**，来源为准确的 Annotated Tag `v0.4.0`。
-> [Workflow Run 32659106344](https://github.com/Magic-Xu/pulse/actions/runs/32659106344) 已通过；
-> 七个签名 Maven Central 发布包均已公开，两个隔离纯制品消费者均已通过。
+> 状态：**候选版**。受控发布目标为准确的 Annotated Tag `v0.5.0`。
 
-## 发布结果
+## 范围
 
-Pulse 0.4 已发布为一条内部一致的版本线，在 0.3 有序运行时基础上解决真实 Android 集成问题。
-它修复了端到端 Split 接纳，完善了 Task 与 Transition 诊断，为真实 Split ViewModel 提供
-确定性测试，并修正框架自有示例；同时不吸收应用的领域、持久任务或多 Store 编排策略。
+本次新增精确 Mutation 结果并保留 Boolean 调用，将 Split Executor 耗时和 Mutation 关联到
+原始 Core UI 请求。诊断保持有界、尽力交付；Android 测试宿主通过自身管理的 Probe 暴露
+同一诊断。参见[发布说明](./RELEASE_NOTES_0.5.0.zh-CN.md)和[迁移指南](./MIGRATION_0.4_TO_0.5.zh-CN.md)。
 
-## 已完成准入
+Platform/Factory 负责生成应用的约定；消费者负责导航、输入反馈及 Feature 任务策略。
+Pulse 继续独立于应用脚手架。
 
-| 阶段 | 已完成结果 |
-|---|---|
-| 0. 基线 | 修改公开行为前，识别已发布的 0.3 API 表面与保留的 0.2 兼容 Fixture |
-| 1. 接纳 | 一个有界预算覆盖 Split UI 接纳到串行 Executor 决策；挂起与非挂起契约明确 |
-| 2. 诊断 | Split Transition 只读、Task Failure 保留请求关联，Android 配置不会静默把生产工作移出 Main |
-| 3. 测试与扩展 | Android Split Test Host 与默认脱敏的现代日志只建立在有序运行时之上 |
-| 4. 示例与指南 | 官方示例处理接纳和 Task Launch Result；集成指南保持框架与应用职责边界 |
-| 5. API 与兼容 | 七份 API 基线、可执行的 0.3 六制品检查，以及保留的 0.2 五制品检查通过 |
-| 6. 发布制品 | 七个暂存发布物和两个纯制品消费者全部通过 |
-| 7. 发布准入 | Framework、Publication、Stress、Performance、托管设备与稳定身份门禁在同一提交通过 |
-
-后续阶段不能为了通过自身检查而削弱更早阶段的契约。准入后如再修改公开 API 或制品，必须重新执行
-API 评审、Framework、Compatibility、暂存消费者、Stress、Performance 与托管设备验证。
+公开 API 或制品变更后，最终候选必须完成 API 评审、Framework、兼容检查、暂存消费者、
+压力/性能及托管设备验证。历史发布证据见对应版本发布说明，不作为本候选的验证结果。
 
 ## 七个发布制品
 
@@ -58,6 +46,8 @@ API 评审、Framework、Compatibility、暂存消费者、Stress、Performance 
 - 三个 Android Library 制品的单元测试与 `lintDebug`；
 - 示例应用单元测试、Debug Assembly 与 Lint；
 - 七个发布制品的 `apiCheck`；
+- `compatibility04Check`：0.4 七制品冻结源码与 Archive 检查，包含 Android Split 测试宿主和
+  JVM 二进制替换；
 - `compatibility03Check`：六个 0.3 制品的冻结源码编译与 Archive 比较，以及 Baseline/Candidate
   JVM 运行、冻结的 0.3 Bytecode 在候选 Runtime 上运行和旧 `PulseTasks` 实现桥接；
 - 保留的 `compatibilityCheck`：0.2 五制品源码/Archive Fixture 与可执行 Core Runtime 链接
@@ -65,7 +55,7 @@ API 评审、Framework、Compatibility、暂存消费者、Stress、Performance 
 - 两个隔离的暂存纯制品消费者；
 - 候选版本一致性。
 
-两个兼容聚合都消费暂存候选制品。有意修改 API 时，还必须对照当前已检入表面评审差异后才能更新
+三个兼容聚合都消费暂存候选制品。有意修改 API 时，还必须对照当前已检入表面评审差异后才能更新
 基线；新制品的首份基线也需要同样的显式评审。
 
 ### 发布聚合门禁

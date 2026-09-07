@@ -29,13 +29,22 @@ internal sealed interface SplitStoreInput<out UI : MviUiIntent, out M : MviMutat
         val value: UI,
         val completion: CompletableDeferred<PulseIntentExecutionResult>?,
         val admission: SplitAdmissionLease,
+        val timing: SplitInputTiming,
     ) : SplitStoreInput<UI, Nothing>
 
     data class Mutation<M : MviMutation>(
         val value: M,
         val token: TaskToken?,
-    ) : SplitStoreInput<Nothing, M>
+    ) : SplitStoreInput<Nothing, M> {
+        // Written only by the reducer before its completion is published to the sender.
+        var rejectedAsStaleTask: Boolean = false
+    }
 }
+
+internal data class SplitInputTiming(
+    val submittedAtNanos: Long,
+    val admittedAtNanos: Long,
+)
 
 internal class SplitAdmissionLease(
     private val onRelease: () -> Unit,

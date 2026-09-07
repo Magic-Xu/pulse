@@ -4,6 +4,8 @@ import com.magic.mvicore.android.PulseAndroidExecutionOwner
 import com.magic.mvicore.android.PulseIntentExecutionDecision
 import com.magic.mvicore.android.PulseIntentExecutionResult
 import com.magic.mvicore.android.PulseSplitInput
+import com.magic.mvicore.android.PulseSplitDiagnosticEvent
+import com.magic.mvicore.android.PulseMutationStatus
 import com.magic.mvicore.android.PulseSplitStoreViewModel
 import com.magic.mvicore.android.PulseUiIntentExecutor
 import com.magic.mvicore.contract.EnqueueResult
@@ -65,6 +67,14 @@ class PulseSplitTestHostTest {
             assertEquals(2, transitions.size)
             assertIs<PulseSplitInput.Ui<TestUi>>(transitions[0].input)
             assertIs<PulseSplitInput.Mutation<TestMutation>>(transitions[1].input)
+            val diagnostics = host.diagnosticProbe.awaitCount(2)
+            val mutation = assertIs<PulseSplitDiagnosticEvent.MutationCompleted>(diagnostics[0])
+            val execution = assertIs<PulseSplitDiagnosticEvent.ExecutionCompleted>(diagnostics[1])
+            assertEquals(transitions[0].requestId, execution.originIntentId)
+            assertEquals(execution.originIntentId, mutation.originIntentId)
+            assertEquals(transitions[1].requestId, mutation.mutationRequestId)
+            assertEquals(PulseMutationStatus.CHANGED, mutation.outcome)
+            assertEquals(diagnostics, host.diagnosticProbe.forIntent(execution.originIntentId))
             host.failureProbe.assertEmpty()
         }
 

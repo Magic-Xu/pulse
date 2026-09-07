@@ -3,7 +3,7 @@ name: Publish Maven Central
 on:
   push:
     tags:
-      - "v0.4.0"
+      - "v0.5.0"
 
 concurrency:
   group: publish-maven-central-${{ github.ref }}
@@ -75,8 +75,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          if [[ "${GITHUB_REF_TYPE}" != "tag" || "${GITHUB_REF_NAME}" != "v0.4.0" ]]; then
-            echo "Only the exact stable tag v0.4.0 may publish." >&2
+          if [[ "${GITHUB_REF_TYPE}" != "tag" || "${GITHUB_REF_NAME}" != "v0.5.0" ]]; then
+            echo "Only the exact stable tag v0.5.0 may publish." >&2
             exit 1
           fi
 
@@ -90,8 +90,8 @@ jobs:
           fi
 
           version="$(sed -n 's/^POM_VERSION_NAME=//p' gradle.properties)"
-          if [[ "${version}" != "0.4.0" || "v${version}" != "${GITHUB_REF_NAME}" ]]; then
-            echo "POM_VERSION_NAME must be stable 0.4.0 and match v0.4.0." >&2
+          if [[ "${version}" != "0.5.0" || "v${version}" != "${GITHUB_REF_NAME}" ]]; then
+            echo "POM_VERSION_NAME must be stable 0.5.0 and match v0.5.0." >&2
             exit 1
           fi
 
@@ -112,7 +112,7 @@ jobs:
     needs:
       - release-check
       - device-check
-    if: github.ref_type == 'tag' && github.ref_name == 'v0.4.0'
+    if: github.ref_type == 'tag' && github.ref_name == 'v0.5.0'
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
@@ -155,7 +155,7 @@ jobs:
             for entry in "${modules[@]}"; do
               module="${entry%%:*}"
               binary_extension="${entry##*:}"
-              module_base="${base}/${module}/0.4.0/${module}-0.4.0"
+              module_base="${base}/${module}/0.5.0/${module}-0.5.0"
               files=(
                 "${module_base}.pom"
                 "${module_base}.module"
@@ -173,7 +173,7 @@ jobs:
               done
             done
             if [[ ${#missing[@]} -eq 0 ]]; then
-              echo "All Pulse 0.4.0 artifacts are public on Maven Central."
+              echo "All Pulse 0.5.0 artifacts are public on Maven Central."
               exit 0
             fi
             if [[ ${attempt} -eq 60 ]]; then
@@ -187,7 +187,7 @@ jobs:
       - name: Consume the public release from isolated samples
         run: >-
           ./gradlew publicArtifactSamplesCheck --refresh-dependencies --stacktrace
-          -PpulsePublicVersion=0.4.0
+          -PpulsePublicVersion=0.5.0
 
       - name: Upload public consumer results
         if: ${{ always() }}

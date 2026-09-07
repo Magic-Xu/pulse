@@ -26,9 +26,16 @@ class PulseIntentContext<S : MviState, M : MviMutation> internal constructor(
     val currentState: S
         get() = stateProvider()
 
-    suspend fun mutate(mutation: M): Boolean {
-        return mutationDispatcher.dispatch(mutation, token = null)
-    }
+    /** Legacy acceptance result; true also includes business Ignored. Use [mutateResult] for commits. */
+    suspend fun mutate(mutation: M): Boolean =
+        if (mutationDispatcher is DetailedMutationDispatcher) {
+            mutateResult(mutation).toLegacyBoolean()
+        } else {
+            mutationDispatcher.dispatch(mutation, null)
+        }
+
+    suspend fun mutateResult(mutation: M): PulseMutationResult =
+        mutationDispatcher.detailedDispatch(mutation, token = null, originIntentId = intentId)
 
     fun launchTask(
         key: TaskKey,
@@ -49,6 +56,7 @@ class PulseIntentContext<S : MviState, M : MviMutation> internal constructor(
                 stateProvider = stateProvider,
                 mutationDispatcher = mutationDispatcher,
                 token = token,
+                originIntentId = intentId,
             ).block()
         }
     }
@@ -86,13 +94,29 @@ class PulseTaskContext<S : MviState, M : MviMutation> internal constructor(
     private val stateProvider: () -> S,
     private val mutationDispatcher: MutationDispatcher<M>,
     val token: TaskToken,
+    /** UI intent that launched this task, retained across suspension and replacement. */
+    val originIntentId: Long,
 ) {
+    // Retains the JVM constructor emitted for the 0.3/0.4 internal Kotlin constructor.
+    internal constructor(
+        stateProvider: () -> S,
+        mutationDispatcher: MutationDispatcher<M>,
+        token: TaskToken,
+    ) : this(stateProvider, mutationDispatcher, token, originIntentId = 0L)
+
     val currentState: S
         get() = stateProvider()
 
-    suspend fun mutate(mutation: M): Boolean {
-        return mutationDispatcher.dispatch(mutation, token)
-    }
+    /** Legacy acceptance result; true also includes business Ignored. Use [mutateResult] for commits. */
+    suspend fun mutate(mutation: M): Boolean =
+        if (mutationDispatcher is DetailedMutationDispatcher) {
+            mutateResult(mutation).toLegacyBoolean()
+        } else {
+            mutationDispatcher.dispatch(mutation, token)
+        }
+
+    suspend fun mutateResult(mutation: M): PulseMutationResult =
+        mutationDispatcher.detailedDispatch(mutation, token, originIntentId)
 }
 
 /** Executes one UI intent after its ordered input frame has completed. */
@@ -141,9 +165,22 @@ sealed interface PulseIntentExecutionResult {
     ) : PulseIntentExecutionResult
 }
 
+/** Original JVM bridge retained for already-compiled internal-constructor callers. */
 internal fun interface MutationDispatcher<M : MviMutation> {
-    suspend fun dispatch(
-        mutation: M,
-        token: TaskToken?,
-    ): Boolean
+    suspend fun dispatch(mutation: M, token: TaskToken?): Boolean
 }
+
+internal fun interface DetailedMutationDispatcher<M : MviMutation> : MutationDispatcher<M> {
+    suspend fun dispatch(mutation: M, token: TaskToken?, originIntentId: Long): PulseMutationResult
+
+    override suspend fun dispatch(mutation: M, token: TaskToken?): Boolean =
+        dispatch(mutation, token, originIntentId = 0L).toLegacyBoolean()
+}
+
+private suspend fun <M : MviMutation> MutationDispatcher<M>.detailedDispatch(
+    mutation: M,
+    token: TaskToken?,
+    originIntentId: Long,
+): PulseMutationResult = checkNotNull(this as? DetailedMutationDispatcher<M>) {
+    "Detailed results require a context created by the current Split Store."
+}.dispatch(mutation, token, originIntentId)

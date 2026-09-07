@@ -1,5 +1,7 @@
 # Pulse
 
+当前开发目标为 **0.5.0**，参见[候选版发布说明](docs/RELEASE_NOTES_0.5.0.zh-CN.md)及[迁移指南](docs/MIGRATION_0.4_TO_0.5.zh-CN.md)。
+
 [English](README.md)
 
 Pulse 是一个面向 Kotlin 与 Android 的有序、协程优先 MVI 运行时。每个 Store 只拥有一个有界

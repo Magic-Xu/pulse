@@ -1,10 +1,8 @@
-# Publishing Pulse 0.4.0 to Maven Central
+# Publishing Pulse to Maven Central
 
 Chinese version: [PUBLISH_MAVEN_CENTRAL.zh-CN.md](./PUBLISH_MAVEN_CENTRAL.zh-CN.md)
 
-> Status: **released on 2026-08-24** from the exact annotated tag `v0.4.0`.
-> [Workflow run 32659106344](https://github.com/Magic-Xu/pulse/actions/runs/32659106344) passed;
-> all seven signed Maven Central bundles are public, and both isolated artifact consumers passed.
+The guarded candidate is **0.5.0**, tagged exactly `v0.5.0`. Publication is not complete until every signed artifact and both public consumers pass verification.
 
 ## One-time setup
 
@@ -23,13 +21,6 @@ are documented in `gradle/maven-central-secrets.template.properties`.
 
 Maven Central's coordinate, signature, source archive, and POM requirements are described in the
 [publishing requirements](https://central.sonatype.org/publish/requirements/).
-
-## 0.4.0 publication record
-
-The guarded workflow completed `release-check`, `device-check`, signed publication, public
-verification of every POM, Gradle metadata file, sources archive, javadoc archive, binary, and
-signature, and both Maven-Central-only consumers. The published version and exact tag matched:
-`POM_VERSION_NAME=0.4.0` and `v0.4.0`.
 
 ## Prepare a future stable release
 
@@ -51,7 +42,7 @@ Run the minimal complete local qualification:
 ```
 
 `mviReleaseCheck` includes `mviFrameworkCheck`, seven-artifact staging and bundle verification,
-the six-artifact 0.3 and retained five-artifact 0.2 compatibility fixtures, both staged
+the seven-artifact 0.4, six-artifact 0.3, and retained five-artifact 0.2 compatibility fixtures, both staged
 artifact-only consumers, multi-seed stress, performance floors, version consistency, and
 `verifyMavenCentralConfig`.
 `mviAndroidDeviceCheck` runs the sample end-to-end instrumentation suite on the managed API 35
@@ -82,9 +73,9 @@ Do not run `publishAndReleaseToMavenCentral` manually for an official stable rel
 publication belongs to the guarded workflow; Gradle publish tasks deliberately do not depend back
 on `mviReleaseCheck`.
 
-## Published 0.4.0 bundle
+## Required publication bundle
 
-The workflow published one version of each artifact:
+The workflow publishes one version of each artifact:
 
 - `mvi-core-contract`
 - `mvi-core-runtime`
@@ -94,9 +85,9 @@ The workflow published one version of each artifact:
 - `mvi-extensions`
 - `mvi-testing`
 
-Local staging verified each binary—JAR or AAR—plus its sources and javadoc archives, POM, Gradle
+Local staging verifies each binary—JAR or AAR—plus its sources and javadoc archives, POM, Gradle
 module metadata, version, and internal Pulse dependency versions. The three Android artifacts
-published AAR binaries; the other four published JAR binaries.
+publish AAR binaries; the other four publish JAR binaries.
 
 ## Verify a future publication
 

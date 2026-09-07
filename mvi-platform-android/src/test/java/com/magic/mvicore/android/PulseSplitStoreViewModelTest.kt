@@ -17,6 +17,7 @@ import com.magic.mvicore.contract.TaskOutcome
 import com.magic.mvicore.contract.TaskPolicy
 import com.magic.mvicore.contract.TaskReplacementReason
 import com.magic.mvicore.contract.TaskToken
+import com.magic.mvicore.contract.TransitionFrame
 import com.magic.mvicore.contract.UiEffect
 import com.magic.mvicore.runtime.PulseErrorHandler
 import com.magic.mvicore.runtime.PulseClock
@@ -38,6 +39,7 @@ import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
@@ -754,12 +756,11 @@ class PulseSplitStoreViewModelTest {
     fun `send frame admitted before close drains even though its owner Job is cancelled`() =
         runTest(mainDispatcherRule.dispatcher) {
             val failures = mutableListOf<PulseFailure>()
-            val clockCalls = AtomicInteger(0)
+            val frames = mutableListOf<TransitionFrame<TestState, PulseSplitInput<TestUi, TestMutation>, TestEffect>>()
             val executed = mutableListOf<TestUi>()
             val config = PulseRuntimeConfig(
                 storeDispatcher = mainDispatcherRule.dispatcher,
                 consumerDispatcher = UnconfinedTestDispatcher(testScheduler),
-                clock = PulseClock { clockCalls.incrementAndGet().toLong() },
                 errorHandler = PulseErrorHandler { _, failure, _ -> failures += failure },
                 storeId = "send-drain-store",
             )
@@ -777,20 +778,23 @@ class PulseSplitStoreViewModelTest {
                 },
                 runtimeConfig = config,
             )
+            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+                viewModel.transitions.collect { frames += it }
+            }
 
             // Unconfined owner execution admits the frame immediately, while the Store processor
             // remains queued on the StandardTestDispatcher until the scheduler advances.
             val sendResult = async(start = CoroutineStart.UNDISPATCHED) {
                 viewModel.send(TestUi.Add(5))
             }
-            assertEquals(0, clockCalls.get())
+            assertTrue(frames.isEmpty())
             viewModel.close()
 
             advanceUntilIdle()
             viewModel.awaitClosed()
 
             assertEquals(PulseIntentExecutionResult.Cancelled, sendResult.await())
-            assertEquals(2, clockCalls.get())
+            assertEquals(listOf(PulseSplitInput.Ui(TestUi.Add(5))), frames.map { it.input })
             assertTrue(executed.isEmpty())
             assertTrue(failures.isEmpty())
         }

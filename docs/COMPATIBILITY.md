@@ -1,5 +1,7 @@
 # Compatibility Policy
 
+The 0.5 candidate adds `compatibility04Check` for all seven published 0.4 artifacts, including the Android Split test host. The 0.3 and 0.2 fixtures remain required. Public Boolean mutation methods and observed Split input shapes are preserved.
+
 Chinese version: [COMPATIBILITY.zh-CN.md](./COMPATIBILITY.zh-CN.md)
 
 > `0.4.0` is the current stable release on Maven Central. `0.3.0` is the direct compatibility

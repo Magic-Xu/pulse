@@ -1,6 +1,7 @@
 package com.magic.mvicore.android.testing
 
 import com.magic.mvicore.android.PulseSplitInput
+import com.magic.mvicore.android.PulseSplitDiagnosticEvent
 import com.magic.mvicore.contract.EffectEnvelope
 import com.magic.mvicore.contract.MviMutation
 import com.magic.mvicore.contract.MviState
@@ -77,6 +78,23 @@ class PulseSplitEffectProbe<E : UiEffect> internal constructor() {
         expected: E,
         timeoutMillis: Long = DEFAULT_PROBE_TIMEOUT_MILLIS,
     ): EffectEnvelope<E> = buffer.await(timeoutMillis) { it.payload == expected }
+}
+
+/** Correlation and executor timing events observed by the test host's diagnostics collector. */
+class PulseSplitDiagnosticProbe internal constructor() {
+    private val buffer = SplitProbeBuffer<PulseSplitDiagnosticEvent>()
+
+    internal fun record(event: PulseSplitDiagnosticEvent) = buffer.record(event)
+
+    fun snapshot(): List<PulseSplitDiagnosticEvent> = buffer.snapshot()
+
+    fun forIntent(originIntentId: Long): List<PulseSplitDiagnosticEvent> =
+        snapshot().filter { it.originIntentId == originIntentId }
+
+    suspend fun awaitCount(
+        count: Int,
+        timeoutMillis: Long = DEFAULT_PROBE_TIMEOUT_MILLIS,
+    ): List<PulseSplitDiagnosticEvent> = buffer.awaitCount(count, timeoutMillis)
 }
 
 private class SplitProbeBuffer<T> {

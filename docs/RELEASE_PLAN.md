@@ -1,34 +1,22 @@
-# Pulse 0.4.0 Release Plan
+# Pulse 0.5.0 Release Plan
 
 Chinese version: [RELEASE_PLAN.zh-CN.md](./RELEASE_PLAN.zh-CN.md)
 
-> Release status: **stable, released on 2026-08-24** from the exact annotated tag `v0.4.0`.
-> [Workflow run 32659106344](https://github.com/Magic-Xu/pulse/actions/runs/32659106344) passed;
-> all seven signed Maven Central bundles are public, and both isolated artifact consumers passed.
+> Status: **candidate**. The guarded release target is exact annotated tag `v0.5.0`.
 
-## Release outcome
+## Scope
 
-Pulse 0.4 ships one coherent line that hardens the 0.3 ordered runtime for real Android
-integrations. It resolves end-to-end Split admission, improves task and transition diagnostics,
-adds deterministic tests for a real Split ViewModel, and corrects framework-owned examples without
-absorbing application domain, durable-work, or multi-Store orchestration policy.
+This release adds precise mutation outcomes while preserving Boolean callers, and connects Split
+executor timing and mutations to the originating Core UI request. Diagnostics remain bounded and
+best effort. The Android test host exposes the same diagnostics through an owned probe.
+See [release notes](./RELEASE_NOTES_0.5.0.md) and [migration](./MIGRATION_0.4_TO_0.5.md).
 
-## Completed qualification
+Platform/Factory own generated app conventions; consumers own navigation, input feedback, and
+feature task policies. Pulse remains independent of that application scaffold.
 
-| Stage | Completed result |
-|---|---|
-| 0. Baseline | The published 0.3 API surface and retained 0.2 compatibility fixtures were identified before public behavior changes |
-| 1. Admission | One bounded budget covered Split UI admission through the serial executor decision; suspending and non-suspending contracts were explicit |
-| 2. Diagnostics | Split transitions were read-only, task failures retained request correlation, and Android config kept production work on Main |
-| 3. Testing and extensions | The Android Split test host and redacted modern logging built only on the ordered runtime |
-| 4. Samples and guidance | Official examples handled admission and task-launch results; integration guidance preserved framework/application ownership |
-| 5. API and compatibility | Seven API baselines, executable six-artifact 0.3 checks, and retained five-artifact 0.2 checks passed |
-| 6. Publication artifacts | All seven staged publications and both artifact-only consumers passed |
-| 7. Release qualification | Framework, publication, stress, performance, managed-device, and stable-identity gates passed on one commit |
-
-A later stage cannot weaken an earlier contract merely to pass its own check. Any public API or
-artifact change after qualification restarts API review, framework, compatibility, staged-consumer,
-stress, performance, and managed-device verification.
+Public API or artifact changes require API review, framework and compatibility checks, staged
+consumers, stress/performance qualification, and managed-device verification on the final candidate.
+Previous release evidence is in the versioned release notes and does not qualify this candidate.
 
 ## Seven published artifacts
 
@@ -61,6 +49,8 @@ they are not published library artifacts.
 - unit tests and `lintDebug` for all three Android library artifacts;
 - sample app unit tests, debug assembly, and lint;
 - `apiCheck` for all seven published artifacts;
+- `compatibility04Check`: frozen source and archive checks for all seven 0.4 artifacts, including
+  the Android Split test host and JVM binary replacement;
 - `compatibility03Check`: frozen source compilation and archive comparison for all six 0.3
   artifacts, plus baseline/candidate JVM runs, frozen 0.3 bytecode on the candidate runtime, and the
   legacy `PulseTasks` implementation bridge;
@@ -69,7 +59,7 @@ they are not published library artifacts.
 - both isolated staged-artifact consumers;
 - candidate version consistency.
 
-Both compatibility aggregates consume staged candidate artifacts. Intentional API changes must
+All three compatibility aggregates consume staged candidate artifacts. Intentional API changes must
 also be reviewed against the currently checked-in surface before updating a baseline; the first
 baseline for a new artifact requires the same explicit review.
 
